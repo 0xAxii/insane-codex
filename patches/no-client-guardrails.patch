@@ -1,0 +1,2308 @@
+diff --git a/codex-rs/Cargo.lock b/codex-rs/Cargo.lock
+index f2b0fbac81..15d3dd9ef7 100644
+--- a/codex-rs/Cargo.lock
++++ b/codex-rs/Cargo.lock
+@@ -3655,15 +3655,6 @@ dependencies = [
+  "zstd",
+ ]
+ 
+-[[package]]
+-name = "codex-guardian-v3"
+-version = "0.0.0"
+-dependencies = [
+- "codex-message-board",
+- "codex-protocol",
+- "codex-state",
+-]
+-
+ [[package]]
+ name = "codex-history"
+ version = "0.0.0"
+diff --git a/codex-rs/Cargo.toml b/codex-rs/Cargo.toml
+index 1c59a14e59..6facd6a7ae 100644
+--- a/codex-rs/Cargo.toml
++++ b/codex-rs/Cargo.toml
+@@ -69,7 +69,6 @@ members = [
+     "ext/git-attribution",
+     "ext/guardian-reviewer",
+     "ext/guardian-v2",
+-    "ext/guardian-v3",
+     "ext/history-notes",
+     "ext/image-generation",
+     "ext/items",
+diff --git a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
+index 49b47f87db..4b274432cd 100644
+--- a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
++++ b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
+@@ -16300,16 +16300,6 @@
+               "null"
+             ]
+           },
+-          "reviewDomains": {
+-            "description": "Host patterns routed to network approval before ordinary allow rules.",
+-            "items": {
+-              "type": "string"
+-            },
+-            "type": [
+-              "array",
+-              "null"
+-            ]
+-          },
+           "socksPort": {
+             "format": "uint16",
+             "minimum": 0.0,
+diff --git a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
+index 8ec2c21b8a..6aeeb08f07 100644
+--- a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
++++ b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
+@@ -12292,16 +12292,6 @@
+             "null"
+           ]
+         },
+-        "reviewDomains": {
+-          "description": "Host patterns routed to network approval before ordinary allow rules.",
+-          "items": {
+-            "type": "string"
+-          },
+-          "type": [
+-            "array",
+-            "null"
+-          ]
+-        },
+         "socksPort": {
+           "format": "uint16",
+           "minimum": 0.0,
+diff --git a/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json b/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
+index d549850ac1..895d3d6fa8 100644
+--- a/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
++++ b/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
+@@ -1073,16 +1073,6 @@
+             "null"
+           ]
+         },
+-        "reviewDomains": {
+-          "description": "Host patterns routed to network approval before ordinary allow rules.",
+-          "items": {
+-            "type": "string"
+-          },
+-          "type": [
+-            "array",
+-            "null"
+-          ]
+-        },
+         "socksPort": {
+           "format": "uint16",
+           "minimum": 0.0,
+diff --git a/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts b/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
+index 5a496b132a..04e07ef1de 100644
+--- a/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
++++ b/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
+@@ -9,10 +9,6 @@ export type NetworkRequirements = { enabled: boolean | null, httpPort: number |
+  * Canonical network permission map for `experimental_network`.
+  */
+ domains: { [key in string]?: NetworkDomainPermission } | null,
+-/**
+- * Host patterns routed to network approval before ordinary allow rules.
+- */
+-reviewDomains: Array<string> | null,
+ /**
+  * When true, only managed allowlist entries are respected while managed
+  * network enforcement is active.
+diff --git a/codex-rs/app-server-protocol/src/protocol/v2/config.rs b/codex-rs/app-server-protocol/src/protocol/v2/config.rs
+index 552520aff3..f9d7b14c6b 100644
+--- a/codex-rs/app-server-protocol/src/protocol/v2/config.rs
++++ b/codex-rs/app-server-protocol/src/protocol/v2/config.rs
+@@ -725,8 +725,6 @@ pub struct NetworkRequirements {
+     pub dangerously_allow_all_unix_sockets: Option<bool>,
+     /// Canonical network permission map for `experimental_network`.
+     pub domains: Option<BTreeMap<String, NetworkDomainPermission>>,
+-    /// Host patterns routed to network approval before ordinary allow rules.
+-    pub review_domains: Option<Vec<String>>,
+     /// When true, only managed allowlist entries are respected while managed
+     /// network enforcement is active.
+     pub managed_allowed_domains_only: Option<bool>,
+diff --git a/codex-rs/app-server-protocol/src/protocol/v2/tests.rs b/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
+index d268de69fb..234636839d 100644
+--- a/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
++++ b/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
+@@ -3054,7 +3054,6 @@ fn network_requirements_deserializes_legacy_fields() {
+             dangerously_allow_non_loopback_proxy: None,
+             dangerously_allow_all_unix_sockets: None,
+             domains: None,
+-            review_domains: None,
+             managed_allowed_domains_only: None,
+             allowed_domains: Some(vec!["api.openai.com".to_string()]),
+             denied_domains: Some(vec!["blocked.example.com".to_string()]),
+@@ -3081,7 +3080,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
+                 NetworkDomainPermission::Deny,
+             ),
+         ])),
+-        review_domains: Some(vec!["api.openai.com".to_string()]),
+         managed_allowed_domains_only: Some(true),
+         allowed_domains: Some(vec!["api.openai.com".to_string()]),
+         denied_domains: Some(vec!["blocked.example.com".to_string()]),
+@@ -3112,7 +3110,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
+                 "api.openai.com": "allow",
+                 "blocked.example.com": "deny"
+             },
+-            "reviewDomains": ["api.openai.com"],
+             "managedAllowedDomainsOnly": true,
+             "allowedDomains": ["api.openai.com"],
+             "deniedDomains": ["blocked.example.com"],
+diff --git a/codex-rs/app-server/Cargo.toml b/codex-rs/app-server/Cargo.toml
+index bddfc75a0d..31a722a5b5 100644
+--- a/codex-rs/app-server/Cargo.toml
++++ b/codex-rs/app-server/Cargo.toml
+@@ -55,7 +55,6 @@ codex-features = { workspace = true }
+ codex-multi-env-copy-file = { workspace = true }
+ codex-goal-extension = { workspace = true }
+ codex-git-attribution = { workspace = true }
+-codex-guardian-v2 = { workspace = true }
+ codex-git-utils = { workspace = true }
+ codex-file-watcher = { workspace = true }
+ codex-hooks = { workspace = true }
+diff --git a/codex-rs/app-server/src/bespoke_event_handling.rs b/codex-rs/app-server/src/bespoke_event_handling.rs
+index d0d363e401..11f0555325 100644
+--- a/codex-rs/app-server/src/bespoke_event_handling.rs
++++ b/codex-rs/app-server/src/bespoke_event_handling.rs
+@@ -104,7 +104,6 @@ use codex_protocol::protocol::Event;
+ use codex_protocol::protocol::EventMsg;
+ use codex_protocol::protocol::ExecApprovalRequestEvent;
+ use codex_protocol::protocol::Op;
+-use codex_protocol::protocol::PrivateSessionEventPayload;
+ use codex_protocol::protocol::RealtimeEvent;
+ use codex_protocol::protocol::ReviewDecision;
+ use codex_protocol::protocol::SubAgentActivityKind;
+@@ -1175,45 +1174,6 @@ pub(crate) async fn apply_bespoke_event_handling(
+                 .send_server_notification(ServerNotification::HookCompleted(notification))
+                 .await;
+         }
+-        EventMsg::PrivateSessionEvent(private) => match private.event {
+-            PrivateSessionEventPayload::RecordedItem(mut recorded) => {
+-                recorded.item.clear_executed_tool_calls();
+-                let mut notification = ServerNotification::RawResponseItemCompleted(
+-                    RawResponseItemCompletedNotification {
+-                        thread_id: private.thread_id.to_string(),
+-                        turn_id: event_turn_id,
+-                        item: recorded.item,
+-                    },
+-                );
+-                if conversation.enabled(Feature::OmitAppServerNotificationMedia) {
+-                    notification = without_notification_media(notification);
+-                }
+-                outgoing.send_server_notification(notification).await;
+-            }
+-            PrivateSessionEventPayload::TurnAborted(aborted) => {
+-                // Notify observers without completing or clearing the parent's turn.
+-                emit_turn_completed_with_status(
+-                    private.thread_id,
+-                    event_turn_id,
+-                    TurnCompletionMetadata {
+-                        status: TurnStatus::Interrupted,
+-                        root_turn_id: aborted.root_turn_id,
+-                        error: aborted.error.map(|error| TurnError {
+-                            message: error.message,
+-                            codex_error_info: error.codex_error_info.map(Into::into),
+-                            misalignment: error.misalignment.map(Into::into),
+-                            additional_details: None,
+-                        }),
+-                        last_agent_message: None,
+-                        started_at: aborted.started_at,
+-                        completed_at: aborted.completed_at,
+-                        duration_ms: aborted.duration_ms,
+-                    },
+-                    &outgoing,
+-                )
+-                .await;
+-            }
+-        },
+         EventMsg::RawResponseItem(mut raw_response_item_event) => {
+             // Keep warehouse metadata out of app-server notifications.
+             raw_response_item_event.item.clear_executed_tool_calls();
+diff --git a/codex-rs/app-server/src/extensions.rs b/codex-rs/app-server/src/extensions.rs
+index e4f43ca88d..4ef970f194 100644
+--- a/codex-rs/app-server/src/extensions.rs
++++ b/codex-rs/app-server/src/extensions.rs
+@@ -104,7 +104,6 @@ pub(crate) fn thread_extensions(
+         git_attribution_base_url,
+         http_client_factory,
+     );
+-    codex_guardian_v2::install(&mut builder, auth_manager.clone(), thread_manager);
+     codex_memories_extension::install(&mut builder, codex_otel::global());
+     codex_mcp_extension::install(&mut builder);
+     codex_mcp_extension::install_plugins(&mut builder, environment_manager);
+diff --git a/codex-rs/app-server/src/request_processors/config_processor.rs b/codex-rs/app-server/src/request_processors/config_processor.rs
+index bbfc952151..1500cd82a2 100644
+--- a/codex-rs/app-server/src/request_processors/config_processor.rs
++++ b/codex-rs/app-server/src/request_processors/config_processor.rs
+@@ -868,7 +868,6 @@ fn map_network_requirements_to_api(
+                 })
+                 .collect()
+         }),
+-        review_domains: network.review_domains,
+         managed_allowed_domains_only: network.managed_allowed_domains_only,
+         allowed_domains,
+         denied_domains,
+diff --git a/codex-rs/app-server/src/request_processors/thread_lifecycle.rs b/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
+index f864f0f341..ab13ac6b0d 100644
+--- a/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
++++ b/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
+@@ -349,7 +349,7 @@ pub(super) async fn ensure_listener_task_running(
+                     };
+                     if matches!(
+                         &event.msg,
+-                        EventMsg::RawResponseItem(_) | EventMsg::RawResponseCompleted(_) | EventMsg::PrivateSessionEvent(_)
++                        EventMsg::RawResponseItem(_) | EventMsg::RawResponseCompleted(_)
+                     ) && !raw_events_enabled
+                     {
+                         continue;
+diff --git a/codex-rs/app-server/tests/suite/v2/config_rpc.rs b/codex-rs/app-server/tests/suite/v2/config_rpc.rs
+index 20476284ec..c4ba5937d1 100644
+--- a/codex-rs/app-server/tests/suite/v2/config_rpc.rs
++++ b/codex-rs/app-server/tests/suite/v2/config_rpc.rs
+@@ -37,8 +37,6 @@ use codex_app_server_protocol::ConfiguredHookHandler;
+ use codex_app_server_protocol::ForcedChatgptWorkspaceIds;
+ use codex_app_server_protocol::JSONRPCError;
+ use codex_app_server_protocol::MergeStrategy;
+-use codex_app_server_protocol::NetworkDomainPermission;
+-use codex_app_server_protocol::NetworkRequirements;
+ use codex_app_server_protocol::RequestId;
+ use codex_app_server_protocol::SandboxMode;
+ use codex_app_server_protocol::ToolsV2;
+@@ -108,52 +106,6 @@ async fn config_requirements_read_exposes_independent_speed_policy() -> Result<(
+     Ok(())
+ }
+ 
+-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+-async fn config_requirements_read_includes_network_review_domains() -> Result<()> {
+-    let codex_home = TempDir::new()?;
+-    std::fs::write(
+-        codex_home.path().join("requirements.toml"),
+-        r#"[experimental_network]
+-enabled = true
+-allowed_domains = ["**.example.com"]
+-review_domains = ["review.example.com"]
+-"#,
+-    )?;
+-    let mut app_server = TestAppServer::builder()
+-        .with_codex_home(codex_home.path())
+-        .build_initialized()
+-        .await?;
+-
+-    let request_id = app_server.send_config_requirements_read_request().await?;
+-    let response: ConfigRequirementsReadResponse = app_server.read_response(request_id).await?;
+-    assert_eq!(
+-        response
+-            .requirements
+-            .expect("managed requirements should be returned")
+-            .network,
+-        Some(NetworkRequirements {
+-            enabled: Some(true),
+-            http_port: None,
+-            socks_port: None,
+-            allow_upstream_proxy: None,
+-            dangerously_allow_non_loopback_proxy: None,
+-            dangerously_allow_all_unix_sockets: None,
+-            domains: Some(BTreeMap::from([(
+-                "**.example.com".to_string(),
+-                NetworkDomainPermission::Allow,
+-            )])),
+-            review_domains: Some(vec!["review.example.com".to_string()]),
+-            managed_allowed_domains_only: None,
+-            allowed_domains: Some(vec!["**.example.com".to_string()]),
+-            denied_domains: None,
+-            unix_sockets: None,
+-            allow_unix_sockets: None,
+-            allow_local_binding: None,
+-        }),
+-    );
+-    Ok(())
+-}
+-
+ #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+ async fn managed_auth_settings_are_exposed_enforced_and_read_only() -> Result<()> {
+     let codex_home = TempDir::new()?;
+diff --git a/codex-rs/app-server/tests/suite/v2/guardian_sync_session_tests.rs b/codex-rs/app-server/tests/suite/v2/guardian_sync_session_tests.rs
+index 7d690e6df4..0830c48079 100644
+--- a/codex-rs/app-server/tests/suite/v2/guardian_sync_session_tests.rs
++++ b/codex-rs/app-server/tests/suite/v2/guardian_sync_session_tests.rs
+@@ -5,7 +5,6 @@ use app_test_support::create_final_assistant_message_sse_response as assistant_r
+ use codex_app_server_protocol::CodexErrorInfo;
+ use codex_app_server_protocol::GuardianWarningNotification;
+ use codex_app_server_protocol::JSONRPCErrorError;
+-use codex_app_server_protocol::RawResponseItemCompletedNotification;
+ use codex_app_server_protocol::RequestId;
+ use codex_app_server_protocol::ReviewDelivery;
+ use codex_app_server_protocol::ReviewStartParams;
+@@ -192,9 +191,6 @@ async fn managed_reviewer_refreshes_global_instructions_before_reuse() -> Result
+     let codex_home = TempDir::new()?;
+     let instructions_path = codex_home.path().join("AGENTS.md");
+     sync_config(server.uri())
+-        .with_provider_name("OpenAI")
+-        .enable_feature(Feature::ContentItemKinds)
+-        .enable_feature(Feature::GuardianRecordedItems)
+         .with_extra_config(&format!(
+             "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"prompt\""
+         ))
+@@ -206,15 +202,8 @@ async fn managed_reviewer_refreshes_global_instructions_before_reuse() -> Result
+     let old_instructions = "Keep this project private.";
+     let new_instructions = "Ask before sharing this project's source code.";
+     std::fs::write(&instructions_path, old_instructions)?;
+-    let parent = app
+-        .start_thread(ThreadStartParams {
+-            experimental_raw_events: true,
+-            ..Default::default()
+-        })
+-        .await?
+-        .thread;
++    let parent = app.start_thread(ThreadStartParams::default()).await?.thread;
+     let mut reviewer_ids = Vec::new();
+-    let mut previous_recorded: Option<(String, Value)> = None;
+     for (index, instructions) in [
+         old_instructions,
+         old_instructions,
+@@ -245,44 +234,6 @@ async fn managed_reviewer_refreshes_global_instructions_before_reuse() -> Result
+         assert_eq!(requests.len(), (index + 1) * 3);
+         let review: Value = serde_json::from_slice(&requests[index * 3 + 1])?;
+         assert!(review["input"].to_string().contains(instructions));
+-        let turn_metadata: Value = serde_json::from_str(
+-            review["client_metadata"]["x-codex-turn-metadata"]
+-                .as_str()
+-                .expect("turn metadata"),
+-        )?;
+-        assert_eq!(turn_metadata["guardian_recorded_items"], true);
+-        if let Some((thread_id, item)) = &previous_recorded
+-            && review["client_metadata"]["thread_id"] == thread_id.as_str()
+-        {
+-            let replayed = review["input"]
+-                .as_array()
+-                .expect("review input")
+-                .iter()
+-                .find(|replayed| replayed["content"] == item["content"])
+-                .expect("previous Guardian reply is replayed");
+-            assert_eq!(
+-                replayed["internal_chat_message_metadata_passthrough"],
+-                item["internal_chat_message_metadata_passthrough"],
+-            );
+-        }
+-        // Private reviewer events arrive on the parent's subscription with the
+-        // reviewer's identity and the metadata that its next request replays.
+-        let (recorded, item) = loop {
+-            let recorded: RawResponseItemCompletedNotification =
+-                app.read_notification("rawResponseItem/completed").await?;
+-            let item = serde_json::to_value(&recorded.item)?;
+-            if recorded.thread_id != parent.id
+-                && item["role"] == "assistant"
+-                && item["content"][0]["text"] == ALLOW
+-            {
+-                break (recorded, item);
+-            }
+-        };
+-        assert_eq!(
+-            json!([recorded.thread_id, recorded.turn_id]),
+-            json!([turn_metadata["thread_id"], turn_metadata["turn_id"]]),
+-        );
+-        previous_recorded = Some((recorded.thread_id, item));
+         reviewer_ids.push(
+             review["client_metadata"]["thread_id"]
+                 .as_str()
+@@ -299,13 +250,11 @@ async fn managed_reviewer_refreshes_global_instructions_before_reuse() -> Result
+     Ok(())
+ }
+ 
+-#[test_case(ReviewEnding::Complete, true; "completed reviews")]
+-#[test_case(ReviewEnding::Interrupt, true; "cancelled concurrent reviews")]
+-#[test_case(ReviewEnding::Interrupt, false; "raw events without reviewer opt-in")]
++#[test_case(ReviewEnding::Complete; "completed reviews")]
++#[test_case(ReviewEnding::Interrupt; "cancelled concurrent reviews")]
+ #[tokio::test]
+ async fn managed_reviewers_reuse_fork_and_resume_after_parent_shutdown(
+     ending: ReviewEnding,
+-    recorded_items: bool,
+ ) -> Result<()> {
+     skip_if_no_network!(Ok(()));
+     let (continue_parent, parent_gate) = oneshot::channel();
+@@ -342,7 +291,6 @@ async fn managed_reviewers_reuse_fork_and_resume_after_parent_shutdown(
+         "Keep this project private.",
+     )?;
+     sync_config(server.uri())
+-        .with_features(&[(Feature::GuardianRecordedItems, recorded_items)].into())
+         .with_extra_config(&format!(
+             "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_url}/mcp\"\ndefault_tools_approval_mode = \"prompt\""
+         ))
+@@ -351,13 +299,7 @@ async fn managed_reviewers_reuse_fork_and_resume_after_parent_shutdown(
+         .with_codex_home(codex_home.path())
+         .build_initialized_with_timeout(TIMEOUT)
+         .await?;
+-    let parent = app
+-        .start_thread(ThreadStartParams {
+-            experimental_raw_events: true,
+-            ..Default::default()
+-        })
+-        .await?
+-        .thread;
++    let parent = app.start_thread(ThreadStartParams::default()).await?.thread;
+     let started: TurnStartResponse = app
+         .request(|request_id| ClientRequest::TurnStart {
+             request_id,
+@@ -471,45 +413,8 @@ async fn managed_reviewers_reuse_fork_and_resume_after_parent_shutdown(
+         finish_first.send(()).expect("finish first review");
+         finish_second.send(()).expect("finish second review");
+     }
+-    let mut parent_completed = None;
+-    let mut interrupted_reviewers = std::collections::BTreeSet::new();
+-    let expected_interruptions = match ending {
+-        ReviewEnding::Interrupt if recorded_items => 2,
+-        ReviewEnding::Complete | ReviewEnding::Interrupt => 0,
+-    };
+-    while parent_completed.is_none() || interrupted_reviewers.len() < expected_interruptions {
+-        let completed: TurnCompletedNotification =
+-            timeout(TIMEOUT, app.read_notification("turn/completed")).await??;
+-        if completed.thread_id == parent.id {
+-            parent_completed = Some(completed);
+-        } else {
+-            assert_eq!(completed.turn.status, TurnStatus::Interrupted);
+-            interrupted_reviewers.insert((completed.thread_id, completed.turn.id));
+-        }
+-    }
+-    assert_eq!(interrupted_reviewers.len(), expected_interruptions);
+-    if matches!(ending, ReviewEnding::Interrupt) && recorded_items {
+-        let mut expected = std::collections::BTreeSet::new();
+-        for review in [&first, &second] {
+-            let metadata: Value = serde_json::from_str(
+-                review["client_metadata"]["x-codex-turn-metadata"]
+-                    .as_str()
+-                    .expect("turn metadata"),
+-            )?;
+-            expected.insert((
+-                metadata["thread_id"]
+-                    .as_str()
+-                    .expect("reviewer thread ID")
+-                    .to_owned(),
+-                metadata["turn_id"]
+-                    .as_str()
+-                    .expect("reviewer turn ID")
+-                    .to_owned(),
+-            ));
+-        }
+-        assert_eq!(interrupted_reviewers, expected);
+-    }
+-    let completed = parent_completed.expect("parent completes independently of its reviewers");
++    let completed: TurnCompletedNotification =
++        timeout(TIMEOUT, app.read_notification("turn/completed")).await??;
+     let expected_status = match ending {
+         ReviewEnding::Complete => TurnStatus::Completed,
+         ReviewEnding::Interrupt => TurnStatus::Interrupted,
+diff --git a/codex-rs/config/src/config_requirements.rs b/codex-rs/config/src/config_requirements.rs
+index 961e3c3d78..59bfd531f8 100644
+--- a/codex-rs/config/src/config_requirements.rs
++++ b/codex-rs/config/src/config_requirements.rs
+@@ -265,26 +265,10 @@ impl Default for ConfigRequirements {
+ 
+ impl ConfigRequirements {
+     /// Returns whether a model slug or its supported provider alias requires auto-review.
+-    pub fn auto_review_required_for_model(&self, model: &str) -> bool {
+-        let Some(protected_models) = self.auto_review_required_models.as_ref() else {
+-            return false;
+-        };
+-
+-        let model = match model.split_once('/') {
+-            Some((namespace, suffix))
+-                if !namespace.is_empty()
+-                    && !suffix.contains('/')
+-                    && namespace.chars().all(|character| {
+-                        character.is_ascii_alphanumeric() || character == '_' || character == '-'
+-                    }) =>
+-            {
+-                suffix
+-            }
+-            Some(_) => return false,
+-            None => model,
+-        };
+-
+-        protected_models.value.contains(model)
++    pub fn auto_review_required_for_model(&self, _model: &str) -> bool {
++        // This research build retains the current requirements schema and cache
++        // format, but restores the pre-managed-Guardian runtime behavior.
++        false
+     }
+ 
+     pub fn managed_auth_policy(&self) -> ManagedAuthPolicy {
+@@ -432,9 +416,6 @@ pub struct NetworkRequirementsToml {
+     pub dangerously_allow_non_loopback_proxy: Option<bool>,
+     pub dangerously_allow_all_unix_sockets: Option<bool>,
+     pub domains: Option<NetworkDomainPermissionsToml>,
+-    /// Host patterns routed to the existing network approval flow before ordinary allow rules.
+-    /// Explicit denials take precedence; approval caching, hooks, and reviewer routing still apply.
+-    pub review_domains: Option<Vec<String>>,
+     /// When true, only managed `allowed_domains` are respected while managed
+     /// network enforcement is active. User allowlist entries are ignored.
+     pub managed_allowed_domains_only: Option<bool>,
+@@ -474,7 +455,6 @@ struct RawNetworkRequirementsToml {
+     dangerously_allow_non_loopback_proxy: Option<bool>,
+     dangerously_allow_all_unix_sockets: Option<bool>,
+     domains: Option<NetworkDomainPermissionsToml>,
+-    review_domains: Option<Vec<String>>,
+     #[serde(default)]
+     allowed_domains: Option<Vec<String>>,
+     /// When true, only managed `allowed_domains` are respected while managed
+@@ -503,7 +483,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
+             dangerously_allow_non_loopback_proxy,
+             dangerously_allow_all_unix_sockets,
+             domains,
+-            review_domains,
+             allowed_domains,
+             managed_allowed_domains_only,
+             denied_domains,
+@@ -534,7 +513,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
+             dangerously_allow_all_unix_sockets,
+             domains: domains
+                 .or_else(|| legacy_domain_permissions_from_lists(allowed_domains, denied_domains)),
+-            review_domains,
+             managed_allowed_domains_only,
+             unix_sockets: unix_sockets
+                 .or_else(|| legacy_unix_socket_permissions_from_list(allow_unix_sockets)),
+@@ -586,7 +564,6 @@ pub struct NetworkConstraints {
+     pub dangerously_allow_non_loopback_proxy: Option<bool>,
+     pub dangerously_allow_all_unix_sockets: Option<bool>,
+     pub domains: Option<NetworkDomainPermissionsToml>,
+-    pub review_domains: Option<Vec<String>>,
+     /// When true, only managed `allowed_domains` are respected while managed
+     /// network enforcement is active. User allowlist entries are ignored.
+     pub managed_allowed_domains_only: Option<bool>,
+@@ -615,7 +592,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
+             dangerously_allow_non_loopback_proxy,
+             dangerously_allow_all_unix_sockets,
+             domains,
+-            review_domains,
+             managed_allowed_domains_only,
+             unix_sockets,
+             allow_local_binding,
+@@ -629,7 +605,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
+             dangerously_allow_non_loopback_proxy,
+             dangerously_allow_all_unix_sockets,
+             domains,
+-            review_domains,
+             managed_allowed_domains_only,
+             unix_sockets,
+             allow_local_binding,
+@@ -4576,7 +4551,6 @@ command = "python3 /enterprise/hooks/pre.py"
+             allow_upstream_proxy = false
+             dangerously_allow_all_unix_sockets = true
+             allowed_domains = ["api.example.com", "*.openai.com"]
+-            review_domains = ["review.example.com", "*.review.example.com"]
+             managed_allowed_domains_only = true
+             denied_domains = ["blocked.example.com"]
+             allow_unix_sockets = ["/tmp/example.sock"]
+@@ -4633,14 +4607,6 @@ command = "python3 /enterprise/hooks/pre.py"
+         );
+         assert_eq!(sourced_network.value.allow_local_binding, Some(false));
+ 
+-        assert_eq!(
+-            sourced_network.value.review_domains,
+-            Some(vec![
+-                "review.example.com".to_string(),
+-                "*.review.example.com".to_string()
+-            ])
+-        );
+-
+         Ok(())
+     }
+ 
+diff --git a/codex-rs/config/src/schema.rs b/codex-rs/config/src/schema.rs
+index fff24a98b3..f7d6b6a7d2 100644
+--- a/codex-rs/config/src/schema.rs
++++ b/codex-rs/config/src/schema.rs
+@@ -90,15 +90,6 @@ pub fn features_schema(schema_gen: &mut SchemaGenerator) -> Schema {
+             );
+             continue;
+         }
+-        if feature.id == codex_features::Feature::GuardianV3 {
+-            validation.properties.insert(
+-                feature.key.to_string(),
+-                schema_gen.subschema_for::<codex_features::FeatureToml<
+-                    codex_features::GuardianV3ConfigToml,
+-                >>(),
+-            );
+-            continue;
+-        }
+         if feature.id == codex_features::Feature::MultiAgentV2 {
+             validation.properties.insert(
+                 feature.key.to_string(),
+diff --git a/codex-rs/core/config.schema.json b/codex-rs/core/config.schema.json
+index 7a96817c9e..da02218caf 100644
+--- a/codex-rs/core/config.schema.json
++++ b/codex-rs/core/config.schema.json
+@@ -970,9 +970,6 @@
+             "guardian_node_repl_transcript_images": {
+               "type": "boolean"
+             },
+-            "guardian_recorded_items": {
+-              "type": "boolean"
+-            },
+             "guardian_reuse_parent_compaction": {
+               "type": "boolean"
+             },
+@@ -988,9 +985,6 @@
+             "guardianv2_decisions_comparison": {
+               "type": "boolean"
+             },
+-            "guardianv3": {
+-              "$ref": "#/definitions/FeatureToml_for_GuardianV3ConfigToml"
+-            },
+             "hooks": {
+               "type": "boolean"
+             },
+@@ -1700,16 +1694,6 @@
+         }
+       ]
+     },
+-    "FeatureToml_for_GuardianV3ConfigToml": {
+-      "anyOf": [
+-        {
+-          "type": "boolean"
+-        },
+-        {
+-          "$ref": "#/definitions/GuardianV3ConfigToml"
+-        }
+-      ]
+-    },
+     "FeatureToml_for_MultiAgentV2ConfigToml": {
+       "anyOf": [
+         {
+@@ -2161,16 +2145,6 @@
+       ],
+       "type": "string"
+     },
+-    "GuardianV3ConfigToml": {
+-      "additionalProperties": false,
+-      "description": "User-configurable settings for Guardian V3.",
+-      "properties": {
+-        "enabled": {
+-          "type": "boolean"
+-        }
+-      },
+-      "type": "object"
+-    },
+     "History": {
+       "additionalProperties": false,
+       "description": "Settings that govern if and what will be written to `~/.codex/history.jsonl`.",
+@@ -7514,9 +7488,6 @@
+         "guardian_node_repl_transcript_images": {
+           "type": "boolean"
+         },
+-        "guardian_recorded_items": {
+-          "type": "boolean"
+-        },
+         "guardian_reuse_parent_compaction": {
+           "type": "boolean"
+         },
+@@ -7532,9 +7503,6 @@
+         "guardianv2_decisions_comparison": {
+           "type": "boolean"
+         },
+-        "guardianv3": {
+-          "$ref": "#/definitions/FeatureToml_for_GuardianV3ConfigToml"
+-        },
+         "hooks": {
+           "type": "boolean"
+         },
+diff --git a/codex-rs/core/src/config/network_proxy_spec.rs b/codex-rs/core/src/config/network_proxy_spec.rs
+index 44e6087a9b..ace90ef9c2 100644
+--- a/codex-rs/core/src/config/network_proxy_spec.rs
++++ b/codex-rs/core/src/config/network_proxy_spec.rs
+@@ -474,10 +474,6 @@ impl NetworkProxySpec {
+             constraints.denied_domains = Some(managed_denied_domains);
+             constraints.denylist_expansion_enabled = Some(denylist_expansion_enabled);
+         }
+-        if let Some(review_domains) = &requirements.review_domains {
+-            config.review_domains =
+-                Self::merge_domain_lists(review_domains.clone(), &config.review_domains);
+-        }
+         if requirements.unix_sockets.is_some() {
+             let allow_unix_sockets = requirements
+                 .unix_sockets
+diff --git a/codex-rs/core/src/config/network_proxy_spec_tests.rs b/codex-rs/core/src/config/network_proxy_spec_tests.rs
+index d015fb6c40..d44b39f75c 100644
+--- a/codex-rs/core/src/config/network_proxy_spec_tests.rs
++++ b/codex-rs/core/src/config/network_proxy_spec_tests.rs
+@@ -223,7 +223,6 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
+             ("controller.example", NetworkDomainPermissionToml::Allow),
+             ("blocked.example", NetworkDomainPermissionToml::Deny),
+         ])),
+-        review_domains: Some(vec!["controller-review.example".to_string()]),
+         ..Default::default()
+     };
+     let profile = PermissionProfile::workspace_write();
+@@ -250,10 +249,7 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
+         &profile,
+     )
+     .expect("controller policy should be valid");
+-    let mut owner = NetworkProxyConfig {
+-        review_domains: vec!["owner-review.example".to_string()],
+-        ..NetworkProxyConfig::default()
+-    };
++    let mut owner = NetworkProxyConfig::default();
+     owner.set_allowed_domains(vec!["owner.example".to_string()]);
+     owner.set_denied_domains(vec!["owner-blocked.example".to_string()]);
+     owner.set_allow_unix_sockets(vec![
+@@ -316,9 +312,6 @@ fn environment_policy_replaces_soft_controller_allowlist_and_preserves_denials()
+     owner.dangerously_allow_all_unix_sockets = Some(false);
+     owner.allow_local_binding = Some(true);
+     owner.enabled = true;
+-    owner
+-        .review_domains
+-        .insert(0, "controller-review.example".to_string());
+     assert_eq!(
+         restricted.environment_policy(),
+         EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false)
+diff --git a/codex-rs/core/src/cyber_access_program.rs b/codex-rs/core/src/cyber_access_program.rs
+index bbc50b90c5..51dd7b9653 100644
+--- a/codex-rs/core/src/cyber_access_program.rs
++++ b/codex-rs/core/src/cyber_access_program.rs
+@@ -4,7 +4,6 @@ use codex_api::AccessPrograms;
+ use codex_features::Feature;
+ use codex_login::CodexAuth;
+ use codex_model_provider_info::OPENAI_PROVIDER_ID;
+-use codex_protocol::error::CodexErr;
+ use codex_protocol::error::Result;
+ use codex_protocol::turn_input::CyberAccessProgram;
+ 
+@@ -30,35 +29,19 @@ impl ApiKeyCyberAccessPrograms {
+ }
+ 
+ pub(crate) fn for_provider(
+-    provider_id: &str,
+-    program: Option<CyberAccessProgram>,
++    _provider_id: &str,
++    _program: Option<CyberAccessProgram>,
+ ) -> Option<CyberAccessProgram> {
+-    program.filter(|_| provider_id == OPENAI_PROVIDER_ID)
++    // Retain the current wire types and model-catalog cache, but do not attach
++    // a client-selected cyber access program to a turn in this research build.
++    None
+ }
+ 
+ /// Resolves an explicit program using the request's current authentication.
+ pub fn for_auth(
+-    auth: Option<&CodexAuth>,
+-    program: Option<CyberAccessProgram>,
+-    policy: ApiKeyCyberAccessPrograms,
++    _auth: Option<&CodexAuth>,
++    _program: Option<CyberAccessProgram>,
++    _policy: ApiKeyCyberAccessPrograms,
+ ) -> Result<Option<AccessPrograms>> {
+-    let Some(program) = program else {
+-        return Ok(None);
+-    };
+-    let Some(auth) = auth else {
+-        return Ok(None);
+-    };
+-    if auth.is_chatgpt_auth() {
+-        return Ok(Some(program.into()));
+-    }
+-    if !auth.is_api_key_auth() {
+-        return Ok(None);
+-    }
+-    match policy {
+-        ApiKeyCyberAccessPrograms::UnsupportedProvider => Ok(None),
+-        ApiKeyCyberAccessPrograms::Disabled => Err(CodexErr::InvalidRequest(
+-            "Cyber access programs are disabled for this API-key session.".to_owned(),
+-        )),
+-        ApiKeyCyberAccessPrograms::Enabled => Ok(Some(program.into())),
+-    }
++    Ok(None)
+ }
+diff --git a/codex-rs/core/src/guardian/decision.rs b/codex-rs/core/src/guardian/decision.rs
+index 79981f57e0..e939f51e46 100644
+--- a/codex-rs/core/src/guardian/decision.rs
++++ b/codex-rs/core/src/guardian/decision.rs
+@@ -1,122 +1,36 @@
+-//! Calls the decision extension for each approval and enforces host constraints.
+-//! The synchronous service captures one action; no outcome is stored by tool-call ID.
++//! Compatibility stubs for builds without the automatic Guardian reviewer.
+ 
+-use codex_async_utils::THREAD_STACK_SIZE_BYTES;
+ use codex_protocol::protocol::ReviewDecision;
+ use std::sync::Arc;
+ use tokio::sync::oneshot;
+ 
+ use super::ApprovalRequestReasons;
+-use super::GuardianApprovalRequest;
+ use super::GuardianReviewContext;
+ use super::GuardianReviewOptions;
+-use super::runtime::ReviewAction;
+-use super::runtime::ReviewRuntime;
+ use crate::session::session::Session;
+ 
+ pub(crate) fn spawn_approval_decision(
+-    session: Arc<Session>,
+-    context: impl Into<GuardianReviewContext>,
+-    review_id: String,
+-    request: impl Into<super::ReviewAction>,
+-    reasons: ApprovalRequestReasons,
+-    options: GuardianReviewOptions,
++    _session: Arc<Session>,
++    _context: impl Into<GuardianReviewContext>,
++    _review_id: String,
++    _request: impl Into<super::ReviewAction>,
++    _reasons: ApprovalRequestReasons,
++    _options: GuardianReviewOptions,
+ ) -> oneshot::Receiver<Option<ReviewDecision>> {
+-    let context: GuardianReviewContext = context.into();
+-    let request: ReviewAction = request.into();
+     let (tx, rx) = oneshot::channel();
+-    let runtime = session.services.runtime_handle.clone();
+-    let spawn_result = std::thread::Builder::new()
+-        .name("codex-approval-review".to_string())
+-        .stack_size(THREAD_STACK_SIZE_BYTES)
+-        .spawn(move || {
+-            let decision = runtime.block_on(decide_approval(
+-                session, context, review_id, request, reasons, options,
+-            ));
+-            let _ = tx.send(decision);
+-        });
+-    if let Err(err) = spawn_result {
+-        tracing::error!(%err, "failed to spawn automatic approval review worker");
+-    }
++    let _ = tx.send(None);
+     rx
+ }
+ 
+ /// `None` requests the existing user flow. No contributor is never an implicit allow.
+ /// Both metric sinks use the originating turn retained by the review context.
+ pub(crate) async fn decide_approval(
+-    session: Arc<Session>,
+-    context: impl Into<GuardianReviewContext>,
+-    review_id: String,
+-    request: impl Into<ReviewAction>,
+-    reasons: ApprovalRequestReasons,
+-    mut options: GuardianReviewOptions,
++    _session: Arc<Session>,
++    _context: impl Into<GuardianReviewContext>,
++    _review_id: String,
++    _request: impl Into<super::ReviewAction>,
++    _reasons: ApprovalRequestReasons,
++    _options: GuardianReviewOptions,
+ ) -> Option<ReviewDecision> {
+-    let context = context.into();
+-    let request = request.into();
+-    let (_, history_reset) = session.history_reset().await;
+-    let cancellation = match options.external_cancel.take() {
+-        Some(external) => crate::exec::cancel_when_either(external, history_reset.clone()),
+-        None => history_reset.child_token(),
+-    };
+-    let _cancel_on_drop = cancellation.clone().drop_guard();
+-    let turn = context.turn();
+-    let live_config = session.get_config().await;
+-    let requirements = live_config.config_layer_stack.requirements();
+-    let model_requires_review =
+-        requirements.auto_review_required_for_model(&context.model_info.slug);
+-    let require_guardian = options.require_guardian
+-        || model_requires_review
+-        || requirements
+-            .approvals_reviewer
+-            .can_set(&codex_protocol::config_types::ApprovalsReviewer::User)
+-            .is_err();
+-    let full_access = context.environments().has_full_access(
+-        context.approval_policy,
+-        &turn.config.permissions.effective_permission_profile(),
+-    );
+-    let require_synchronous_review = options.require_synchronous_review;
+-    let retried = reasons.retry.is_some();
+-    let decision = codex_guardian_reviewer::ReviewRequest {
+-        host: ReviewRuntime {
+-            session: Arc::clone(&session),
+-            history_reset: history_reset.clone(),
+-            context: context.clone(),
+-            request: request.clone(),
+-            reasons,
+-            options,
+-        },
+-        approval_id: &review_id,
+-        tool_call_id: request.tool_call_id.as_deref(),
+-        action: request.action.as_ref().ok(),
+-        thread_id: session.thread_id,
+-        thread_store: &session.services.thread_extension_data,
+-        category: request.category,
+-        approval_policy: context.approval_policy,
+-        approvals_reviewer: context.approvals_reviewer,
+-        require_guardian,
+-        require_synchronous_review,
+-        model_requires_review,
+-        async_enabled: turn.config.features.enabled(codex_features::Feature::GuardianV2),
+-        retried,
+-        escalated_exec: matches!(&request.request, Ok(GuardianApprovalRequest::ExecCommand { sandbox_permissions, .. }) if sandbox_permissions.requires_escalated_permissions()),
+-        full_access,
+-        cancellation: cancellation.clone(),
+-        timeout: turn.config.guardian_review_timeout,
+-        // Keep the existing turn-level reporting policy during this ownership move.
+-        model: turn.model_info(),
+-        telemetry: &turn.session_telemetry,
+-        log_assessments: turn.config.otel.guardian_assessment_logging_enabled(),
+-        analytics: &session.services.analytics_events_client,
+-        metrics: Some(crate::session::extension_metrics::from_session_telemetry(
+-            turn.session_telemetry.clone(),
+-        )),
+-    }
+-    .decide(&session.services.extensions)
+-    .await;
+-    // Enforce cancellation after extension callbacks too, including cached decisions.
+-    if history_reset.is_cancelled() || cancellation.is_cancelled() {
+-        Some(ReviewDecision::Abort)
+-    } else {
+-        decision
+-    }
++    None
+ }
+diff --git a/codex-rs/core/src/guardian/review_session_setup.rs b/codex-rs/core/src/guardian/review_session_setup.rs
+index 163f6b60e4..ba6e916741 100644
+--- a/codex-rs/core/src/guardian/review_session_setup.rs
++++ b/codex-rs/core/src/guardian/review_session_setup.rs
+@@ -2,14 +2,12 @@
+ //! Checkpoint recovery allows one fresh attempt under the original review deadline.
+ //! Both attempts share captured context and use separate recovery flags.
+ //! Checkpoints are captured before final authorization validation and published without yielding.
+-//! Recorded reviewer items and interruptions are forwarded to the parent's raw-event subscription.
+ 
+ use codex_guardian_reviewer::ReviewDeadline;
+ use std::sync::atomic::AtomicBool;
+ 
+ use super::*;
+ use crate::guardian::input_budget::CheckpointRecovery;
+-use codex_features::Feature;
+ use codex_guardian_reviewer::ReviewerPool;
+ use codex_guardian_reviewer::ReviewerRequest;
+ use codex_protocol::protocol::TurnEnvironmentSelection;
+@@ -188,11 +186,6 @@ impl PreparedGuardianContext {
+         cancellation: CancellationToken,
+     ) -> GuardianReviewSession {
+         let session = Arc::clone(&thread.session);
+-        if self.parent.enabled(Feature::GuardianRecordedItems) {
+-            session
+-                .parent_observer_event_tx
+-                .get_or_init(|| self.parent.get_tx_event());
+-        }
+         let io = SessionIo {
+             tx_sub: thread.io.tx_sub.clone(),
+             rx_event: thread.io.rx_event.clone(),
+diff --git a/codex-rs/core/src/responses_metadata.rs b/codex-rs/core/src/responses_metadata.rs
+index 2d82bb719e..bcc2f9e945 100644
+--- a/codex-rs/core/src/responses_metadata.rs
++++ b/codex-rs/core/src/responses_metadata.rs
+@@ -67,7 +67,6 @@ pub(crate) const WORKSPACES_KEY: &str = "workspaces";
+ // when submitting a turn, but they must not override fields owned by core.
+ const RESERVED_METADATA_KEYS: &[&str] = &[
+     "guardian_credits_requested",
+-    "guardian_recorded_items",
+     MCP_ATTRIBUTION_CLIENT_METADATA_KEY,
+     INSTALLATION_ID_KEY,
+     X_CODEX_INSTALLATION_ID_HEADER,
+@@ -109,7 +108,6 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
+ // These keys were previously valid user configuration. Accept existing configs while filtering
+ // their values before constructing Core-owned request metadata.
+ const BACKWARD_COMPATIBLE_RESERVED_METADATA_KEYS: &[&str] = &[
+-    "guardian_recorded_items",
+     WINDOW_NUMBER_KEY,
+     FORKED_FROM_ORDINAL_EXCLUSIVE_KEY,
+     ANALYTICS_ENABLED_KEY,
+@@ -234,8 +232,6 @@ pub(crate) enum TurnToolSource {
+ /// truth.
+ #[derive(Clone, Debug)]
+ pub struct CodexResponsesMetadata {
+-    /// The private reviewer forwards recorded items through its parent's raw-event subscription.
+-    pub(crate) guardian_recorded_items: bool,
+     /// Guardian parent reference; projected only onto a Guardian request.
+     pub(crate) parent_response_id: Option<String>,
+     pub(crate) installation_id: String,
+@@ -284,7 +280,6 @@ impl CodexResponsesMetadata {
+     ) -> Self {
+         Self {
+             parent_response_id: None,
+-            guardian_recorded_items: false,
+             installation_id,
+             session_id,
+             thread_id,
+@@ -425,7 +420,6 @@ impl CodexResponsesMetadata {
+         let has_request_identity =
+             request_kind.is_some_and(CodexResponsesRequestKind::has_thread_identity);
+         CodexTurnMetadataPayload {
+-            guardian_recorded_items: self.guardian_recorded_items.then_some(true),
+             installation_id: has_request_identity.then_some(self.installation_id.as_str()),
+             session_id: has_thread_identity.then_some(self.session_id.as_str()),
+             thread_id: has_thread_identity.then_some(self.thread_id.as_str()),
+@@ -552,8 +546,6 @@ fn non_empty_workspaces(
+ 
+ #[derive(Serialize)]
+ struct CodexTurnMetadataPayload<'a> {
+-    #[serde(default, skip_serializing_if = "Option::is_none")]
+-    guardian_recorded_items: Option<bool>,
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+     installation_id: Option<&'a str>,
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+diff --git a/codex-rs/core/src/session/mod.rs b/codex-rs/core/src/session/mod.rs
+index aba497125c..83df4a043f 100644
+--- a/codex-rs/core/src/session/mod.rs
++++ b/codex-rs/core/src/session/mod.rs
+@@ -150,8 +150,6 @@ use codex_protocol::protocol::ItemCompletedEvent;
+ use codex_protocol::protocol::ItemStartedEvent;
+ use codex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+ use codex_protocol::protocol::MultiAgentVersion;
+-use codex_protocol::protocol::PrivateSessionEvent;
+-use codex_protocol::protocol::PrivateSessionEventPayload;
+ use codex_protocol::protocol::RawResponseItemEvent;
+ use codex_protocol::protocol::SessionSource;
+ use codex_protocol::protocol::SubAgentSource;
+@@ -2775,30 +2773,6 @@ impl Session {
+     }
+ 
+     async fn deliver_event_raw(&self, event: Event) {
+-        if let Some(parent_tx) = self.parent_observer_event_tx.get() {
+-            let forwarded = match &event.msg {
+-                EventMsg::RawResponseItem(item) => {
+-                    Some(PrivateSessionEventPayload::RecordedItem(item.clone()))
+-                }
+-                EventMsg::TurnAborted(aborted) => {
+-                    Some(PrivateSessionEventPayload::TurnAborted(aborted.clone()))
+-                }
+-                _ => None,
+-            };
+-            if let Some(forwarded) = forwarded {
+-                // Queue observer events before the private consumer can finish the review.
+-                // They bypass the parent's history and retain the reviewer's identity.
+-                let _ = parent_tx
+-                    .send(Event {
+-                        id: event.id.clone(),
+-                        msg: EventMsg::PrivateSessionEvent(PrivateSessionEvent {
+-                            thread_id: self.thread_id,
+-                            event: forwarded,
+-                        }),
+-                    })
+-                    .await;
+-            }
+-        }
+         // Record the last known agent status.
+         if let Some(status) = agent_status_from_event(&event.msg) {
+             self.agent_status.send_replace(status);
+diff --git a/codex-rs/core/src/session/session.rs b/codex-rs/core/src/session/session.rs
+index 9c415e6020..ce15a8f9a0 100644
+--- a/codex-rs/core/src/session/session.rs
++++ b/codex-rs/core/src/session/session.rs
+@@ -61,9 +61,6 @@ pub(crate) struct Session {
+     pub(crate) thread_id: ThreadId,
+     pub(crate) installation_id: String,
+     pub(super) tx_event: Sender<Event>,
+-    /// Installed by Guardian before its first review; forwards items and cancellation without
+-    /// transferring ownership of the private session's event receiver.
+-    pub(crate) parent_observer_event_tx: OnceLock<Sender<Event>>,
+     pub(super) agent_status: watch::Sender<AgentStatus>,
+     pub(super) state: Mutex<SessionState>,
+     /// Orders accepted settings commits and their persisted events with compaction checkpoints.
+@@ -727,7 +724,6 @@ impl Session {
+             request_kind,
+         );
+         ExecutionMetadata::from_settings(&step_context.settings).apply_to(&mut responses_metadata);
+-        responses_metadata.guardian_recorded_items = self.parent_observer_event_tx.get().is_some();
+         responses_metadata.tool_namespaces_info = if step_context
+             .turn
+             .config
+@@ -1868,7 +1864,6 @@ impl Session {
+                 thread_id,
+                 installation_id,
+                 tx_event: tx_event.clone(),
+-                parent_observer_event_tx: OnceLock::new(),
+                 agent_status,
+                 state: Mutex::new(state),
+                 thread_settings_persistence: Semaphore::new(/*permits*/ 1),
+diff --git a/codex-rs/core/src/session/tests.rs b/codex-rs/core/src/session/tests.rs
+index 182e03e588..52b6fcded0 100644
+--- a/codex-rs/core/src/session/tests.rs
++++ b/codex-rs/core/src/session/tests.rs
+@@ -6999,7 +6999,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
+         thread_id,
+         installation_id: "11111111-1111-4111-8111-111111111111".to_string(),
+         tx_event,
+-        parent_observer_event_tx: OnceLock::new(),
+         agent_status: agent_status_tx,
+         state: Mutex::new(state),
+         thread_settings_persistence: Semaphore::new(/*permits*/ 1),
+@@ -9284,7 +9283,6 @@ where
+         thread_id,
+         installation_id: "11111111-1111-4111-8111-111111111111".to_string(),
+         tx_event,
+-        parent_observer_event_tx: OnceLock::new(),
+         agent_status: agent_status_tx,
+         state: Mutex::new(state),
+         thread_settings_persistence: Semaphore::new(/*permits*/ 1),
+diff --git a/codex-rs/core/src/session/turn.rs b/codex-rs/core/src/session/turn.rs
+index 65cbd64a18..ea0a301ff7 100644
+--- a/codex-rs/core/src/session/turn.rs
++++ b/codex-rs/core/src/session/turn.rs
+@@ -2294,7 +2294,6 @@ pub(super) fn realtime_text_for_event(msg: &EventMsg) -> Option<RealtimeEventTex
+         | EventMsg::EnteredReviewMode(_)
+         | EventMsg::ExitedReviewMode(_)
+         | EventMsg::RawResponseItem(_)
+-        | EventMsg::PrivateSessionEvent(_)
+         | EventMsg::RawResponseCompleted(_)
+         | EventMsg::ItemStarted(_)
+         | EventMsg::HookStarted(_)
+diff --git a/codex-rs/core/src/tools/network_approval.rs b/codex-rs/core/src/tools/network_approval.rs
+index 5971d10683..579b45dfa6 100644
+--- a/codex-rs/core/src/tools/network_approval.rs
++++ b/codex-rs/core/src/tools/network_approval.rs
+@@ -681,7 +681,7 @@ impl NetworkApprovalService {
+         let target = Self::format_network_target(key.protocol, request.host.as_str(), key.port);
+         let policy_denial_message =
+             format!("Network access to \"{target}\" was blocked by policy.");
+-        let prompt_reason = format!("Network access to {} requires approval", request.host);
++        let prompt_reason = format!("{} is not in the allowed_domains", request.host);
+ 
+         let Some((turn_context, settings, active_environments, strict_auto_review)) = active_turn
+         else {
+diff --git a/codex-rs/core/src/tools/orchestrator.rs b/codex-rs/core/src/tools/orchestrator.rs
+index a1a88e4454..46fd29d030 100644
+--- a/codex-rs/core/src/tools/orchestrator.rs
++++ b/codex-rs/core/src/tools/orchestrator.rs
+@@ -1,13 +1,15 @@
+-//! Coordinates tool approval, sandbox selection, and retries after sandbox denial.
+-//! Guardian approval applies to the reviewed authority; escalating a sandboxed
+-//! attempt requires a fresh review of the retry.
++/*
++Module: orchestrator
++
++Central place for approvals + sandbox selection + retry semantics. Drives a
++simple sequence for any ToolRuntime: approval → select sandbox → attempt →
++retry with an escalated sandbox strategy on denial (no re‑approval thanks to
++caching).
++*/
+ use crate::config::NetworkProxySpec;
+ use crate::guardian::GuardianReviewContext;
+ use crate::network_policy_decision::network_approval_context_from_payload;
+-use crate::sandboxing::SandboxPermissions;
+-use crate::tools::approvals::ApprovalAction;
+ use crate::tools::approvals::ApprovalContext;
+-use crate::tools::approvals::ApprovalResolutionSource;
+ use crate::tools::flat_tool_name;
+ use crate::tools::network_approval::ActiveNetworkApproval;
+ use crate::tools::network_approval::DeferredNetworkApproval;
+@@ -138,7 +140,7 @@ impl ToolOrchestrator {
+         let otel_ci = &tool_ctx.call_id;
+         let strict_auto_review = turn_ctx.strict_auto_review_enabled();
+         // 1) Approval
+-        let mut initial_approval_source = None;
++        let mut already_approved = false;
+ 
+         let environment = tool.turn_environment(req);
+         let sandbox_manager = SandboxManager::new();
+@@ -182,12 +184,12 @@ impl ToolOrchestrator {
+                         retry_reason: None,
+                         network_approval_context: None,
+                     };
+-                    let approval = tool_ctx
++                    tool_ctx
+                         .session
+                         .request_approval(action, approval_ctx)
+-                        .await;
+-                    approval.result?;
+-                    initial_approval_source = approval.source;
++                        .await
++                        .result?;
++                    already_approved = true;
+                 } else {
+                     otel.tool_decision(
+                         &tool_ctx.tool_name,
+@@ -216,12 +218,12 @@ impl ToolOrchestrator {
+                     retry_reason: None,
+                     network_approval_context: None,
+                 };
+-                let approval = tool_ctx
++                tool_ctx
+                     .session
+                     .request_approval(action, approval_ctx)
+-                    .await;
+-                approval.result?;
+-                initial_approval_source = approval.source;
++                    .await
++                    .result?;
++                already_approved = true;
+             }
+         }
+ 
+@@ -231,7 +233,7 @@ impl ToolOrchestrator {
+             tool.sandbox_permissions(req),
+             &requirement,
+             &file_system_sandbox_policy,
+-            /*already_approved*/ initial_approval_source.is_some(),
++            already_approved,
+         );
+         let (escalated_profile, writable_root_metadata) = if sandbox_override
+             == SandboxOverride::EscalatedSandboxWithRestrictions
+@@ -481,14 +483,10 @@ impl ToolOrchestrator {
+                         build_denial_reason_from_output(output.as_ref())
+                     };
+ 
+-                // Human and policy approvals keep their existing retry scope. A
+-                // Guardian verdict only covers the authority of the reviewed action.
+-                let retry_preapproved = matches!(
+-                    initial_approval_source,
+-                    Some(ApprovalResolutionSource::User | ApprovalResolutionSource::Hook)
+-                );
++                // Strict auto-review approval covers the sandboxed attempt only;
++                // retrying without the sandbox requires a fresh guardian review.
+                 let bypass_retry_approval = !strict_auto_review
+-                    && tool.should_bypass_approval(approval_policy, retry_preapproved)
++                    && tool.should_bypass_approval(approval_policy, already_approved)
+                     && network_approval_context.is_none();
+                 if !bypass_retry_approval {
+                     let approval_reason = match &requirement {
+@@ -496,25 +494,11 @@ impl ToolOrchestrator {
+                         ExecApprovalRequirement::Skip { .. }
+                         | ExecApprovalRequirement::Forbidden { .. } => None,
+                     };
+-                    let mut action =
+-                        tool.approval_action(req, &tool_ctx.call_id)
+-                            .map_err(|err| {
+-                                ToolError::Rejected(format!(
+-                                    "could not prepare approval action: {err}"
+-                                ))
+-                            })?;
+-                    if unsandboxed_allowed
+-                        && let ApprovalAction::ExecCommand {
+-                            sandbox_permissions,
+-                            additional_permissions,
+-                            ..
+-                        } = &mut action
+-                    {
+-                        // Review and cache the authority of the actual retry, not
+-                        // the narrower permissions requested for the first attempt.
+-                        *sandbox_permissions = SandboxPermissions::RequireEscalated;
+-                        *additional_permissions = None;
+-                    }
++                    let action = tool
++                        .approval_action(req, &tool_ctx.call_id)
++                        .map_err(|err| {
++                            ToolError::Rejected(format!("could not prepare approval action: {err}"))
++                        })?;
+                     let approval_ctx = ApprovalContext {
+                         review_context: GuardianReviewContext::from(&tool_ctx.step_context),
+                         cancellation_token: Some(tool_ctx.cancellation_token.clone()),
+diff --git a/codex-rs/core/tests/suite/hooks.rs b/codex-rs/core/tests/suite/hooks.rs
+index 1f76244051..17b21de85d 100644
+--- a/codex-rs/core/tests/suite/hooks.rs
++++ b/codex-rs/core/tests/suite/hooks.rs
+@@ -48,6 +48,7 @@ use codex_thread_store::InMemoryThreadStore;
+ use core_test_support::TestTargetOs;
+ use core_test_support::fs_wait;
+ use core_test_support::hooks::trust_discovered_hooks;
++use core_test_support::managed_network_requirements_loader;
+ use core_test_support::responses;
+ use core_test_support::responses::ev_apply_patch_custom_tool_call;
+ use core_test_support::responses::ev_assistant_message;
+@@ -3469,17 +3470,7 @@ allow_local_binding = true
+             )
+             .expect("failed to write permission request hook test fixture");
+         })
+-        .with_cloud_config_bundle(
+-            CloudConfigBundleFixture::loader_with_enterprise_requirement(
+-                r#"
+-[experimental_network]
+-enabled = true
+-allow_local_binding = true
+-allowed_domains = ["**.invalid"]
+-review_domains = ["codex-network-test.invalid"]
+-"#,
+-            ),
+-        )
++        .with_cloud_config_bundle(managed_network_requirements_loader())
+         .with_config(move |config| {
+             trust_discovered_hooks(config);
+             config.approvals_reviewer = codex_config::types::ApprovalsReviewer::AutoReview;
+diff --git a/codex-rs/core/tests/suite/network_approval.rs b/codex-rs/core/tests/suite/network_approval.rs
+index dc2328ce36..192cfc31e1 100644
+--- a/codex-rs/core/tests/suite/network_approval.rs
++++ b/codex-rs/core/tests/suite/network_approval.rs
+@@ -1166,7 +1166,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
+     assert_eq!(approval.cwd, test.config.cwd.clone().into());
+     assert_eq!(
+         approval.reason.as_deref(),
+-        Some("Network access to codex-network-test.invalid requires approval")
++        Some("codex-network-test.invalid is not in the allowed_domains")
+     );
+     test.codex
+         .submit(Op::ExecApproval {
+diff --git a/codex-rs/exec-server-protocol/src/protocol.rs b/codex-rs/exec-server-protocol/src/protocol.rs
+index dad1132447..fbb2496f26 100644
+--- a/codex-rs/exec-server-protocol/src/protocol.rs
++++ b/codex-rs/exec-server-protocol/src/protocol.rs
+@@ -153,9 +153,6 @@ pub struct EnvironmentCapabilities {
+     /// Whether `exec` accepts instructions for launching an executor-local network proxy.
+     #[serde(default)]
+     network_proxy_launch: bool,
+-    /// Whether executor proxies enforce managed review domains before ordinary allows.
+-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+-    pub network_proxy_review_domains: bool,
+     /// Whether the selected shell can mask executor environment credentials.
+     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+     credential_masking: bool,
+@@ -317,7 +314,6 @@ impl EnvironmentInfo {
+             temp_dir,
+             capabilities: EnvironmentCapabilities {
+                 network_proxy_launch: true,
+-                network_proxy_review_domains: true,
+                 credential_masking,
+                 credential_masking_custom_providers: credential_masking,
+                 capability_discovery_sandbox: true,
+@@ -1543,7 +1539,6 @@ mod tests {
+             capabilities,
+             EnvironmentCapabilities {
+                 network_proxy_launch: true,
+-                network_proxy_review_domains: false,
+                 credential_masking: false,
+                 credential_masking_custom_providers: false,
+                 capability_discovery_sandbox: true,
+diff --git a/codex-rs/exec-server/src/client.rs b/codex-rs/exec-server/src/client.rs
+index e8140904f5..d243b99d99 100644
+--- a/codex-rs/exec-server/src/client.rs
++++ b/codex-rs/exec-server/src/client.rs
+@@ -845,31 +845,9 @@ impl ExecServerClient {
+     }
+ 
+     pub async fn exec(&self, params: ExecParams) -> Result<ExecResponse, ExecServerError> {
+-        self.ensure_network_review_capability(&params).await?;
+         self.call(EXEC_METHOD, &params).await
+     }
+ 
+-    async fn ensure_network_review_capability(
+-        &self,
+-        params: &ExecParams,
+-    ) -> Result<(), ExecServerError> {
+-        if params
+-            .network_proxy
+-            .as_ref()
+-            .is_some_and(|launch| !launch.proxy.review_domains.is_empty())
+-            && !self
+-                .environment_info()
+-                .await?
+-                .capabilities
+-                .network_proxy_review_domains
+-        {
+-            return Err(ExecServerError::Protocol(
+-                "selected exec-server does not support managed network review domains".to_string(),
+-            ));
+-        }
+-        Ok(())
+-    }
+-
+     /// Returns shared cached executor metadata, fetching it lazily if initialization omitted it.
+     pub async fn environment_info(&self) -> Result<Arc<EnvironmentInfo>, ExecServerError> {
+         self.inner
+@@ -1129,7 +1107,6 @@ impl ExecServerClient {
+         params: ExecParams,
+         network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
+     ) -> Result<Session, ExecServerError> {
+-        self.ensure_network_review_capability(&params).await?;
+         let policy_decision_timeout_ms = params
+             .network_proxy
+             .as_ref()
+diff --git a/codex-rs/exec/src/daybreak.rs b/codex-rs/exec/src/daybreak.rs
+deleted file mode 100644
+index 9f4a1cb8b7..0000000000
+--- a/codex-rs/exec/src/daybreak.rs
++++ /dev/null
+@@ -1,106 +0,0 @@
+-//! Resolve the cyber treatment for an exec turn from the connected server's catalog.
+-
+-use crate::RequestIdSequencer;
+-use codex_app_server_client::InProcessAppServerClient;
+-use codex_app_server_protocol::Account;
+-use codex_app_server_protocol::ClientRequest;
+-use codex_app_server_protocol::CyberAccessProgram;
+-use codex_app_server_protocol::GetAccountParams;
+-use codex_app_server_protocol::GetAccountResponse;
+-use codex_app_server_protocol::ModelListParams;
+-use codex_app_server_protocol::ModelListResponse;
+-use codex_features::Feature;
+-use codex_features::Features;
+-use codex_protocol::openai_models::ModelAccessPrograms;
+-
+-pub(crate) async fn program_for_turn(
+-    features: &Features,
+-    client: &InProcessAppServerClient,
+-    request_ids: &mut RequestIdSequencer,
+-    model: &str,
+-    provider: &str,
+-    enabled: bool,
+-) -> anyhow::Result<Option<CyberAccessProgram>> {
+-    if provider != "openai" {
+-        anyhow::ensure!(!enabled, "Daybreak requires the OpenAI model provider");
+-        return Ok(None);
+-    }
+-
+-    if enabled {
+-        anyhow::ensure!(
+-            matches!(
+-                read_account(client, request_ids).await?,
+-                Some(Account::Chatgpt { .. } | Account::ApiKey { .. })
+-            ),
+-            "Daybreak requires a signed-in ChatGPT account or an OpenAI API key"
+-        );
+-    }
+-
+-    let mut cursor = None;
+-    loop {
+-        let result = client
+-            .request_typed::<ModelListResponse>(ClientRequest::ModelList {
+-                request_id: request_ids.next(),
+-                params: ModelListParams {
+-                    cursor,
+-                    limit: None,
+-                    include_hidden: Some(true),
+-                },
+-            })
+-            .await;
+-        let Ok(result) = result else {
+-            return Ok(None);
+-        };
+-        if let Some(selected) = result.data.into_iter().find(|entry| entry.model == model) {
+-            let programs = selected
+-                .available_access_programs
+-                .map(ModelAccessPrograms::from)
+-                .filter(|programs| !programs.cyber.is_empty());
+-            let Some(programs) = programs else {
+-                return Ok(None);
+-            };
+-            if enabled {
+-                return programs
+-                    .daybreak()
+-                    .map(|program| Some(program.into()))
+-                    .ok_or_else(|| anyhow::anyhow!("Daybreak is unavailable for model {model}; turn it off or choose a compatible model"));
+-            }
+-            let Some(standard) = programs.standard() else {
+-                return Ok(None);
+-            };
+-            let eligible = match read_account(client, request_ids).await.unwrap_or(None) {
+-                Some(Account::Chatgpt { .. }) => true,
+-                Some(Account::ApiKey { .. }) => {
+-                    features.enabled(Feature::ApiKeyCyberAccessPrograms)
+-                }
+-                Some(Account::AmazonBedrock { .. } | Account::Gcp {}) | None => false,
+-            };
+-            return Ok(eligible.then_some(standard.into()));
+-        }
+-        match result.next_cursor {
+-            Some(next) => cursor = Some(next),
+-            None => {
+-                // Preserve automatic treatment for explicit model IDs absent from the catalog.
+-                return Ok(None);
+-            }
+-        }
+-    }
+-}
+-
+-async fn read_account(
+-    client: &InProcessAppServerClient,
+-    request_ids: &mut RequestIdSequencer,
+-) -> anyhow::Result<Option<Account>> {
+-    let account = client
+-        .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
+-            request_id: request_ids.next(),
+-            params: GetAccountParams {
+-                refresh_token: false,
+-            },
+-        })
+-        .await
+-        .map_err(|error| {
+-            anyhow::anyhow!("Daybreak account availability could not be determined: {error}")
+-        })?;
+-    Ok(account.account)
+-}
+diff --git a/codex-rs/exec/src/lib.rs b/codex-rs/exec/src/lib.rs
+index db35aaa6bb..d771247394 100644
+--- a/codex-rs/exec/src/lib.rs
++++ b/codex-rs/exec/src/lib.rs
+@@ -6,7 +6,6 @@
+ #![deny(clippy::print_stdout)]
+ 
+ mod cli;
+-mod daybreak;
+ mod event_processor;
+ mod event_processor_with_human_output;
+ pub(crate) mod event_processor_with_jsonl_output;
+@@ -1211,21 +1210,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
+             items,
+             output_schema,
+         } => {
+-            let cyber_access_program = match cyber_access_program {
+-                Some(program) => Some(program),
+-                None if config.features.enabled(Feature::CliDaybreak) => {
+-                    daybreak::program_for_turn(
+-                        &config.features,
+-                        &client,
+-                        &mut request_ids,
+-                        &session_configured.model,
+-                        &session_configured.model_provider_id,
+-                        daybreak_enabled,
+-                    )
+-                    .await?
+-                }
+-                None => None,
+-            };
++            let cyber_access_program = None;
+             let response: TurnStartResponse = send_request_with_response(
+                 &client,
+                 ClientRequest::TurnStart {
+diff --git a/codex-rs/ext/guardian-v3/BUILD.bazel b/codex-rs/ext/guardian-v3/BUILD.bazel
+deleted file mode 100644
+index 4c3d858d75..0000000000
+--- a/codex-rs/ext/guardian-v3/BUILD.bazel
++++ /dev/null
+@@ -1,6 +0,0 @@
+-load("//:defs.bzl", "codex_rust_crate")
+-
+-codex_rust_crate(
+-    name = "guardian-v3",
+-    crate_name = "codex_guardian_v3",
+-)
+diff --git a/codex-rs/ext/guardian-v3/Cargo.toml b/codex-rs/ext/guardian-v3/Cargo.toml
+deleted file mode 100644
+index d86f4ba895..0000000000
+--- a/codex-rs/ext/guardian-v3/Cargo.toml
++++ /dev/null
+@@ -1,17 +0,0 @@
+-[package]
+-edition.workspace = true
+-license.workspace = true
+-name = "codex-guardian-v3"
+-version.workspace = true
+-
+-[lib]
+-doctest = false
+-test = false
+-
+-[lints]
+-workspace = true
+-
+-[dependencies]
+-codex-message-board = { workspace = true }
+-codex-protocol = { workspace = true }
+-codex-state = { workspace = true }
+diff --git a/codex-rs/ext/guardian-v3/src/lib.rs b/codex-rs/ext/guardian-v3/src/lib.rs
+deleted file mode 100644
+index 203762e654..0000000000
+--- a/codex-rs/ext/guardian-v3/src/lib.rs
++++ /dev/null
+@@ -1,22 +0,0 @@
+-//! Guardian's durable evidence storage, owned by the main thread.
+-//! Shared boards provide persistence and access checks. This crate starts no background work
+-//! and exposes no model tools; ingestion and review integration follow separately.
+-
+-use codex_message_board::LocalBoard;
+-use codex_message_board::LocalBoardOptions;
+-use codex_protocol::SessionId;
+-use codex_state::SqliteConfig;
+-
+-/// Shared by setup, opening and cleanup, including when Guardian is disabled.
+-pub fn local_board_options() -> LocalBoardOptions {
+-    LocalBoardOptions {
+-        storage_namespace: "guardian".into(),
+-    }
+-}
+-
+-/// Selects the board for the owning main thread, never the temporary reviewer or housekeeper.
+-/// Hosts use a read-write connection; reviewers use a read-only connection, which still
+-/// permits their own explicit subscriptions. Cleanup uses the same namespace and root identity.
+-pub fn local_board(sqlite: SqliteConfig, root: SessionId) -> LocalBoard {
+-    LocalBoard::new(sqlite, root).with_options(local_board_options())
+-}
+diff --git a/codex-rs/features/src/feature_configs.rs b/codex-rs/features/src/feature_configs.rs
+index 71ee10be44..0d0bcf5b98 100644
+--- a/codex-rs/features/src/feature_configs.rs
++++ b/codex-rs/features/src/feature_configs.rs
+@@ -284,20 +284,6 @@ where
+     Ok(feature)
+ }
+ 
+-/// User-configurable settings for Guardian V3.
+-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+-#[serde(deny_unknown_fields)]
+-pub struct GuardianV3ConfigToml {
+-    #[serde(skip_serializing_if = "Option::is_none")]
+-    pub enabled: Option<bool>,
+-}
+-
+-impl FeatureConfig for GuardianV3ConfigToml {
+-    fn enabled(&self) -> Option<bool> {
+-        self.enabled
+-    }
+-}
+-
+ #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+ #[serde(deny_unknown_fields)]
+ pub struct MultiAgentV2ConfigToml {
+diff --git a/codex-rs/features/src/lib.rs b/codex-rs/features/src/lib.rs
+index 8576b87693..94a696d828 100644
+--- a/codex-rs/features/src/lib.rs
++++ b/codex-rs/features/src/lib.rs
+@@ -28,7 +28,6 @@ pub use feature_configs::GuardianV2ConfigToml;
+ pub use feature_configs::GuardianV2ReviewScopeConfigToml;
+ pub use feature_configs::GuardianV2TranscriptConfigToml;
+ pub use feature_configs::GuardianV2TranscriptSource;
+-pub use feature_configs::GuardianV3ConfigToml;
+ pub use feature_configs::MultiAgentV2ConfigToml;
+ pub use feature_configs::NetworkProxyConfigToml;
+ pub use feature_configs::NetworkProxyDomainPermissionToml;
+@@ -383,8 +382,6 @@ pub enum Feature {
+     SendMessageToUserAsync,
+     /// Enable automatic review for approval prompts.
+     GuardianApproval,
+-    /// Forward private reviewer items and interruptions to raw-event observers.
+-    GuardianRecordedItems,
+     /// Removed compatibility flag for always-on thread-owned Guardian context.
+     GuardianThreadContext,
+     /// Reuse encrypted parent compaction when restarting Guardian review sessions.
+@@ -404,8 +401,6 @@ pub enum Feature {
+     GuardianV2,
+     /// Run Decisions alongside Guardian V2 for measurement without changing approvals.
+     GuardianV2DecisionsComparison,
+-    /// Enable Guardian V3 integrations.
+-    GuardianV3,
+     /// Removed compatibility flag for the unused Guardian extension prototype.
+     GuardianExt,
+     /// Enable persisted thread goals and automatic goal continuation.
+@@ -590,6 +585,16 @@ impl Features {
+     }
+ 
+     pub fn enabled(&self, f: Feature) -> bool {
++        if matches!(
++            f,
++            Feature::GuardianApproval
++                | Feature::GuardianV2
++                | Feature::GuardianV2DecisionsComparison
++                | Feature::CliDaybreak
++                | Feature::ApiKeyCyberAccessPrograms
++        ) {
++            return false;
++        }
+         self.enabled.contains(&f)
+     }
+ 
+@@ -905,8 +910,6 @@ pub struct FeaturesToml {
+     )]
+     pub guardianv2: Option<FeatureToml<GuardianV2ConfigToml>>,
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub guardianv3: Option<FeatureToml<GuardianV3ConfigToml>>,
+-    #[serde(default, skip_serializing_if = "Option::is_none")]
+     pub multi_agent_v2: Option<FeatureToml<MultiAgentV2ConfigToml>>,
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+     pub token_budget: Option<FeatureToml<TokenBudgetConfigToml>>,
+@@ -969,9 +972,6 @@ impl FeaturesToml {
+         {
+             entries.insert(Feature::GuardianThreadContext.key().to_string(), enabled);
+         }
+-        if let Some(enabled) = self.guardianv3.as_ref().and_then(FeatureToml::enabled) {
+-            entries.insert(Feature::GuardianV3.key().to_string(), enabled);
+-        }
+         if let Some(enabled) = self.multi_agent_v2.as_ref().and_then(FeatureToml::enabled) {
+             entries.insert(Feature::MultiAgentV2.key().to_string(), enabled);
+         }
+@@ -1469,14 +1469,14 @@ pub const FEATURES: &[FeatureSpec] = &[
+     FeatureSpec {
+         id: Feature::CliDaybreak,
+         key: "cli_daybreak",
+-        stage: Stage::Stable,
+-        default_enabled: true,
++        stage: Stage::Removed,
++        default_enabled: false,
+     },
+     FeatureSpec {
+         id: Feature::ApiKeyCyberAccessPrograms,
+         key: "api_key_cyber_access_programs",
+-        stage: Stage::Stable,
+-        default_enabled: true,
++        stage: Stage::Removed,
++        default_enabled: false,
+     },
+     FeatureSpec {
+         id: Feature::EnableRequestCompression,
+@@ -1917,13 +1917,7 @@ pub const FEATURES: &[FeatureSpec] = &[
+     FeatureSpec {
+         id: Feature::GuardianApproval,
+         key: "guardian_approval",
+-        stage: Stage::Stable,
+-        default_enabled: true,
+-    },
+-    FeatureSpec {
+-        id: Feature::GuardianRecordedItems,
+-        key: "guardian_recorded_items",
+-        stage: Stage::UnderDevelopment,
++        stage: Stage::Removed,
+         default_enabled: false,
+     },
+     FeatureSpec {
+@@ -1971,19 +1965,13 @@ pub const FEATURES: &[FeatureSpec] = &[
+     FeatureSpec {
+         id: Feature::GuardianV2,
+         key: "guardianv2",
+-        stage: Stage::UnderDevelopment,
++        stage: Stage::Removed,
+         default_enabled: false,
+     },
+     FeatureSpec {
+         id: Feature::GuardianV2DecisionsComparison,
+         key: "guardianv2_decisions_comparison",
+-        stage: Stage::UnderDevelopment,
+-        default_enabled: false,
+-    },
+-    FeatureSpec {
+-        id: Feature::GuardianV3,
+-        key: "guardianv3",
+-        stage: Stage::UnderDevelopment,
++        stage: Stage::Removed,
+         default_enabled: false,
+     },
+     FeatureSpec {
+diff --git a/codex-rs/features/src/tests.rs b/codex-rs/features/src/tests.rs
+index c791fb4684..a0fd13decf 100644
+--- a/codex-rs/features/src/tests.rs
++++ b/codex-rs/features/src/tests.rs
+@@ -211,43 +211,6 @@ fn guardian_v2_feature_config_preserves_boolean_toggle() {
+     );
+ }
+ 
+-#[test]
+-fn guardian_v3_feature_config_resolves_base_and_profile_toggles() {
+-    for (base, profile, enabled) in [
+-        ("guardianv3 = true", "", true),
+-        ("guardianv3 = false", "", false),
+-        ("[guardianv3]", "", false),
+-        ("[guardianv3]\nenabled = true", "", true),
+-        ("[guardianv3]\nenabled = false", "", false),
+-        (
+-            "[guardianv3]\nenabled = true",
+-            "[guardianv3]\nenabled = false",
+-            false,
+-        ),
+-        (
+-            "[guardianv3]\nenabled = false",
+-            "[guardianv3]\nenabled = true",
+-            true,
+-        ),
+-        ("[guardianv3]\nenabled = true", "[guardianv3]", true),
+-    ] {
+-        let base = toml::from_str::<FeaturesToml>(base).expect("base features");
+-        let profile = toml::from_str::<FeaturesToml>(profile).expect("profile features");
+-        let features = Features::from_sources(
+-            FeatureConfigSource {
+-                features: Some(&base),
+-                ..Default::default()
+-            },
+-            FeatureConfigSource {
+-                features: Some(&profile),
+-                ..Default::default()
+-            },
+-            FeatureOverrides::default(),
+-        );
+-        assert_eq!(features.enabled(Feature::GuardianV3), enabled);
+-    }
+-}
+-
+ #[test]
+ fn guardian_thread_context_is_ignored_with_a_migration_notice() {
+     let enabled_context = "[guardianv2]\nthread_context = true";
+diff --git a/codex-rs/network-proxy/src/config.rs b/codex-rs/network-proxy/src/config.rs
+index 91a201f3ef..55841b78bc 100644
+--- a/codex-rs/network-proxy/src/config.rs
++++ b/codex-rs/network-proxy/src/config.rs
+@@ -146,10 +146,6 @@ pub struct NetworkProxyConfig {
+     pub mode: NetworkMode,
+     #[serde(default)]
+     pub domains: Option<NetworkDomainPermissions>,
+-    /// Managed host selectors routed through the existing approval flow before ordinary allows.
+-    /// Direct proxy configuration cannot change these requirements-only selectors.
+-    #[serde(skip)]
+-    pub review_domains: Vec<String>,
+     #[serde(default)]
+     pub unix_sockets: Option<NetworkUnixSocketPermissions>,
+     /// Omission is resolved for the selected sandbox; ordinary proxy execution defaults to false.
+@@ -191,7 +187,6 @@ impl Default for NetworkProxyConfig {
+             dangerously_allow_all_unix_sockets: None,
+             mode: NetworkMode::default(),
+             domains: None,
+-            review_domains: Vec::new(),
+             unix_sockets: None,
+             allow_local_binding: None,
+             mitm: false,
+@@ -732,7 +727,6 @@ mod tests {
+                 dangerously_allow_all_unix_sockets: None,
+                 mode: NetworkMode::Full,
+                 domains: None,
+-                review_domains: Vec::new(),
+                 unix_sockets: None,
+                 allow_local_binding: None,
+                 mitm: false,
+diff --git a/codex-rs/network-proxy/src/connect_policy.rs b/codex-rs/network-proxy/src/connect_policy.rs
+index abb6a67d91..eab3df9831 100644
+--- a/codex-rs/network-proxy/src/connect_policy.rs
++++ b/codex-rs/network-proxy/src/connect_policy.rs
+@@ -1,5 +1,4 @@
+ use crate::policy::is_non_public_ip;
+-use crate::runtime::HostAuthorization;
+ use crate::runtime::HostBlockDecision;
+ use crate::state::NetworkProxyState;
+ #[cfg(target_os = "macos")]
+@@ -21,8 +20,6 @@ use std::io;
+ use std::net::SocketAddr;
+ use std::sync::Arc;
+ 
+-/// Connects traffic whose host policy has already allowed the request.
+-/// Resolved non-public targets still undergo explicit-deny and local-address checks.
+ #[derive(Clone)]
+ pub(crate) struct TargetCheckedTcpConnector {
+     state: Arc<NetworkProxyState>,
+@@ -108,12 +105,7 @@ impl TargetCheckedStreamConnector {
+         }
+ 
+         self.state
+-            .host_blocked_with_local_binding(
+-                &self.target.host.to_string(),
+-                self.target.port,
+-                /*allow_local_binding*/ None,
+-                HostAuthorization::Approved,
+-            )
++            .host_blocked(&self.target.host.to_string(), self.target.port)
+             .await
+             .map(|decision| decision == HostBlockDecision::Allowed)
+             .map_err(|err| {
+@@ -206,9 +198,8 @@ mod tests {
+         let target = listener.local_addr().expect("local addr");
+         let mut config = NetworkProxyConfig::default();
+         config.set_allowed_domains(vec![target.ip().to_string()]);
+-        config.review_domains = vec![target.ip().to_string()];
+-        let state = Arc::new(network_proxy_state_for_policy(config));
+-        let connector = TargetCheckedTcpConnector::new(Arc::clone(&state));
++        let connector =
++            TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(config)));
+ 
+         let request: rama_tcp::client::Request =
+             rama_tcp::client::Request::new(HostWithPort::from(target));
+@@ -218,12 +209,6 @@ mod tests {
+             result.is_ok(),
+             "explicitly allowlisted local target should be allowed: {result:?}"
+         );
+-        state
+-            .add_denied_domain(&target.ip().to_string())
+-            .await
+-            .unwrap();
+-        let request = rama_tcp::client::Request::new(HostWithPort::from(target));
+-        assert!(Service::serve(&connector, request).await.is_err());
+     }
+ 
+     #[tokio::test(flavor = "current_thread")]
+@@ -234,7 +219,6 @@ mod tests {
+         let target = listener.local_addr().expect("local addr");
+         let mut config = NetworkProxyConfig::default();
+         config.set_allowed_domains(vec!["localhost".to_string()]);
+-        config.review_domains = vec!["localhost".to_string()];
+         let connector =
+             TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(config)));
+ 
+diff --git a/codex-rs/network-proxy/src/environment_policy.rs b/codex-rs/network-proxy/src/environment_policy.rs
+index aea0e9b966..d877f79d02 100644
+--- a/codex-rs/network-proxy/src/environment_policy.rs
++++ b/codex-rs/network-proxy/src/environment_policy.rs
+@@ -17,9 +17,6 @@ pub struct EnvironmentNetworkPolicy {
+     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+     pub requires_proxy: bool,
+     pub domains: Option<NetworkDomainPermissions>,
+-    /// Managed host selectors inherited by every execution in this environment.
+-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+-    pub review_domains: Vec<String>,
+     pub unix_sockets: Option<NetworkUnixSocketPermissions>,
+     pub allow_upstream_proxy: bool,
+     pub dangerously_allow_all_unix_sockets: bool,
+@@ -34,7 +31,6 @@ impl EnvironmentNetworkPolicy {
+         Self {
+             requires_proxy: config.enabled,
+             domains: config.domains.clone(),
+-            review_domains: config.review_domains.clone(),
+             unix_sockets: config.unix_sockets.clone(),
+             allow_upstream_proxy: config.allow_upstream_proxy,
+             dangerously_allow_all_unix_sockets: config
+@@ -47,16 +43,6 @@ impl EnvironmentNetworkPolicy {
+ 
+     /// Applies attachment-owned traffic settings while preserving inherited denials and proxy setup.
+     pub fn apply_to(&self, config: &mut NetworkProxyConfig) {
+-        // Neither owner nor controller may remove the other's review selectors.
+-        for pattern in &self.review_domains {
+-            if !config
+-                .review_domains
+-                .iter()
+-                .any(|existing| existing.eq_ignore_ascii_case(pattern))
+-            {
+-                config.review_domains.push(pattern.clone());
+-            }
+-        }
+         // Use the owner's domain rules without dropping controller denials.
+         let inherited_denials = config.denied_domains().unwrap_or_default();
+         config.domains.clone_from(&self.domains);
+diff --git a/codex-rs/network-proxy/src/host_policy_tests.rs b/codex-rs/network-proxy/src/host_policy_tests.rs
+index d6009ec3a7..7addfffce8 100644
+--- a/codex-rs/network-proxy/src/host_policy_tests.rs
++++ b/codex-rs/network-proxy/src/host_policy_tests.rs
+@@ -51,7 +51,7 @@ async fn unapproved_hosts_do_not_trigger_dns() {
+ }
+ 
+ #[tokio::test]
+-async fn local_and_remote_approvals_preserve_review_precedence_and_recheck_dns() -> Result<()> {
++async fn local_and_remote_approvals_recheck_dns_after_the_decider() -> Result<()> {
+     use crate::NetworkDecision;
+     use crate::NetworkDecisionSource;
+     use crate::NetworkPolicyDecider;
+@@ -61,33 +61,21 @@ async fn local_and_remote_approvals_preserve_review_precedence_and_recheck_dns()
+     use crate::NetworkProxy;
+     use crate::network_policy::evaluate_host_policy;
+     use std::sync::Arc;
+-    use std::sync::Mutex;
++    use std::sync::atomic::AtomicUsize;
++    use std::sync::atomic::Ordering;
+ 
+     for remote in [false, true] {
+-        let calls = Arc::new(Mutex::new(Vec::new()));
++        let calls = Arc::new(AtomicUsize::new(0));
+         let decider_calls = Arc::clone(&calls);
+-        let decider: Arc<dyn NetworkPolicyDecider> =
+-            Arc::new(move |request: NetworkPolicyRequest| {
+-                decider_calls.lock().unwrap().push(request.host);
+-                async { NetworkDecision::Allow }
+-            });
++        let decider: Arc<dyn NetworkPolicyDecider> = Arc::new(move |_request| {
++            decider_calls.fetch_add(1, Ordering::SeqCst);
++            async { NetworkDecision::Allow }
++        });
+         // Explicit controller false must survive an executor allowing local binding.
+-        let mut config = NetworkProxyConfig {
++        let config = NetworkProxyConfig {
+             allow_local_binding: Some(false),
+-            review_domains: vec![
+-                "8.8.8.8".to_string(),
+-                "9.9.9.9".to_string(),
+-                "host.review.invalid".to_string(),
+-            ],
+             ..NetworkProxyConfig::default()
+         };
+-        config.set_allowed_domains(vec![
+-            "8.8.8.8".to_string(),
+-            "1.1.1.1".to_string(),
+-            "9.9.9.9".to_string(),
+-            "**.review.invalid".to_string(),
+-        ]);
+-        config.set_denied_domains(vec!["9.9.9.9".to_string()]);
+         let state = Arc::new(network_proxy_state_for_policy(config));
+         let proxy = NetworkProxy::builder()
+             .state(Arc::clone(&state))
+@@ -105,14 +93,7 @@ async fn local_and_remote_approvals_preserve_review_precedence_and_recheck_dns()
+         let remote_decider = scoped
+             .remote_policy_decider(/*allow_local_binding*/ true)
+             .unwrap();
+-        for host in [
+-            "does-not-resolve.invalid",
+-            "8.8.8.8",
+-            "host.review.invalid",
+-            "ordinary.review.invalid",
+-            "1.1.1.1",
+-            "9.9.9.9",
+-        ] {
++        for host in ["does-not-resolve.invalid", "8.8.8.8"] {
+             let request = NetworkPolicyRequest::new(NetworkPolicyRequestArgs {
+                 protocol: NetworkProtocol::HttpsConnect,
+                 host: host.to_string(),
+@@ -133,20 +114,15 @@ async fn local_and_remote_approvals_preserve_review_precedence_and_recheck_dns()
+                     HostBlockReason::NotAllowedLocal.as_str(),
+                     NetworkDecisionSource::BaselinePolicy,
+                 )
+-            } else if host == "9.9.9.9" {
+-                NetworkDecision::deny_with_source(
+-                    HostBlockReason::Denied.as_str(),
+-                    NetworkDecisionSource::BaselinePolicy,
+-                )
+             } else {
+                 NetworkDecision::Allow
+             };
+             assert_eq!(decision, expected);
+         }
+         assert_eq!(
+-            *calls.lock().unwrap(),
+-            vec!["does-not-resolve.invalid", "8.8.8.8", "host.review.invalid"],
+-            "review selectors precede exact and wildcard allows; ordinary allows and denies skip the decider"
++            calls.load(Ordering::SeqCst),
++            2,
++            "domain review precedes DNS"
+         );
+     }
+     Ok(())
+diff --git a/codex-rs/network-proxy/src/remote_config.rs b/codex-rs/network-proxy/src/remote_config.rs
+index b5f203425c..4b00da931f 100644
+--- a/codex-rs/network-proxy/src/remote_config.rs
++++ b/codex-rs/network-proxy/src/remote_config.rs
+@@ -184,9 +184,6 @@ pub struct RemoteNetworkProxyConfig {
+     pub dangerously_allow_all_unix_sockets: bool,
+     pub mode: NetworkMode,
+     pub domains: Option<NetworkDomainPermissions>,
+-    /// Clients must require the `networkProxyReviewDomains` executor capability when nonempty.
+-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+-    pub review_domains: Vec<String>,
+     pub unix_sockets: Option<NetworkUnixSocketPermissions>,
+     pub allow_local_binding: bool,
+ }
+@@ -213,7 +210,6 @@ impl RemoteNetworkProxyConfig {
+                 .unwrap_or(false),
+             mode: config.mode,
+             domains: config.domains.clone(),
+-            review_domains: config.review_domains.clone(),
+             unix_sockets: config.unix_sockets.clone(),
+             allow_local_binding: config.allow_local_binding(),
+         })
+@@ -244,7 +240,6 @@ impl RemoteNetworkProxyConfig {
+             dangerously_allow_all_unix_sockets: Some(self.dangerously_allow_all_unix_sockets),
+             mode: self.mode,
+             domains: self.domains,
+-            review_domains: self.review_domains,
+             unix_sockets: self.unix_sockets,
+             allow_local_binding: Some(self.allow_local_binding),
+             ..NetworkProxyConfig::default()
+diff --git a/codex-rs/network-proxy/src/remote_config_tests.rs b/codex-rs/network-proxy/src/remote_config_tests.rs
+index 332d8a99c0..ec327bb902 100644
+--- a/codex-rs/network-proxy/src/remote_config_tests.rs
++++ b/codex-rs/network-proxy/src/remote_config_tests.rs
+@@ -65,7 +65,6 @@ async fn round_trip_preserves_supported_effective_settings() {
+             dangerously_allow_all_unix_sockets: Some(true),
+             mode: NetworkMode::Limited,
+             allow_local_binding: Some(true),
+-            review_domains: vec!["review.example.com".to_string()],
+             ..NetworkProxyConfig::default()
+         };
+         // Domain permissions serialize as a sorted map.
+diff --git a/codex-rs/network-proxy/src/runtime.rs b/codex-rs/network-proxy/src/runtime.rs
+index cd09549cb4..c70c4dc39c 100644
+--- a/codex-rs/network-proxy/src/runtime.rs
++++ b/codex-rs/network-proxy/src/runtime.rs
+@@ -181,7 +181,6 @@ pub struct ConfigState {
+     pub(crate) brokerage_created_default_allowlist: bool,
+     pub allow_set: DomainPatternSet,
+     pub deny_set: DomainPatternSet,
+-    pub review_set: DomainPatternSet,
+     pub mitm: Option<Arc<MitmState>>,
+     pub mitm_hooks: MitmHooksByHost,
+     pub constraints: NetworkProxyConstraints,
+@@ -817,12 +816,11 @@ impl NetworkProxyState {
+             Ok(host) => host,
+             Err(_) => return Ok(HostBlockDecision::Blocked(HostBlockReason::NotAllowed)),
+         };
+-        let (deny_set, review_set, allow_set, allow_local_binding, allowed_domains) = {
++        let (deny_set, allow_set, allow_local_binding, allowed_domains) = {
+             let guard = self.state.read().await;
+             let allowed_domains = guard.config.allowed_domains();
+             (
+                 guard.deny_set.clone(),
+-                guard.review_set.clone(),
+                 guard.allow_set.clone(),
+                 // Keep explicit controller restrictions even if the executor launched with true.
+                 allow_local_binding
+@@ -838,15 +836,13 @@ impl NetworkProxyState {
+         // Decision order matters:
+         //  1) explicit deny always wins
+         //  2) local/private networking is opt-in (defense-in-depth)
+-        //  3) managed review selectors precede every ordinary allow rule
+-        //  4) DNS requires an allowlist match or an approval
++        //  3) DNS requires an allowlist match or an approval
+         if domains_match_host_or_unscoped(&deny_set, host_str) {
+             return Ok(HostBlockDecision::Blocked(HostBlockReason::Denied));
+         }
+ 
+         let is_authorized = authorization == HostAuthorization::Approved
+-            || (!domains_match_host_or_unscoped(&review_set, host_str)
+-                && domains_match_host_or_unscoped(&allow_set, host_str));
++            || domains_match_host_or_unscoped(&allow_set, host_str);
+         if !allow_local_binding {
+             // If the intent is "prevent access to local/internal networks", we must not rely solely
+             // on string checks like `localhost` / `127.0.0.1`. Attackers can use DNS rebinding or
+@@ -1385,7 +1381,6 @@ pub(crate) fn network_proxy_state_for_policy(
+         constraints: NetworkProxyConstraints::default(),
+         deny_set: crate::policy::compile_denylist(&config.denied_domains().unwrap_or_default())
+             .unwrap(),
+-        review_set: crate::policy::compile_allowlist(&config.review_domains).unwrap(),
+         mitm: None,
+         mitm_hooks: crate::mitm_hook::compile_mitm_hooks(&config).unwrap(),
+         config,
+diff --git a/codex-rs/network-proxy/src/state.rs b/codex-rs/network-proxy/src/state.rs
+index 262b7270c2..b31367170e 100644
+--- a/codex-rs/network-proxy/src/state.rs
++++ b/codex-rs/network-proxy/src/state.rs
+@@ -92,7 +92,6 @@ pub fn build_config_state(
+         .map_err(NetworkProxyConstraintError::into_anyhow)?;
+     let deny_set = compile_denylist(&denied_domains)?;
+     let allow_set = compile_allowlist(&allowed_domains)?;
+-    let review_set = compile_allowlist(&config.review_domains)?;
+     let mitm_hooks = compile_mitm_hooks(&config)?;
+     let mitm = if config.mitm {
+         Some(Arc::new(MitmState::new(MitmUpstreamConfig {
+@@ -108,7 +107,6 @@ pub fn build_config_state(
+         brokerage_created_default_allowlist,
+         allow_set,
+         deny_set,
+-        review_set,
+         mitm,
+         mitm_hooks,
+         constraints,
+diff --git a/codex-rs/protocol/src/openai_models/guardian_v2.rs b/codex-rs/protocol/src/openai_models/guardian_v2.rs
+index 6a80d8dce2..c13a0dca9b 100644
+--- a/codex-rs/protocol/src/openai_models/guardian_v2.rs
++++ b/codex-rs/protocol/src/openai_models/guardian_v2.rs
+@@ -10,8 +10,8 @@ use super::ReasoningEffort;
+ #[serde(rename_all = "snake_case")]
+ #[ts(rename_all = "snake_case")]
+ pub enum AsyncClassifierMode {
+-    Snapshot,
+     #[default]
++    Snapshot,
+     Conversation,
+ }
+ 
+diff --git a/codex-rs/protocol/src/protocol.rs b/codex-rs/protocol/src/protocol.rs
+index 2ac7fe12a8..6d3b04a4d0 100644
+--- a/codex-rs/protocol/src/protocol.rs
++++ b/codex-rs/protocol/src/protocol.rs
+@@ -1653,12 +1653,6 @@ pub enum EventMsg {
+     RawResponseItem(RawResponseItemEvent),
+     RawResponseCompleted(RawResponseCompletedEvent),
+ 
+-    /// In-process delivery from a private reviewer through its parent's subscription.
+-    #[serde(skip)]
+-    #[schemars(skip)]
+-    #[ts(skip)]
+-    PrivateSessionEvent(PrivateSessionEvent),
+-
+     ItemStarted(ItemStartedEvent),
+     ItemCompleted(ItemCompletedEvent),
+     HookStarted(HookStartedEvent),
+@@ -2050,20 +2044,6 @@ pub struct RawResponseItemEvent {
+     pub item: ResponseItem,
+ }
+ 
+-/// Observer events that a private session forwards without modifying its parent's history.
+-#[derive(Debug, Clone)]
+-pub struct PrivateSessionEvent {
+-    pub thread_id: ThreadId,
+-    pub event: PrivateSessionEventPayload,
+-}
+-
+-/// Recorded state and cancellation needed by observers awaiting response acceptance.
+-#[derive(Debug, Clone)]
+-pub enum PrivateSessionEventPayload {
+-    RecordedItem(RawResponseItemEvent),
+-    TurnAborted(TurnAbortedEvent),
+-}
+-
+ /// Exact usage and metadata reported by one upstream Responses API completion.
+ ///
+ /// Unlike TokenCountEvent, this is not accumulated, estimated, or replayed.
+diff --git a/codex-rs/rollout-trace/src/protocol_event.rs b/codex-rs/rollout-trace/src/protocol_event.rs
+index d68df83e6e..0119d3ace8 100644
+--- a/codex-rs/rollout-trace/src/protocol_event.rs
++++ b/codex-rs/rollout-trace/src/protocol_event.rs
+@@ -421,7 +421,6 @@ pub(crate) fn tool_runtime_trace_event(event: &EventMsg) -> Option<ToolRuntimeTr
+         | EventMsg::ShutdownComplete
+         | EventMsg::EnteredReviewMode(_)
+         | EventMsg::ExitedReviewMode(_)
+-        | EventMsg::PrivateSessionEvent(_)
+         | EventMsg::RawResponseItem(_)
+         | EventMsg::RawResponseCompleted(_)
+         | EventMsg::ItemStarted(_)
+@@ -502,7 +501,6 @@ pub(crate) fn wrapped_protocol_event_type(event: &EventMsg) -> Option<&'static s
+         | EventMsg::PlanUpdate(_)
+         | EventMsg::EnteredReviewMode(_)
+         | EventMsg::ExitedReviewMode(_)
+-        | EventMsg::PrivateSessionEvent(_)
+         | EventMsg::RawResponseItem(_)
+         | EventMsg::RawResponseCompleted(_)
+         | EventMsg::ItemStarted(_)
+diff --git a/codex-rs/rollout/src/policy.rs b/codex-rs/rollout/src/policy.rs
+index 93a1e3a5d8..51997cd91b 100644
+--- a/codex-rs/rollout/src/policy.rs
++++ b/codex-rs/rollout/src/policy.rs
+@@ -183,7 +183,6 @@ fn persisted_event_msg(
+         | EventMsg::ModelVerification(_)
+         | EventMsg::TurnModerationMetadata(_)
+         | EventMsg::AgentReasoningSectionBreak(_)
+-        | EventMsg::PrivateSessionEvent(_)
+         | EventMsg::RawResponseItem(_)
+         | EventMsg::RawResponseCompleted(_)
+         | EventMsg::SessionConfigured(_)
+diff --git a/codex-rs/tui/src/debug_config.rs b/codex-rs/tui/src/debug_config.rs
+index 01a7802d06..70eb6042b0 100644
+--- a/codex-rs/tui/src/debug_config.rs
++++ b/codex-rs/tui/src/debug_config.rs
+@@ -557,7 +557,6 @@ fn format_network_constraints(network: &NetworkConstraints) -> String {
+         dangerously_allow_non_loopback_proxy,
+         dangerously_allow_all_unix_sockets,
+         domains,
+-        review_domains,
+         managed_allowed_domains_only,
+         unix_sockets,
+         allow_local_binding,
+@@ -592,9 +591,6 @@ fn format_network_constraints(network: &NetworkConstraints) -> String {
+             format_network_permission_entries(&domains.entries, format_network_domain_permission)
+         ));
+     }
+-    if let Some(review_domains) = review_domains {
+-        parts.push(format!("review_domains={{{}}}", review_domains.join(", ")));
+-    }
+     if let Some(managed_allowed_domains_only) = managed_allowed_domains_only {
+         parts.push(format!(
+             "managed_allowed_domains_only={managed_allowed_domains_only}"
+@@ -921,7 +917,6 @@ interrupt_message = false
+                             NetworkDomainPermissionToml::Allow,
+                         )]),
+                     }),
+-                    review_domains: Some(vec!["api.example.com".to_string()]),
+                     header_injections: Some(vec![NetworkHeaderInjectionToml {
+                         host: "api.example.com".to_string(),
+                         methods: vec!["POST".to_string()],
+@@ -1070,7 +1065,7 @@ interrupt_message = false
+             "enforce_residency: us (source: {requirements_source})"
+         )));
+         assert!(rendered.contains(&format!(
+-            "experimental_network: enabled=true, domains={{example.com=allow}}, review_domains={{api.example.com}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
++            "experimental_network: enabled=true, domains={{example.com=allow}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
+         )));
+         assert!(!rendered.contains("secret-looking-value"));
+         assert!(
+diff --git a/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap b/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
+index 64120d4aed..7d4455cb1c 100644
+--- a/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
++++ b/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
+@@ -25,5 +25,5 @@ Requirements:
+   - features: guardian_approval=true (source: MDM managed_config.toml (legacy))
+   - mcp_servers: docs (source: MDM managed_config.toml (legacy))
+   - enforce_residency: us (source: MDM managed_config.toml (legacy))
+-  - experimental_network: enabled=true, domains={example.com=allow}, review_domains={api.example.com}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
++  - experimental_network: enabled=true, domains={example.com=allow}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
+   - permissions.filesystem.deny_read: /home/alice/.gitconfig (source: /etc/codex/requirements.toml)
+diff --git a/sdk/python/src/openai_codex/generated/v2_all.py b/sdk/python/src/openai_codex/generated/v2_all.py
+index ffd4ddef96..9877f4091d 100644
+--- a/sdk/python/src/openai_codex/generated/v2_all.py
++++ b/sdk/python/src/openai_codex/generated/v2_all.py
+@@ -2927,13 +2927,6 @@ class NetworkRequirements(BaseModel):
+             description="When true, only managed allowlist entries are respected while managed network enforcement is active.",
+         ),
+     ] = None
+-    review_domains: Annotated[
+-        list[str] | None,
+-        Field(
+-            alias="reviewDomains",
+-            description="Host patterns routed to network approval before ordinary allow rules.",
+-        ),
+-    ] = None
+     socks_port: Annotated[int | None, Field(alias="socksPort", ge=0)] = None
+     unix_sockets: Annotated[
+         dict[str, Any] | None,

@@ -1,0 +1,158 @@
+name: Release binaries
+
+on:
+  push:
+    tags:
+      - "v*-insane.*"
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - runner: windows-2025
+            target: x86_64-pc-windows-msvc
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    env:
+      UPSTREAM_TAG: rust-v0.165.0
+      CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+      CARGO_PROFILE_RELEASE_LTO: "false"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+      CARGO_PROFILE_RELEASE_DEBUG: "none"
+      CARGO_PROFILE_RELEASE_STRIP: "symbols"
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential pkg-config libcap-dev libasound2-dev
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@d124f86f28ff42855784ff3319f48ac182c248f8 # 1.99.1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Fetch and patch Codex
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --depth 1 --branch "$UPSTREAM_TAG" \
+            https://github.com/openai/codex.git upstream
+          git -C upstream apply --check "$GITHUB_WORKSPACE/patches/no-client-guardrails.patch"
+          git -C upstream apply "$GITHUB_WORKSPACE/patches/no-client-guardrails.patch"
+
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: upstream/codex-rs -> target
+          key: ${{ matrix.target }}
+
+      - name: Build Codex
+        working-directory: upstream/codex-rs
+        shell: bash
+        # Release tags update workspace versions without rewriting Cargo.lock.
+        # The upstream release workflow also builds without --locked.
+        run: |
+          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-msvc" ]]; then
+            export LIBSQLITE3_FLAGS=SQLITE_DISABLE_INTRINSIC
+          fi
+          cargo build --release -p codex-cli --bin codex
+
+      - name: Package Unix binary
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          binary="upstream/codex-rs/target/release/codex"
+          asset="insane-codex-${TARGET}.tar.gz"
+          mkdir -p package release
+          install -m 755 "$binary" package/insane-codex
+          package/insane-codex --version
+          tar -C package -czf "release/${asset}" insane-codex
+
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $asset = "insane-codex-$env:TARGET.zip"
+          New-Item -ItemType Directory -Force package, release | Out-Null
+          Copy-Item "upstream/codex-rs/target/release/codex.exe" "package/insane-codex.exe"
+          & "package/insane-codex.exe" --version
+          Compress-Archive -Path "package/insane-codex.exe" -DestinationPath "release/$asset"
+
+      - name: Upload package
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: package-${{ matrix.target }}
+          path: release/*
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: package-*
+          path: release
+          merge-multiple: true
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<'EOF'
+          Patched OpenAI Codex CLI 0.165.0 binaries.
+
+          The binaries are built from `rust-v0.165.0` after applying
+          `patches/no-client-guardrails.patch`. See the repository README and
+          patch details before installing.
+          EOF
+          gh release create "$GITHUB_REF_NAME" \
+            release/*.tar.gz \
+            release/*.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "insane-codex $GITHUB_REF_NAME" \
+            --notes-file release-notes.md

@@ -47,6 +47,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Enable long Git paths on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --global core.longpaths true
+
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         shell: bash

@@ -35,7 +35,7 @@ jobs:
           - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
     env:
-      UPSTREAM_TAG: rust-v0.165.0
+      UPSTREAM_TAG: rust-v0.166.0
       CARGO_NET_GIT_FETCH_WITH_CLI: "true"
       CARGO_PROFILE_RELEASE_LTO: "false"
       CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
@@ -143,9 +143,9 @@ jobs:
         run: |
           set -euo pipefail
           cat > release-notes.md <<'EOF'
-          Patched OpenAI Codex CLI 0.165.0 binaries.
+          Patched OpenAI Codex CLI 0.166.0 binaries.
 
-          The binaries are built from `rust-v0.165.0` after applying
+          The binaries are built from `rust-v0.166.0` after applying
           `patches/no-client-guardrails.patch`. See the repository README and
           patch details before installing.
           EOF

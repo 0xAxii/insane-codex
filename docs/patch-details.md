@@ -7,8 +7,8 @@
 | 항목        | 값                                   |
 | ----------- | ------------------------------------ |
 | 원본 저장소 | `openai/codex`                       |
-| 태그        | `rust-v0.165.0`                      |
-| 커밋        | `360319d8de`                         |
+| 태그        | `rust-v0.166.0`                      |
+| 커밋        | `6ff1e1ca3b`                         |
 | 패치 파일   | `patches/no-client-guardrails.patch` |
 
 패치에는 원본 코드와의 차이가 기록되어 있습니다.
@@ -80,6 +80,37 @@ CLI/TUI 설정 또는 --cyber-access-program
 Responses API 요청에 access_programs.cyber 없음
 ```
 
+### 안전 차단 후속 처리
+
+원본 v0.166.0 TUI는 서버가 전달한 안전 차단 메타데이터를 읽어 차단 이유와 재작성
+선택지를 표시합니다. 선택한 문구는 차단된 턴 이전에서 새 대화를 만든 뒤
+`safety_recourse_follow_up` 턴으로 제출됩니다. 사이버 차단에서는 Daybreak 활성화
+선택지도 표시합니다.
+
+패치 적용 후에는 다음 클라이언트 경로가 없습니다.
+
+- 안전 차단 메타데이터의 설명·재작성 후보 해석
+- 안전한 재작성 선택 화면
+- 선택한 문구를 위한 자동 대화 분기와 재제출
+- 차단 화면에서 Daybreak를 켜도록 제안하는 동작
+
+서버가 보내는 일반 오류는 기존 오류 처리 경로로 표시됩니다.
+
+### v0.166.0 Guardian 추가 경로
+
+v0.166.0은 네이티브 함수 호출을 실행 전에 Guardian으로 검토하는 공통 경로와
+멀티 에이전트 도구 연결을 추가했습니다. 또한 Responses API 스트림에서 Guardian
+평가 메타데이터를 읽고 확장 기능에 전달하는 코드와, 별도 검토 세션에서 평가만
+수행하는 격리 평가 API를 추가했습니다.
+
+패치는 다음 경로를 제거합니다.
+
+- 네이티브 함수 호출을 Guardian 검토로 보내는 도구 레지스트리 연결
+- `spawn_agent`, `send_message`, `followup_task`, `interrupt_agent`의 사전 검토 연결
+- SSE·WebSocket 응답에서 Guardian 평가 메타데이터를 해석하는 코드
+- 요청 단위 확장 기능에 Guardian 평가를 전달하는 코드
+- 실행과 분리된 Guardian 격리 평가 API
+
 ### v0.165.0에서 추가된 경로
 
 v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가 추가되었습니다.
@@ -100,6 +131,7 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
   - `GuardianV2DecisionsComparison`
   - `CliDaybreak`
   - `ApiKeyCyberAccessPrograms`
+  - `GuardianNativeMultiAgentHistory`
 - `Features::enabled()`는 위 기능에 대해 항상 `false`를 반환합니다.
 - 사용자 설정이나 관리 설정에서 기능을 켜도록 지정해도 비활성 상태를 유지합니다.
 - v0.165.0에서 추가된 `GuardianV3`와 `GuardianRecordedItems` 기능 항목은 제거합니다.
@@ -109,6 +141,24 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 - `codex-rs/ext/guardian-v3` 크레이트와 워크스페이스 등록을 제거합니다.
 - `GuardianV3ConfigToml`, 설정 스키마와 테스트를 제거합니다.
 - Guardian 검토 기록을 상위 세션으로 전달하던 경로와 관련 메타데이터를 제거합니다.
+
+### `codex-rs/core/src/tools`
+
+- 네이티브 함수 호출의 Guardian 사전 검토 모듈을 제거합니다.
+- 도구 레지스트리가 실행 전에 Guardian 검토를 호출하던 분기를 제거합니다.
+- 멀티 에이전트 도구의 Guardian 검토 연결을 제거합니다.
+
+### Guardian 평가 스트림 관련 파일
+
+- `codex-api`의 Guardian 평가 메타데이터 파서와 SSE·WebSocket 연결을 제거합니다.
+- `extension-api`에 Guardian 평가를 전달하던 타입과 공개 항목을 제거합니다.
+- Guardian 평가 스트림 테스트와 계측 항목을 제거합니다.
+
+### TUI 안전 차단 후속 처리 관련 파일
+
+- `app/safety_recourse.rs`와 `chatwidget/safety_recourse.rs`를 제거합니다.
+- 안전한 재작성 선택, 자동 대화 분기와 재제출 코드를 제거합니다.
+- 차단 화면에서 Daybreak를 제안하던 선택지를 제거합니다.
 
 ### `codex-rs/config/src/config_requirements.rs`
 
@@ -221,11 +271,11 @@ dist/에 로컬 바이너리 생성
 
 ## 7. 다른 버전에 적용
 
-패치는 `rust-v0.165.0`을 기준으로 작성했습니다. 다른 태그를 지정할 수는 있지만,
+패치는 `rust-v0.166.0`을 기준으로 작성했습니다. 다른 태그를 지정할 수는 있지만,
 원본 코드가 바뀌면 패치 수정과 재검증이 필요합니다.
 
 ```bash
-./scripts/build.sh rust-v0.166.0
+./scripts/build.sh rust-v0.167.0
 ```
 
 스크립트는 먼저 `git apply --check`를 수행합니다.
@@ -239,12 +289,13 @@ dist/에 로컬 바이너리 생성
 ## 8. 검증 방법
 
 ```bash
-binary="./dist/codex-rust-v0.165.0-$(uname -m)"
+binary="./dist/codex-rust-v0.166.0-$(uname -m)"
 
 "${binary}" --version
 "${binary}" \
   --enable guardian_approval \
   --enable guardianv2 \
+  --enable guardian_native_multi_agent_history \
   --enable cli_daybreak \
   --enable api_key_cyber_access_programs \
   features list
@@ -256,6 +307,7 @@ binary="./dist/codex-rust-v0.165.0-$(uname -m)"
 api_key_cyber_access_programs
 cli_daybreak
 guardian_approval
+guardian_native_multi_agent_history
 guardianv2
 guardianv2_decisions_comparison
 ```

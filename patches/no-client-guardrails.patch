@@ -1,28 +1,8 @@
-diff --git a/codex-rs/Cargo.lock b/codex-rs/Cargo.lock
-index f2b0fbac81..15d3dd9ef7 100644
---- a/codex-rs/Cargo.lock
-+++ b/codex-rs/Cargo.lock
-@@ -3655,15 +3655,6 @@ dependencies = [
-  "zstd",
- ]
- 
--[[package]]
--name = "codex-guardian-v3"
--version = "0.0.0"
--dependencies = [
-- "codex-message-board",
-- "codex-protocol",
-- "codex-state",
--]
--
- [[package]]
- name = "codex-history"
- version = "0.0.0"
 diff --git a/codex-rs/Cargo.toml b/codex-rs/Cargo.toml
-index 1c59a14e59..6facd6a7ae 100644
+index 85cd80b7c4..0374e6f868 100644
 --- a/codex-rs/Cargo.toml
 +++ b/codex-rs/Cargo.toml
-@@ -69,7 +69,6 @@ members = [
+@@ -71,7 +71,6 @@ members = [
      "ext/git-attribution",
      "ext/guardian-reviewer",
      "ext/guardian-v2",
@@ -31,10 +11,10 @@ index 1c59a14e59..6facd6a7ae 100644
      "ext/image-generation",
      "ext/items",
 diff --git a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
-index 49b47f87db..4b274432cd 100644
+index afeb27696a..56456a48b1 100644
 --- a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
 +++ b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json
-@@ -16300,16 +16300,6 @@
+@@ -16511,16 +16511,6 @@
                "null"
              ]
            },
@@ -52,10 +32,10 @@ index 49b47f87db..4b274432cd 100644
              "format": "uint16",
              "minimum": 0.0,
 diff --git a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
-index 8ec2c21b8a..6aeeb08f07 100644
+index b6a76228a4..40599ae822 100644
 --- a/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
 +++ b/codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json
-@@ -12292,16 +12292,6 @@
+@@ -12503,16 +12503,6 @@
              "null"
            ]
          },
@@ -73,10 +53,10 @@ index 8ec2c21b8a..6aeeb08f07 100644
            "format": "uint16",
            "minimum": 0.0,
 diff --git a/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json b/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
-index d549850ac1..895d3d6fa8 100644
+index caa30bcab5..0803486ebe 100644
 --- a/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
 +++ b/codex-rs/app-server-protocol/schema/json/v2/ConfigRequirementsReadResponse.json
-@@ -1073,16 +1073,6 @@
+@@ -1083,16 +1083,6 @@
              "null"
            ]
          },
@@ -94,11 +74,11 @@ index d549850ac1..895d3d6fa8 100644
            "format": "uint16",
            "minimum": 0.0,
 diff --git a/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts b/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
-index 5a496b132a..04e07ef1de 100644
+index 953f69da7c..5cee2d8b02 100644
 --- a/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
 +++ b/codex-rs/app-server-protocol/schema/typescript/v2/NetworkRequirements.ts
 @@ -9,10 +9,6 @@ export type NetworkRequirements = { enabled: boolean | null, httpPort: number |
-  * Canonical network permission map for `experimental_network`.
+  * Canonical managed network permission map.
   */
  domains: { [key in string]?: NetworkDomainPermission } | null,
 -/**
@@ -109,12 +89,12 @@ index 5a496b132a..04e07ef1de 100644
   * When true, only managed allowlist entries are respected while managed
   * network enforcement is active.
 diff --git a/codex-rs/app-server-protocol/src/protocol/v2/config.rs b/codex-rs/app-server-protocol/src/protocol/v2/config.rs
-index 552520aff3..f9d7b14c6b 100644
+index 177d000775..28d97901bc 100644
 --- a/codex-rs/app-server-protocol/src/protocol/v2/config.rs
 +++ b/codex-rs/app-server-protocol/src/protocol/v2/config.rs
-@@ -725,8 +725,6 @@ pub struct NetworkRequirements {
+@@ -792,8 +792,6 @@ pub struct NetworkRequirements {
      pub dangerously_allow_all_unix_sockets: Option<bool>,
-     /// Canonical network permission map for `experimental_network`.
+     /// Canonical managed network permission map.
      pub domains: Option<BTreeMap<String, NetworkDomainPermission>>,
 -    /// Host patterns routed to network approval before ordinary allow rules.
 -    pub review_domains: Option<Vec<String>>,
@@ -122,10 +102,10 @@ index 552520aff3..f9d7b14c6b 100644
      /// network enforcement is active.
      pub managed_allowed_domains_only: Option<bool>,
 diff --git a/codex-rs/app-server-protocol/src/protocol/v2/tests.rs b/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
-index d268de69fb..234636839d 100644
+index 4580410ea9..d93eebca41 100644
 --- a/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
 +++ b/codex-rs/app-server-protocol/src/protocol/v2/tests.rs
-@@ -3054,7 +3054,6 @@ fn network_requirements_deserializes_legacy_fields() {
+@@ -3070,7 +3070,6 @@ fn network_requirements_deserializes_legacy_fields() {
              dangerously_allow_non_loopback_proxy: None,
              dangerously_allow_all_unix_sockets: None,
              domains: None,
@@ -133,7 +113,7 @@ index d268de69fb..234636839d 100644
              managed_allowed_domains_only: None,
              allowed_domains: Some(vec!["api.openai.com".to_string()]),
              denied_domains: Some(vec!["blocked.example.com".to_string()]),
-@@ -3081,7 +3080,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
+@@ -3097,7 +3096,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
                  NetworkDomainPermission::Deny,
              ),
          ])),
@@ -141,7 +121,7 @@ index d268de69fb..234636839d 100644
          managed_allowed_domains_only: Some(true),
          allowed_domains: Some(vec!["api.openai.com".to_string()]),
          denied_domains: Some(vec!["blocked.example.com".to_string()]),
-@@ -3112,7 +3110,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
+@@ -3128,7 +3126,6 @@ fn network_requirements_serializes_canonical_and_legacy_fields() {
                  "api.openai.com": "allow",
                  "blocked.example.com": "deny"
              },
@@ -150,10 +130,10 @@ index d268de69fb..234636839d 100644
              "allowedDomains": ["api.openai.com"],
              "deniedDomains": ["blocked.example.com"],
 diff --git a/codex-rs/app-server/Cargo.toml b/codex-rs/app-server/Cargo.toml
-index bddfc75a0d..31a722a5b5 100644
+index b4553fc0be..ca151a5760 100644
 --- a/codex-rs/app-server/Cargo.toml
 +++ b/codex-rs/app-server/Cargo.toml
-@@ -55,7 +55,6 @@ codex-features = { workspace = true }
+@@ -54,7 +54,6 @@ codex-features = { workspace = true }
  codex-multi-env-copy-file = { workspace = true }
  codex-goal-extension = { workspace = true }
  codex-git-attribution = { workspace = true }
@@ -162,10 +142,10 @@ index bddfc75a0d..31a722a5b5 100644
  codex-file-watcher = { workspace = true }
  codex-hooks = { workspace = true }
 diff --git a/codex-rs/app-server/src/bespoke_event_handling.rs b/codex-rs/app-server/src/bespoke_event_handling.rs
-index d0d363e401..11f0555325 100644
+index a4130d93fd..435383bdbc 100644
 --- a/codex-rs/app-server/src/bespoke_event_handling.rs
 +++ b/codex-rs/app-server/src/bespoke_event_handling.rs
-@@ -104,7 +104,6 @@ use codex_protocol::protocol::Event;
+@@ -105,7 +105,6 @@ use codex_protocol::protocol::Event;
  use codex_protocol::protocol::EventMsg;
  use codex_protocol::protocol::ExecApprovalRequestEvent;
  use codex_protocol::protocol::Op;
@@ -173,7 +153,7 @@ index d0d363e401..11f0555325 100644
  use codex_protocol::protocol::RealtimeEvent;
  use codex_protocol::protocol::ReviewDecision;
  use codex_protocol::protocol::SubAgentActivityKind;
-@@ -1175,45 +1174,6 @@ pub(crate) async fn apply_bespoke_event_handling(
+@@ -1161,45 +1160,6 @@ pub(crate) async fn apply_bespoke_event_handling(
                  .send_server_notification(ServerNotification::HookCompleted(notification))
                  .await;
          }
@@ -220,7 +200,7 @@ index d0d363e401..11f0555325 100644
              // Keep warehouse metadata out of app-server notifications.
              raw_response_item_event.item.clear_executed_tool_calls();
 diff --git a/codex-rs/app-server/src/extensions.rs b/codex-rs/app-server/src/extensions.rs
-index e4f43ca88d..4ef970f194 100644
+index 733df70ed5..b7ba791bb2 100644
 --- a/codex-rs/app-server/src/extensions.rs
 +++ b/codex-rs/app-server/src/extensions.rs
 @@ -104,7 +104,6 @@ pub(crate) fn thread_extensions(
@@ -232,10 +212,10 @@ index e4f43ca88d..4ef970f194 100644
      codex_mcp_extension::install(&mut builder);
      codex_mcp_extension::install_plugins(&mut builder, environment_manager);
 diff --git a/codex-rs/app-server/src/request_processors/config_processor.rs b/codex-rs/app-server/src/request_processors/config_processor.rs
-index bbfc952151..1500cd82a2 100644
+index b31f910fe2..e30f49389b 100644
 --- a/codex-rs/app-server/src/request_processors/config_processor.rs
 +++ b/codex-rs/app-server/src/request_processors/config_processor.rs
-@@ -868,7 +868,6 @@ fn map_network_requirements_to_api(
+@@ -873,7 +873,6 @@ fn map_network_requirements_to_api(
                  })
                  .collect()
          }),
@@ -244,10 +224,10 @@ index bbfc952151..1500cd82a2 100644
          allowed_domains,
          denied_domains,
 diff --git a/codex-rs/app-server/src/request_processors/thread_lifecycle.rs b/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
-index f864f0f341..ab13ac6b0d 100644
+index a6d8250d60..6c88e3e5dd 100644
 --- a/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
 +++ b/codex-rs/app-server/src/request_processors/thread_lifecycle.rs
-@@ -349,7 +349,7 @@ pub(super) async fn ensure_listener_task_running(
+@@ -555,7 +555,7 @@ async fn start_listener(
                      };
                      if matches!(
                          &event.msg,
@@ -257,7 +237,7 @@ index f864f0f341..ab13ac6b0d 100644
                      {
                          continue;
 diff --git a/codex-rs/app-server/tests/suite/v2/config_rpc.rs b/codex-rs/app-server/tests/suite/v2/config_rpc.rs
-index 20476284ec..c4ba5937d1 100644
+index 8f21fc0edf..e222d8f445 100644
 --- a/codex-rs/app-server/tests/suite/v2/config_rpc.rs
 +++ b/codex-rs/app-server/tests/suite/v2/config_rpc.rs
 @@ -37,8 +37,6 @@ use codex_app_server_protocol::ConfiguredHookHandler;
@@ -493,11 +473,537 @@ index 7d690e6df4..0830c48079 100644
      let expected_status = match ending {
          ReviewEnding::Complete => TurnStatus::Completed,
          ReviewEnding::Interrupt => TurnStatus::Interrupted,
+diff --git a/codex-rs/codex-api/src/common.rs b/codex-rs/codex-api/src/common.rs
+index 2510f35d9b..8696df4813 100644
+--- a/codex-rs/codex-api/src/common.rs
++++ b/codex-rs/codex-api/src/common.rs
+@@ -93,8 +93,6 @@ pub enum ResponseEvent {
+     ModelVerifications(Vec<ModelVerification>),
+     /// Emitted when the server includes moderation metadata for first-party turn presentation.
+     TurnModerationMetadata(TurnModerationMetadataEvent),
+-    /// Action-bound Guardian evidence for request-scoped consumers, not model history.
+-    GuardianAssessment(crate::guardian_assessment::GuardianAssessment),
+     /// Emitted when `X-Reasoning-Included: true` is present on the response,
+     /// meaning the server already accounted for past reasoning tokens and the
+     /// client should not re-estimate them.
+diff --git a/codex-rs/codex-api/src/endpoint/responses_websocket.rs b/codex-rs/codex-api/src/endpoint/responses_websocket.rs
+index f43e285d00..0c31969017 100644
+--- a/codex-rs/codex-api/src/endpoint/responses_websocket.rs
++++ b/codex-rs/codex-api/src/endpoint/responses_websocket.rs
+@@ -898,9 +898,10 @@ async fn run_websocket_response_stream(
+                 {
+                     let _ = turn_state.set(response_turn_state);
+                 }
++                let model_verifications = event.model_verifications();
++                let turn_moderation_metadata = event.turn_moderation_metadata();
+                 let safety_buffering =
+                     safety_buffering_for_event(&event, &mut safety_buffering_treatment);
+-                let metadata_events = event.metadata_events(safety_buffering);
+                 if event.kind() == "codex.rate_limits" {
+                     if let Some(snapshot) = parse_rate_limit_event(&text) {
+                         let _ = tx_event.send(Ok(ResponseEvent::RateLimits(snapshot))).await;
+@@ -924,12 +925,35 @@ async fn run_websocket_response_stream(
+                         .await;
+                     last_server_model = Some(model);
+                 }
+-                for metadata_event in metadata_events {
+-                    if tx_event.send(Ok(metadata_event)).await.is_err() {
+-                        return Err(ApiError::Stream(
+-                            "response event consumer dropped".to_string(),
+-                        ));
+-                    }
++                if let Some(verifications) = model_verifications
++                    && tx_event
++                        .send(Ok(ResponseEvent::ModelVerifications(verifications)))
++                        .await
++                        .is_err()
++                {
++                    return Err(ApiError::Stream(
++                        "response event consumer dropped".to_string(),
++                    ));
++                }
++                if let Some(metadata) = turn_moderation_metadata
++                    && tx_event
++                        .send(Ok(ResponseEvent::TurnModerationMetadata(metadata)))
++                        .await
++                        .is_err()
++                {
++                    return Err(ApiError::Stream(
++                        "response event consumer dropped".to_string(),
++                    ));
++                }
++                if let Some(buffering) = safety_buffering
++                    && tx_event
++                        .send(Ok(ResponseEvent::SafetyBuffering(buffering)))
++                        .await
++                        .is_err()
++                {
++                    return Err(ApiError::Stream(
++                        "response event consumer dropped".to_string(),
++                    ));
+                 }
+                 match event {
+                     Ok(Some(event)) => {
+diff --git a/codex-rs/codex-api/src/guardian_assessment.rs b/codex-rs/codex-api/src/guardian_assessment.rs
+deleted file mode 100644
+index 728d279767..0000000000
+--- a/codex-rs/codex-api/src/guardian_assessment.rs
++++ /dev/null
+@@ -1,35 +0,0 @@
+-//! Decodes action-bound Guardian metadata without granting permission to execute.
+-//! Missing or malformed assessments remain unavailable; consumers must validate the
+-//! response, completed action, and current authorization before using a low-risk result.
+-
+-use serde_json::Value;
+-
+-/// A serving-side assessment carried outside model-visible response items.
+-///
+-/// Consumers must validate the response, completed action, and current authorization
+-/// before using a low-risk result. This assessment does not grant permission to execute.
+-#[derive(Clone, Debug, PartialEq, Eq)]
+-pub struct GuardianAssessment {
+-    pub response_id: String,
+-    pub item_id: String,
+-    /// False only permits considering the action for the Guardian fast path.
+-    pub requires_review: bool,
+-}
+-
+-pub(crate) fn parse_guardian_assessment(
+-    response_id: Option<&str>,
+-    metadata: Option<&Value>,
+-) -> Option<GuardianAssessment> {
+-    let response_id = response_id?;
+-    let guardian = metadata?.get("guardian")?;
+-    let item_id = guardian.get("item_id")?.as_str()?;
+-    let requires_review = guardian.get("requires_review")?.as_bool()?;
+-    if response_id.is_empty() || item_id.is_empty() {
+-        return None;
+-    }
+-    Some(GuardianAssessment {
+-        response_id: response_id.to_owned(),
+-        item_id: item_id.to_owned(),
+-        requires_review,
+-    })
+-}
+diff --git a/codex-rs/codex-api/src/lib.rs b/codex-rs/codex-api/src/lib.rs
+index 88d5568703..221010a44f 100644
+--- a/codex-rs/codex-api/src/lib.rs
++++ b/codex-rs/codex-api/src/lib.rs
+@@ -4,7 +4,6 @@ pub(crate) mod common;
+ pub(crate) mod endpoint;
+ pub(crate) mod error;
+ pub(crate) mod files;
+-mod guardian_assessment;
+ pub(crate) mod images;
+ pub(crate) mod provider;
+ pub(crate) mod rate_limits;
+@@ -86,7 +85,6 @@ pub use crate::error::ApiError;
+ pub use crate::files::HostedFileUploadContext;
+ pub use crate::files::OPENAI_FILE_UPLOAD_LIMIT_BYTES;
+ pub use crate::files::upload_openai_file;
+-pub use crate::guardian_assessment::GuardianAssessment;
+ pub use crate::images::ImageBackground;
+ pub use crate::images::ImageData;
+ pub use crate::images::ImageEditRequest;
+diff --git a/codex-rs/codex-api/src/sse/responses.rs b/codex-rs/codex-api/src/sse/responses.rs
+index 67f627e601..40478f4088 100644
+--- a/codex-rs/codex-api/src/sse/responses.rs
++++ b/codex-rs/codex-api/src/sse/responses.rs
+@@ -5,7 +5,6 @@ use crate::common::SafetyBuffering;
+ use crate::common::SafetyBufferingTreatment;
+ use crate::error::ApiError;
+ use crate::error::parse_terminal_provider_error;
+-use crate::guardian_assessment::parse_guardian_assessment;
+ use crate::rate_limits::parse_all_rate_limits;
+ use crate::safety_buffering::treatment_from_headers;
+ use crate::telemetry::SseTelemetry;
+@@ -165,7 +164,6 @@ pub struct ResponsesStreamEvent {
+     pub(crate) headers: Option<Value>,
+     metadata: Option<Value>,
+     response: Option<Value>,
+-    response_id: Option<Value>,
+     error: Option<Value>,
+     item: Option<Value>,
+     item_id: Option<String>,
+@@ -221,33 +219,6 @@ impl ResponsesStreamEvent {
+             .and_then(header_turn_state_value_from_json)
+     }
+ 
+-    /// Collects independent typed notifications in delivery order. The transport
+-    /// supplies safety buffering after applying its response-header treatment.
+-    pub(crate) fn metadata_events(
+-        &self,
+-        safety_buffering: Option<SafetyBuffering>,
+-    ) -> Vec<ResponseEvent> {
+-        let guardian = if self.kind() == "response.metadata" {
+-            parse_guardian_assessment(
+-                self.response_id.as_ref().and_then(Value::as_str),
+-                self.metadata.as_ref(),
+-            )
+-        } else {
+-            None
+-        };
+-        [
+-            self.model_verifications()
+-                .map(ResponseEvent::ModelVerifications),
+-            self.turn_moderation_metadata()
+-                .map(ResponseEvent::TurnModerationMetadata),
+-            safety_buffering.map(ResponseEvent::SafetyBuffering),
+-            guardian.map(ResponseEvent::GuardianAssessment),
+-        ]
+-        .into_iter()
+-        .flatten()
+-        .collect()
+-    }
+-
+     pub(crate) fn model_verifications(&self) -> Option<Vec<ModelVerification>> {
+         if self.kind() != "response.metadata" {
+             return None;
+@@ -634,8 +605,9 @@ async fn process_sse_with_treatment(
+                 continue;
+             }
+         };
++        let model_verifications = event.model_verifications();
++        let turn_moderation_metadata = event.turn_moderation_metadata();
+         let safety_buffering = event.safety_buffering(&safety_buffering_treatment);
+-        let metadata_events = event.metadata_events(safety_buffering);
+ 
+         if let Some(model) = event.response_model()
+             && last_server_model.as_deref() != Some(model.as_str())
+@@ -649,10 +621,29 @@ async fn process_sse_with_treatment(
+             }
+             last_server_model = Some(model);
+         }
+-        for metadata_event in metadata_events {
+-            if tx_event.send(Ok(metadata_event)).await.is_err() {
+-                return;
+-            }
++        if let Some(verifications) = model_verifications
++            && tx_event
++                .send(Ok(ResponseEvent::ModelVerifications(verifications)))
++                .await
++                .is_err()
++        {
++            return;
++        }
++        if let Some(metadata) = turn_moderation_metadata
++            && tx_event
++                .send(Ok(ResponseEvent::TurnModerationMetadata(metadata)))
++                .await
++                .is_err()
++        {
++            return;
++        }
++        if let Some(buffering) = safety_buffering
++            && tx_event
++                .send(Ok(ResponseEvent::SafetyBuffering(buffering)))
++                .await
++                .is_err()
++        {
++            return;
+         }
+ 
+         match process_responses_event(event) {
+diff --git a/codex-rs/codex-api/tests/sse_end_to_end.rs b/codex-rs/codex-api/tests/sse_end_to_end.rs
+index 0a7f14801d..bf72eda9c0 100644
+--- a/codex-rs/codex-api/tests/sse_end_to_end.rs
++++ b/codex-rs/codex-api/tests/sse_end_to_end.rs
+@@ -6,7 +6,6 @@ use anyhow::Result;
+ use bytes::Bytes;
+ use codex_api::AuthProvider;
+ use codex_api::Compression;
+-use codex_api::GuardianAssessment;
+ use codex_api::Provider;
+ use codex_api::ResponseEvent;
+ use codex_api::ResponsesClient;
+@@ -16,13 +15,11 @@ use codex_client::Response;
+ use codex_client::StreamResponse;
+ use codex_client::TransportError;
+ use codex_protocol::models::ResponseItem;
+-use codex_protocol::protocol::ModelVerification;
+ use futures::StreamExt;
+ use http::HeaderMap;
+ use http::StatusCode;
+ use pretty_assertions::assert_eq;
+ use serde_json::Value;
+-use serde_json::json;
+ 
+ #[derive(Clone)]
+ struct FixtureSseTransport {
+@@ -202,268 +199,3 @@ async fn responses_stream_parses_items_and_completed_end_to_end() -> Result<()>
+ 
+     Ok(())
+ }
+-
+-#[tokio::test]
+-async fn responses_stream_delivers_guardian_assessments_before_tool_completion() -> Result<()> {
+-    let body = build_responses_body(vec![
+-        json!({
+-            "type": "response.metadata",
+-            "response_id": "resp_1",
+-            "metadata": {"guardian": {
+-                "item_id": "fc_1", "requires_review": false, "future_field": "ignored"
+-            }}
+-        }),
+-        json!({
+-            "type": "response.output_item.done",
+-            "item": {
+-                "type": "function_call", "id": "fc_1", "call_id": "call_1",
+-                "name": "example", "arguments": "{}"
+-            }
+-        }),
+-        json!({
+-            "type": "response.metadata",
+-            "response_id": "resp_1",
+-            "metadata": {"guardian": {"item_id": "fc_2", "requires_review": true}}
+-        }),
+-        json!({
+-            "type": "response.output_item.done",
+-            "item": {
+-                "type": "function_call", "id": "fc_2", "call_id": "call_2",
+-                "name": "example", "arguments": "{}"
+-            }
+-        }),
+-        json!({"type": "response.completed", "response": {"id": "resp_1"}}),
+-    ]);
+-    let client = ResponsesClient::new(
+-        FixtureSseTransport::new(body),
+-        provider("openai"),
+-        Arc::new(NoAuth),
+-    );
+-    let mut stream = client
+-        .stream(
+-            json!({}),
+-            HeaderMap::new(),
+-            Compression::None,
+-            /*turn_state*/ None,
+-        )
+-        .await?;
+-    let mut assessments = Vec::new();
+-    let mut call_ids = Vec::new();
+-    let mut completed = false;
+-    while let Some(event) = stream.next().await {
+-        match event? {
+-            ResponseEvent::GuardianAssessment(assessment) => {
+-                assessments.push((assessment, call_ids.len()));
+-            }
+-            ResponseEvent::OutputItemDone(ResponseItem::FunctionCall { call_id, .. }) => {
+-                call_ids.push(call_id);
+-            }
+-            ResponseEvent::Completed { .. } => completed = true,
+-            ResponseEvent::RateLimits(_) => {}
+-            other => panic!("unexpected event: {other:?}"),
+-        }
+-    }
+-    assert_eq!(
+-        assessments,
+-        vec![
+-            (
+-                GuardianAssessment {
+-                    response_id: "resp_1".into(),
+-                    item_id: "fc_1".into(),
+-                    requires_review: false,
+-                },
+-                0
+-            ),
+-            (
+-                GuardianAssessment {
+-                    response_id: "resp_1".into(),
+-                    item_id: "fc_2".into(),
+-                    requires_review: true,
+-                },
+-                1
+-            ),
+-        ]
+-    );
+-    assert_eq!(call_ids, vec!["call_1", "call_2"]);
+-    assert!(completed);
+-    Ok(())
+-}
+-
+-#[tokio::test]
+-async fn responses_stream_ignores_unusable_guardian_metadata() -> Result<()> {
+-    let mut events = Vec::new();
+-    for (response_id, guardian) in [
+-        (json!("resp_1"), json!(null)),
+-        (json!("resp_1"), json!({"item_id": "fc_1"})),
+-        (
+-            json!("resp_1"),
+-            json!({"item_id": "fc_1", "requires_review": null}),
+-        ),
+-        (
+-            json!("resp_1"),
+-            json!({"item_id": "fc_1", "requires_review": "false"}),
+-        ),
+-        (json!("resp_1"), json!({"requires_review": false})),
+-        (
+-            json!("resp_1"),
+-            json!({"item_id": "", "requires_review": false}),
+-        ),
+-        (
+-            json!("resp_1"),
+-            json!({"item_id": 1, "requires_review": false}),
+-        ),
+-        (
+-            json!(""),
+-            json!({"item_id": "fc_1", "requires_review": false}),
+-        ),
+-        (
+-            json!(null),
+-            json!({"item_id": "fc_1", "requires_review": false}),
+-        ),
+-        (
+-            json!(1),
+-            json!({"item_id": "fc_1", "requires_review": false}),
+-        ),
+-    ] {
+-        events.push(json!({
+-            "type": "response.metadata", "response_id": response_id,
+-            "metadata": {"guardian": guardian}
+-        }));
+-    }
+-    events.push(json!({
+-        "type": "response.completed", "response": {"id": "resp_1"},
+-        "response_id": 1,
+-        "metadata": {"guardian": {"item_id": "fc_1", "requires_review": false}}
+-    }));
+-    let client = ResponsesClient::new(
+-        FixtureSseTransport::new(build_responses_body(events)),
+-        provider("openai"),
+-        Arc::new(NoAuth),
+-    );
+-    let mut stream = client
+-        .stream(
+-            json!({}),
+-            HeaderMap::new(),
+-            Compression::None,
+-            /*turn_state*/ None,
+-        )
+-        .await?;
+-    let mut response_ids = Vec::new();
+-    while let Some(event) = stream.next().await {
+-        match event? {
+-            ResponseEvent::Completed { response_id, .. } => response_ids.push(response_id),
+-            ResponseEvent::RateLimits(_) => {}
+-            other => panic!("unexpected event: {other:?}"),
+-        }
+-    }
+-    assert_eq!(response_ids, vec!["resp_1"]);
+-    Ok(())
+-}
+-
+-#[tokio::test]
+-async fn responses_stream_dispatches_mixed_metadata_independently() -> Result<()> {
+-    let body = build_responses_body(vec![
+-        json!({
+-            "type": "response.metadata", "response_id": "resp_1",
+-            "metadata": {
+-                "openai_verification_recommendation": ["trusted_access_for_cyber"],
+-                "openai_chatgpt_moderation_metadata": {"presentation": "inline"},
+-                "type": "safety_buffering", "use_cases": ["cyber"],
+-                "reasons": ["user_risk"], "retry_model": "gpt-fast",
+-                "guardian": {"item_id": "fc_1", "requires_review": false},
+-                "future_metadata": {"ignored": true}
+-            }
+-        }),
+-        json!({
+-            "type": "response.metadata", "response_id": "resp_1",
+-            "metadata": {
+-                "openai_verification_recommendation": ["trusted_access_for_cyber"],
+-                "openai_chatgpt_moderation_metadata": {"presentation": "inline"},
+-                "type": "safety_buffering", "use_cases": ["cyber"],
+-                "reasons": ["user_risk"], "retry_model": "gpt-fast",
+-                "guardian": {"item_id": "fc_2", "requires_review": "false"}
+-            }
+-        }),
+-        json!({
+-            "type": "response.metadata", "response_id": "resp_1",
+-            "metadata": {
+-                "openai_verification_recommendation": false,
+-                "guardian": {"item_id": "fc_3", "requires_review": true}
+-            }
+-        }),
+-        json!({"type": "response.completed", "response": {"id": "resp_1"}}),
+-    ]);
+-    let client = ResponsesClient::new(
+-        FixtureSseTransport::new(body),
+-        provider("openai"),
+-        Arc::new(NoAuth),
+-    );
+-    let mut stream = client
+-        .stream(
+-            json!({}),
+-            HeaderMap::new(),
+-            Compression::None,
+-            /*turn_state*/ None,
+-        )
+-        .await?;
+-    let mut events = Vec::new();
+-    while let Some(event) = stream.next().await {
+-        let event = event?;
+-        if !matches!(event, ResponseEvent::RateLimits(_)) {
+-            events.push(event);
+-        }
+-    }
+-    let [
+-        ResponseEvent::ModelVerifications(verifications),
+-        ResponseEvent::TurnModerationMetadata(moderation),
+-        ResponseEvent::SafetyBuffering(buffering),
+-        ResponseEvent::GuardianAssessment(low_risk),
+-        ResponseEvent::ModelVerifications(other_verifications),
+-        ResponseEvent::TurnModerationMetadata(other_moderation),
+-        ResponseEvent::SafetyBuffering(other_buffering),
+-        ResponseEvent::GuardianAssessment(review_required),
+-        ResponseEvent::Completed { response_id, .. },
+-    ] = events.as_slice()
+-    else {
+-        panic!("unexpected metadata delivery: {events:?}");
+-    };
+-    assert_eq!(
+-        verifications,
+-        &vec![ModelVerification::TrustedAccessForCyber]
+-    );
+-    assert_eq!(other_verifications, verifications);
+-    assert_eq!(moderation.metadata, json!({"presentation": "inline"}));
+-    assert_eq!(other_moderation, moderation);
+-    assert_eq!(
+-        (
+-            &buffering.use_cases,
+-            &buffering.reasons,
+-            buffering.show_buffering_ui,
+-            buffering.faster_model.as_deref(),
+-        ),
+-        (
+-            &vec!["cyber".to_string()],
+-            &vec!["user_risk".to_string()],
+-            true,
+-            Some("gpt-fast"),
+-        )
+-    );
+-    assert_eq!(other_buffering, buffering);
+-    assert_eq!(
+-        (low_risk, review_required),
+-        (
+-            &GuardianAssessment {
+-                response_id: "resp_1".into(),
+-                item_id: "fc_1".into(),
+-                requires_review: false,
+-            },
+-            &GuardianAssessment {
+-                response_id: "resp_1".into(),
+-                item_id: "fc_3".into(),
+-                requires_review: true,
+-            },
+-        )
+-    );
+-    assert_eq!(response_id, "resp_1");
+-    Ok(())
+-}
 diff --git a/codex-rs/config/src/config_requirements.rs b/codex-rs/config/src/config_requirements.rs
-index 961e3c3d78..59bfd531f8 100644
+index 0d1fcfdf98..9476fc8e27 100644
 --- a/codex-rs/config/src/config_requirements.rs
 +++ b/codex-rs/config/src/config_requirements.rs
-@@ -265,26 +265,10 @@ impl Default for ConfigRequirements {
+@@ -273,26 +273,10 @@ impl Default for ConfigRequirements {
  
  impl ConfigRequirements {
      /// Returns whether a model slug or its supported provider alias requires auto-review.
@@ -528,7 +1034,7 @@ index 961e3c3d78..59bfd531f8 100644
      }
  
      pub fn managed_auth_policy(&self) -> ManagedAuthPolicy {
-@@ -432,9 +416,6 @@ pub struct NetworkRequirementsToml {
+@@ -440,9 +424,6 @@ pub struct NetworkRequirementsToml {
      pub dangerously_allow_non_loopback_proxy: Option<bool>,
      pub dangerously_allow_all_unix_sockets: Option<bool>,
      pub domains: Option<NetworkDomainPermissionsToml>,
@@ -538,7 +1044,7 @@ index 961e3c3d78..59bfd531f8 100644
      /// When true, only managed `allowed_domains` are respected while managed
      /// network enforcement is active. User allowlist entries are ignored.
      pub managed_allowed_domains_only: Option<bool>,
-@@ -474,7 +455,6 @@ struct RawNetworkRequirementsToml {
+@@ -482,7 +463,6 @@ struct RawNetworkRequirementsToml {
      dangerously_allow_non_loopback_proxy: Option<bool>,
      dangerously_allow_all_unix_sockets: Option<bool>,
      domains: Option<NetworkDomainPermissionsToml>,
@@ -546,7 +1052,7 @@ index 961e3c3d78..59bfd531f8 100644
      #[serde(default)]
      allowed_domains: Option<Vec<String>>,
      /// When true, only managed `allowed_domains` are respected while managed
-@@ -503,7 +483,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
+@@ -511,7 +491,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
              dangerously_allow_non_loopback_proxy,
              dangerously_allow_all_unix_sockets,
              domains,
@@ -554,7 +1060,7 @@ index 961e3c3d78..59bfd531f8 100644
              allowed_domains,
              managed_allowed_domains_only,
              denied_domains,
-@@ -534,7 +513,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
+@@ -542,7 +521,6 @@ impl<'de> Deserialize<'de> for NetworkRequirementsToml {
              dangerously_allow_all_unix_sockets,
              domains: domains
                  .or_else(|| legacy_domain_permissions_from_lists(allowed_domains, denied_domains)),
@@ -562,7 +1068,7 @@ index 961e3c3d78..59bfd531f8 100644
              managed_allowed_domains_only,
              unix_sockets: unix_sockets
                  .or_else(|| legacy_unix_socket_permissions_from_list(allow_unix_sockets)),
-@@ -586,7 +564,6 @@ pub struct NetworkConstraints {
+@@ -594,7 +572,6 @@ pub struct NetworkConstraints {
      pub dangerously_allow_non_loopback_proxy: Option<bool>,
      pub dangerously_allow_all_unix_sockets: Option<bool>,
      pub domains: Option<NetworkDomainPermissionsToml>,
@@ -570,7 +1076,7 @@ index 961e3c3d78..59bfd531f8 100644
      /// When true, only managed `allowed_domains` are respected while managed
      /// network enforcement is active. User allowlist entries are ignored.
      pub managed_allowed_domains_only: Option<bool>,
-@@ -615,7 +592,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
+@@ -623,7 +600,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
              dangerously_allow_non_loopback_proxy,
              dangerously_allow_all_unix_sockets,
              domains,
@@ -578,7 +1084,7 @@ index 961e3c3d78..59bfd531f8 100644
              managed_allowed_domains_only,
              unix_sockets,
              allow_local_binding,
-@@ -629,7 +605,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
+@@ -637,7 +613,6 @@ impl From<NetworkRequirementsToml> for NetworkConstraints {
              dangerously_allow_non_loopback_proxy,
              dangerously_allow_all_unix_sockets,
              domains,
@@ -586,7 +1092,7 @@ index 961e3c3d78..59bfd531f8 100644
              managed_allowed_domains_only,
              unix_sockets,
              allow_local_binding,
-@@ -4576,7 +4551,6 @@ command = "python3 /enterprise/hooks/pre.py"
+@@ -4974,7 +4949,6 @@ command = "python3 /enterprise/hooks/pre.py"
              allow_upstream_proxy = false
              dangerously_allow_all_unix_sockets = true
              allowed_domains = ["api.example.com", "*.openai.com"]
@@ -594,7 +1100,7 @@ index 961e3c3d78..59bfd531f8 100644
              managed_allowed_domains_only = true
              denied_domains = ["blocked.example.com"]
              allow_unix_sockets = ["/tmp/example.sock"]
-@@ -4633,14 +4607,6 @@ command = "python3 /enterprise/hooks/pre.py"
+@@ -5031,14 +5005,6 @@ command = "python3 /enterprise/hooks/pre.py"
          );
          assert_eq!(sourced_network.value.allow_local_binding, Some(false));
  
@@ -630,10 +1136,10 @@ index fff24a98b3..f7d6b6a7d2 100644
              validation.properties.insert(
                  feature.key.to_string(),
 diff --git a/codex-rs/core/config.schema.json b/codex-rs/core/config.schema.json
-index 7a96817c9e..da02218caf 100644
+index 0e741b619f..a201585fa6 100644
 --- a/codex-rs/core/config.schema.json
 +++ b/codex-rs/core/config.schema.json
-@@ -970,9 +970,6 @@
+@@ -1065,9 +1065,6 @@
              "guardian_node_repl_transcript_images": {
                "type": "boolean"
              },
@@ -643,7 +1149,7 @@ index 7a96817c9e..da02218caf 100644
              "guardian_reuse_parent_compaction": {
                "type": "boolean"
              },
-@@ -988,9 +985,6 @@
+@@ -1083,9 +1080,6 @@
              "guardianv2_decisions_comparison": {
                "type": "boolean"
              },
@@ -653,7 +1159,7 @@ index 7a96817c9e..da02218caf 100644
              "hooks": {
                "type": "boolean"
              },
-@@ -1700,16 +1694,6 @@
+@@ -1813,16 +1807,6 @@
          }
        ]
      },
@@ -670,7 +1176,7 @@ index 7a96817c9e..da02218caf 100644
      "FeatureToml_for_MultiAgentV2ConfigToml": {
        "anyOf": [
          {
-@@ -2161,16 +2145,6 @@
+@@ -2283,16 +2267,6 @@
        ],
        "type": "string"
      },
@@ -687,7 +1193,7 @@ index 7a96817c9e..da02218caf 100644
      "History": {
        "additionalProperties": false,
        "description": "Settings that govern if and what will be written to `~/.codex/history.jsonl`.",
-@@ -7514,9 +7488,6 @@
+@@ -7714,9 +7688,6 @@
          "guardian_node_repl_transcript_images": {
            "type": "boolean"
          },
@@ -697,7 +1203,7 @@ index 7a96817c9e..da02218caf 100644
          "guardian_reuse_parent_compaction": {
            "type": "boolean"
          },
-@@ -7532,9 +7503,6 @@
+@@ -7732,9 +7703,6 @@
          "guardianv2_decisions_comparison": {
            "type": "boolean"
          },
@@ -708,10 +1214,10 @@ index 7a96817c9e..da02218caf 100644
            "type": "boolean"
          },
 diff --git a/codex-rs/core/src/config/network_proxy_spec.rs b/codex-rs/core/src/config/network_proxy_spec.rs
-index 44e6087a9b..ace90ef9c2 100644
+index 3d4591c1e4..5c1b3c08a0 100644
 --- a/codex-rs/core/src/config/network_proxy_spec.rs
 +++ b/codex-rs/core/src/config/network_proxy_spec.rs
-@@ -474,10 +474,6 @@ impl NetworkProxySpec {
+@@ -487,10 +487,6 @@ impl NetworkProxySpec {
              constraints.denied_domains = Some(managed_denied_domains);
              constraints.denylist_expansion_enabled = Some(denylist_expansion_enabled);
          }
@@ -814,10 +1320,10 @@ index bbc50b90c5..51dd7b9653 100644
 +    Ok(None)
  }
 diff --git a/codex-rs/core/src/guardian/decision.rs b/codex-rs/core/src/guardian/decision.rs
-index 79981f57e0..e939f51e46 100644
+index e0d2d0d1e8..e939f51e46 100644
 --- a/codex-rs/core/src/guardian/decision.rs
 +++ b/codex-rs/core/src/guardian/decision.rs
-@@ -1,122 +1,36 @@
+@@ -1,162 +1,36 @@
 -//! Calls the decision extension for each approval and enforces host constraints.
 -//! The synchronous service captures one action; no outcome is stored by tool-call ID.
 +//! Compatibility stubs for builds without the automatic Guardian reviewer.
@@ -853,13 +1359,12 @@ index 79981f57e0..e939f51e46 100644
 -    let request: ReviewAction = request.into();
      let (tx, rx) = oneshot::channel();
 -    let runtime = session.services.runtime_handle.clone();
+-    let decision = decide_approval(session, context, review_id, request, reasons, options);
 -    let spawn_result = std::thread::Builder::new()
 -        .name("codex-approval-review".to_string())
 -        .stack_size(THREAD_STACK_SIZE_BYTES)
 -        .spawn(move || {
--            let decision = runtime.block_on(decide_approval(
--                session, context, review_id, request, reasons, options,
--            ));
+-            let decision = runtime.block_on(decision);
 -            let _ = tx.send(decision);
 -        });
 -    if let Err(err) = spawn_result {
@@ -871,92 +1376,296 @@ index 79981f57e0..e939f51e46 100644
  
  /// `None` requests the existing user flow. No contributor is never an implicit allow.
  /// Both metric sinks use the originating turn retained by the review context.
- pub(crate) async fn decide_approval(
+-pub(crate) fn decide_approval(
 -    session: Arc<Session>,
 -    context: impl Into<GuardianReviewContext>,
 -    review_id: String,
 -    request: impl Into<ReviewAction>,
 -    reasons: ApprovalRequestReasons,
 -    mut options: GuardianReviewOptions,
+-) -> futures::future::BoxFuture<'static, Option<ReviewDecision>> {
+-    let context: GuardianReviewContext = context.into();
+-    let request: ReviewAction = request.into();
+-    // Bind the invocation before scheduling. Async review cleanup can outlive
+-    // the decision, but must not extend the time blocking this tool.
+-    let review_timing = if context
+-        .turn()
+-        .config
+-        .features
+-        .enabled(codex_features::Feature::CriticalPathTiming)
+-    {
+-        // Network display identity differs from its owning tool invocation. Keep
+-        // timing correlation separate from the reviewer's existing provenance.
+-        let timing_call_id = match &request.request {
+-            Ok(GuardianApprovalRequest::NetworkAccess { trigger, .. }) => {
+-                trigger.as_ref().map(|trigger| trigger.call_id.as_str())
+-            }
+-            Ok(
+-                GuardianApprovalRequest::ExecCommand { .. }
+-                | GuardianApprovalRequest::WriteStdin { .. }
+-                | GuardianApprovalRequest::ApplyPatch { .. }
+-                | GuardianApprovalRequest::McpToolCall { .. }
+-                | GuardianApprovalRequest::NativeToolCall { .. }
+-                | GuardianApprovalRequest::RequestPermissions { .. },
+-            )
+-            | Err(_) => request.tool_call_id.as_deref(),
+-        };
+-        let timing = timing_call_id.and_then(|call_id| {
+-            context
+-                .turn()
+-                .turn_timing_state
+-                .direct_tool_timings
+-                .start_review_for_turn(call_id, &context.turn().sub_id)
+-        });
+-        if timing.is_none() {
+-            context.turn().turn_timing_state.invalidate_critical_path();
+-        }
+-        timing
+-    } else {
+-        None
+-    };
+-    Box::pin(async move {
+-        let _review_timing = review_timing;
+-        let (_, history_reset) = session.history_reset().await;
+-        let cancellation = match options.external_cancel.take() {
+-            Some(external) => crate::exec::cancel_when_either(external, history_reset.clone()),
+-            None => history_reset.child_token(),
+-        };
+-        let _cancel_on_drop = cancellation.clone().drop_guard();
+-        let turn = context.turn();
+-        let live_config = session.get_config().await;
+-        let requirements = live_config.config_layer_stack.requirements();
+-        let model_requires_review =
+-            requirements.auto_review_required_for_model(&context.model_info.slug);
+-        let require_guardian = options.require_guardian
+-            || model_requires_review
+-            || requirements
+-                .approvals_reviewer
+-                .can_set(&codex_protocol::config_types::ApprovalsReviewer::User)
+-                .is_err();
+-        let full_access = context.environments().has_full_access(
+-            context.approval_policy,
+-            &turn.config.permissions.effective_permission_profile(),
+-        );
+-        let require_synchronous_review = options.require_synchronous_review;
+-        let retried = reasons.retry.is_some();
+-        let decision = codex_guardian_reviewer::ReviewRequest {
+-            host: ReviewRuntime {
+-                session: Arc::clone(&session),
+-                history_reset: history_reset.clone(),
+-                context: context.clone(),
+-                request: request.clone(),
+-                reasons,
+-                options,
+-            },
+-            approval_id: &review_id,
+-            tool_call_id: request.tool_call_id.as_deref(),
+-            action: request.action.as_ref().ok(),
+-            thread_id: session.thread_id,
+-            thread_store: &session.services.thread_extension_data,
+-            category: request.category,
+-            approval_policy: context.approval_policy,
+-            approvals_reviewer: context.approvals_reviewer,
+-            require_guardian,
+-            require_synchronous_review,
+-            model_requires_review,
+-            async_enabled: turn.config.features.enabled(codex_features::Feature::GuardianV2),
+-            retried,
+-            escalated_exec: matches!(&request.request, Ok(GuardianApprovalRequest::ExecCommand { sandbox_permissions, .. }) if sandbox_permissions.requires_escalated_permissions()),
+-            full_access,
+-            cancellation: cancellation.clone(),
+-            timeout: turn.config.guardian_review_timeout,
+-            // Keep the existing turn-level reporting policy during this ownership move.
+-            model: turn.model_info(),
+-            telemetry: &turn.session_telemetry,
+-            log_assessments: turn.config.otel.guardian_assessment_logging_enabled(),
+-            analytics: &session.services.analytics_events_client,
+-            metrics: Some(crate::session::extension_metrics::from_session_telemetry(
+-                turn.session_telemetry.clone(),
+-            )),
+-        }
+-        .decide(&session.services.extensions)
+-        .await;
+-        // Enforce cancellation after extension callbacks too, including cached decisions.
+-        if history_reset.is_cancelled() || cancellation.is_cancelled() {
+-            Some(ReviewDecision::Abort)
+-        } else {
+-            decision
+-        }
+-    })
++pub(crate) async fn decide_approval(
 +    _session: Arc<Session>,
 +    _context: impl Into<GuardianReviewContext>,
 +    _review_id: String,
 +    _request: impl Into<super::ReviewAction>,
 +    _reasons: ApprovalRequestReasons,
 +    _options: GuardianReviewOptions,
- ) -> Option<ReviewDecision> {
--    let context = context.into();
--    let request = request.into();
--    let (_, history_reset) = session.history_reset().await;
--    let cancellation = match options.external_cancel.take() {
--        Some(external) => crate::exec::cancel_when_either(external, history_reset.clone()),
--        None => history_reset.child_token(),
--    };
--    let _cancel_on_drop = cancellation.clone().drop_guard();
--    let turn = context.turn();
--    let live_config = session.get_config().await;
--    let requirements = live_config.config_layer_stack.requirements();
--    let model_requires_review =
--        requirements.auto_review_required_for_model(&context.model_info.slug);
--    let require_guardian = options.require_guardian
--        || model_requires_review
--        || requirements
--            .approvals_reviewer
--            .can_set(&codex_protocol::config_types::ApprovalsReviewer::User)
--            .is_err();
--    let full_access = context.environments().has_full_access(
--        context.approval_policy,
--        &turn.config.permissions.effective_permission_profile(),
--    );
--    let require_synchronous_review = options.require_synchronous_review;
--    let retried = reasons.retry.is_some();
--    let decision = codex_guardian_reviewer::ReviewRequest {
--        host: ReviewRuntime {
--            session: Arc::clone(&session),
--            history_reset: history_reset.clone(),
--            context: context.clone(),
--            request: request.clone(),
--            reasons,
--            options,
--        },
--        approval_id: &review_id,
--        tool_call_id: request.tool_call_id.as_deref(),
--        action: request.action.as_ref().ok(),
--        thread_id: session.thread_id,
--        thread_store: &session.services.thread_extension_data,
--        category: request.category,
--        approval_policy: context.approval_policy,
--        approvals_reviewer: context.approvals_reviewer,
--        require_guardian,
--        require_synchronous_review,
--        model_requires_review,
--        async_enabled: turn.config.features.enabled(codex_features::Feature::GuardianV2),
--        retried,
--        escalated_exec: matches!(&request.request, Ok(GuardianApprovalRequest::ExecCommand { sandbox_permissions, .. }) if sandbox_permissions.requires_escalated_permissions()),
--        full_access,
--        cancellation: cancellation.clone(),
--        timeout: turn.config.guardian_review_timeout,
--        // Keep the existing turn-level reporting policy during this ownership move.
--        model: turn.model_info(),
--        telemetry: &turn.session_telemetry,
--        log_assessments: turn.config.otel.guardian_assessment_logging_enabled(),
--        analytics: &session.services.analytics_events_client,
--        metrics: Some(crate::session::extension_metrics::from_session_telemetry(
--            turn.session_telemetry.clone(),
--        )),
--    }
--    .decide(&session.services.extensions)
--    .await;
--    // Enforce cancellation after extension callbacks too, including cached decisions.
--    if history_reset.is_cancelled() || cancellation.is_cancelled() {
--        Some(ReviewDecision::Abort)
--    } else {
--        decision
--    }
++) -> Option<ReviewDecision> {
 +    None
  }
+diff --git a/codex-rs/core/src/guardian/review.rs b/codex-rs/core/src/guardian/review.rs
+index b2307e9728..caa3810a7c 100644
+--- a/codex-rs/core/src/guardian/review.rs
++++ b/codex-rs/core/src/guardian/review.rs
+@@ -9,7 +9,6 @@ use codex_analytics::GuardianApprovalRequestSource;
+ use codex_analytics::GuardianReviewAnalyticsResult;
+ use codex_core_plugins::PluginCommandAttribution;
+ use codex_features::Feature;
+-use codex_guardian_reviewer::GuardianAssessment;
+ use codex_guardian_reviewer::GuardianReviewError;
+ use codex_guardian_reviewer::GuardianReviewOutcome;
+ #[cfg(test)]
+@@ -30,7 +29,6 @@ use tokio_util::sync::CancellationToken;
+ 
+ use crate::context::GuardianNodeReplPolicy;
+ use crate::context::GuardianReviewEvidence;
+-use crate::context_manager::ContextManager;
+ use crate::session::session::Session;
+ 
+ use super::ApprovalRequestReasons;
+@@ -159,87 +157,6 @@ struct ReviewAttemptOptions {
+     deadline: ReviewDeadline,
+ }
+ 
+-/// A prepared action and the parent transcript to use as evidence for it.
+-pub(super) struct ReviewInput {
+-    pub(super) session: Arc<Session>,
+-    pub(super) context: GuardianReviewContext,
+-    pub(super) history: ContextManager,
+-    pub(super) request: GuardianApprovalRequest,
+-    pub(super) reasons: ApprovalRequestReasons,
+-}
+-
+-impl ReviewInput {
+-    fn into_params(
+-        self,
+-        config: GuardianReviewSessionConfig,
+-        category: GuardianScope,
+-        options: ReviewAttemptOptions,
+-    ) -> GuardianReviewSessionParams {
+-        GuardianReviewSessionParams {
+-            parent_session: self.session,
+-            parent_history: self.history,
+-            reasoning_summary: self.context.reasoning_summary,
+-            personality: self.context.personality,
+-            parent_context: self.context,
+-            spawn_config: config.spawn_config,
+-            node_repl_policy: config.node_repl_policy,
+-            request: self.request,
+-            category,
+-            reasons: self.reasons,
+-            authorization: options.authorization,
+-            schema: guardian_output_schema(),
+-            review_model: config.review_model,
+-            external_cancel: options.external_cancel,
+-            deadline: options.deadline,
+-        }
+-    }
+-
+-    /// Assess the supplied request in a fresh reviewer without publishing a live approval.
+-    #[cfg_attr(
+-        not(test),
+-        expect(dead_code, reason = "consumed by the recorded-call stack layer")
+-    )]
+-    pub(super) async fn assess_isolated(
+-        self,
+-        deadline: ReviewDeadline,
+-        cancellation: &CancellationToken,
+-    ) -> Result<GuardianAssessment, GuardianReviewError> {
+-        let review = async {
+-            let pool = self.session.guardian_review_session().ok_or_else(|| {
+-                GuardianReviewError::session(anyhow::anyhow!("Guardian reviewer is unavailable"))
+-            })?;
+-            let config = guardian_review_session_config(&self.session, &self.context)
+-                .await
+-                .map_err(GuardianReviewError::prompt_build)?;
+-            let category = self.request.guardian_scope();
+-            let params = self.into_params(
+-                config,
+-                category,
+-                ReviewAttemptOptions {
+-                    authorization: None,
+-                    external_cancel: Some(cancellation.clone()),
+-                    deadline,
+-                },
+-            );
+-            let prepared = super::review_session::prepare_review(params)
+-                .await
+-                .map_err(GuardianReviewError::prompt_build)?;
+-            Ok::<_, GuardianReviewError>(pool.review_isolated(&prepared).await.0)
+-        };
+-        let outcome = match run_before_review_deadline(
+-            deadline,
+-            Some(cancellation),
+-            Box::pin(review),
+-        )
+-        .await
+-        {
+-            Ok(result) => result?,
+-            Err(interruption) => interruption,
+-        };
+-        outcome.into_assessment()
+-    }
+-}
+-
+ /// Runs the guardian in a locked-down reusable review session.
+ ///
+ /// The guardian itself should not mutate state or trigger further approvals, so
+@@ -291,18 +208,28 @@ async fn run_guardian_review_session_before_deadline(
+             );
+         }
+     };
+-    let input = ReviewInput {
+-        history: session.clone_history().await,
+-        session,
+-        context,
+-        request,
+-        reasons,
+-    };
+-    let params = input.into_params(session_config, category, options);
+-    let (session_outcome, session_analytics_result) = Box::pin(
+-        super::review_session::run_guardian_review_session(pool, params),
+-    )
+-    .await;
++    let (session_outcome, session_analytics_result) =
++        Box::pin(super::review_session::run_guardian_review_session(
++            pool,
++            GuardianReviewSessionParams {
++                parent_session: Arc::clone(&session),
++                parent_context: context.clone(),
++                parent_history: session.clone_history().await,
++                spawn_config: session_config.spawn_config,
++                node_repl_policy: session_config.node_repl_policy,
++                request,
++                category,
++                reasons,
++                authorization: options.authorization,
++                schema: guardian_output_schema(),
++                review_model: session_config.review_model,
++                reasoning_summary: context.reasoning_summary,
++                personality: context.personality,
++                external_cancel: options.external_cancel,
++                deadline: options.deadline,
++            },
++        ))
++        .await;
+ 
+     (session_outcome.into(), session_analytics_result)
+ }
+diff --git a/codex-rs/core/src/guardian/review_session.rs b/codex-rs/core/src/guardian/review_session.rs
+index 65005cc725..9a39edd428 100644
+--- a/codex-rs/core/src/guardian/review_session.rs
++++ b/codex-rs/core/src/guardian/review_session.rs
+@@ -5,7 +5,6 @@
+ #[path = "review_session_setup.rs"]
+ mod setup;
+ pub use setup::PreparedGuardianContext;
+-pub(super) use setup::prepare_review;
+ pub use setup::prepare_review_prewarm;
+ pub(crate) use setup::run_guardian_review_session;
+ 
 diff --git a/codex-rs/core/src/guardian/review_session_setup.rs b/codex-rs/core/src/guardian/review_session_setup.rs
-index 163f6b60e4..ba6e916741 100644
+index 64955bacbe..f482ab465a 100644
 --- a/codex-rs/core/src/guardian/review_session_setup.rs
 +++ b/codex-rs/core/src/guardian/review_session_setup.rs
 @@ -2,14 +2,12 @@
@@ -973,8 +1682,8 @@ index 163f6b60e4..ba6e916741 100644
 -use codex_features::Feature;
  use codex_guardian_reviewer::ReviewerPool;
  use codex_guardian_reviewer::ReviewerRequest;
- use codex_protocol::protocol::TurnEnvironmentSelection;
-@@ -188,11 +186,6 @@ impl PreparedGuardianContext {
+ use codex_guardian_reviewer::ReviewerSelection;
+@@ -154,11 +152,6 @@ impl PreparedGuardianContext {
          cancellation: CancellationToken,
      ) -> GuardianReviewSession {
          let session = Arc::clone(&thread.session);
@@ -986,8 +1695,196 @@ index 163f6b60e4..ba6e916741 100644
          let io = SessionIo {
              tx_sub: thread.io.tx_sub.clone(),
              rx_event: thread.io.rx_event.clone(),
+@@ -203,7 +196,7 @@ impl PreparedGuardianContext {
+ }
+ 
+ #[derive(Clone)]
+-pub(in crate::guardian) struct PreparedReview {
++pub(super) struct PreparedReview {
+     context: Arc<PreparedGuardianContext>,
+     params: Arc<GuardianReviewSessionParams>,
+     recovery_requested: Arc<AtomicBool>,
+@@ -360,7 +353,7 @@ pub(crate) async fn run_guardian_review_session(
+     (outcome, analytics)
+ }
+ 
+-pub(in crate::guardian) async fn prepare_review(
++pub(super) async fn prepare_review(
+     params: GuardianReviewSessionParams,
+ ) -> anyhow::Result<PreparedReview> {
+     let context = PreparedGuardianContext::prepare(
+diff --git a/codex-rs/core/src/guardian/tests.rs b/codex-rs/core/src/guardian/tests.rs
+index b09c5431aa..be20b9f7c2 100644
+--- a/codex-rs/core/src/guardian/tests.rs
++++ b/codex-rs/core/src/guardian/tests.rs
+@@ -205,60 +205,6 @@ fn guardian_exec_command_request(id: &str) -> GuardianApprovalRequest {
+     }
+ }
+ 
+-#[tokio::test]
+-async fn isolated_review_returns_assessment_for_prepared_action() -> anyhow::Result<()> {
+-    skip_if_no_network!(Ok(()));
+-    let server = start_mock_server().await;
+-    let assessment = serde_json::json!({
+-        "risk_level": "medium",
+-        "user_authorization": "high",
+-        "outcome": "allow",
+-        "rationale": "Publishing the requested documentation change."
+-    });
+-    let mock = mount_sse_once(
+-        &server,
+-        sse(vec![
+-            ev_assistant_message("assessment", &assessment.to_string()),
+-            ev_completed("review"),
+-        ]),
+-    )
+-    .await;
+-    let (session, turn) = guardian_test_session_and_turn(&server).await;
+-    seed_guardian_parent_history(&session, &turn).await;
+-    let history = session.clone_history().await;
+-    let later = codex_protocol::models::ResponseInputItem::Message {
+-        role: "user".into(),
+-        content: vec![codex_protocol::models::input_text(
+-            "Instruction added after capture.",
+-        )],
+-        phase: None,
+-    };
+-    session
+-        .record_conversation_items(&turn, turn.model_info(), &[later.into()])
+-        .await;
+-    let input = review::ReviewInput {
+-        history,
+-        context: GuardianReviewContext::from(&turn),
+-        request: guardian_exec_command_request("supplied-action"),
+-        reasons: ApprovalRequestReasons::default(),
+-        session,
+-    };
+-    let result = input
+-        .assess_isolated(
+-            codex_guardian_reviewer::ReviewDeadline::Unlimited,
+-            &CancellationToken::new(),
+-        )
+-        .await
+-        .expect("isolated assessment");
+-    assert_eq!(result, serde_json::from_value(assessment)?);
+-    let request = mock.single_request();
+-    let rendered = serde_json::to_string(&request.input())?;
+-    assert!(rendered.contains("Please check the repo visibility"));
+-    assert!(rendered.contains("Need to push the reviewed docs fix."));
+-    assert!(!rendered.contains("Instruction added after capture."));
+-    Ok(())
+-}
+-
+ fn guardian_mcp_request(server: &str, tool_name: &str) -> GuardianApprovalRequest {
+     GuardianApprovalRequest::McpToolCall {
+         id: "mcp-1".to_string(),
+@@ -3223,104 +3169,6 @@ async fn guardian_review_does_not_retry_missing_assessment_payload() -> anyhow::
+     Ok(())
+ }
+ 
+-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+-async fn guardian_review_retries_two_parse_failures_then_approves() -> anyhow::Result<()> {
+-    skip_if_no_network!(Ok(()));
+-
+-    let server = start_mock_server().await;
+-    let approval = serde_json::json!({
+-        "risk_level": "low",
+-        "user_authorization": "high",
+-        "outcome": "allow",
+-        "rationale": "retry succeeded",
+-    })
+-    .to_string();
+-    let request_log = mount_sse_sequence(
+-        &server,
+-        vec![
+-            sse(vec![
+-                ev_response_created("resp-parse-failure-1"),
+-                ev_assistant_message("msg-parse-failure-1", "not valid guardian json"),
+-                ev_completed("resp-parse-failure-1"),
+-            ]),
+-            sse(vec![
+-                ev_response_created("resp-parse-failure-2"),
+-                ev_assistant_message("msg-parse-failure-2", "still not valid guardian json"),
+-                ev_completed("resp-parse-failure-2"),
+-            ]),
+-            sse(vec![
+-                ev_response_created("resp-approved"),
+-                ev_assistant_message("msg-approved", &approval),
+-                ev_completed("resp-approved"),
+-            ]),
+-        ],
+-    )
+-    .await;
+-    let (session, mut turn) = guardian_test_session_and_turn(&server).await;
+-    let config = Arc::make_mut(&mut Arc::get_mut(&mut turn).unwrap().config);
+-    config.approvals_reviewer = ApprovalsReviewer::AutoReview;
+-    config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
+-    seed_guardian_parent_history(&session, &turn).await;
+-    let original = serde_json::json!({
+-        "type": "function_call", "id": "fc_action", "call_id": "action",
+-        "namespace": "team", "name": "send_message",
+-        "arguments": r#"{"target":"worker","message":"opaque-message"}"#,
+-        "encrypted_content": "opaque-replay", "encrypted_function_args": ["message"],
+-    });
+-    session
+-        .record_conversation_items(
+-            &turn,
+-            turn.model_info(),
+-            &[serde_json::from_value(original.clone())?],
+-        )
+-        .await;
+-    let mut expected = original;
+-    expected
+-        .as_object_mut()
+-        .unwrap()
+-        .remove("encrypted_content");
+-    expected["arguments"] = serde_json::json!(r#"{"target":"/root","message":"opaque-message"}"#);
+-    let invocation = crate::tools::context::ToolInvocation {
+-        session: Arc::clone(&session),
+-        step_context: crate::session::step_context::StepContext::for_test(Arc::clone(&turn)),
+-        turn,
+-        cancellation_token: CancellationToken::new(),
+-        tracker: Arc::new(tokio::sync::Mutex::new(
+-            crate::turn_diff_tracker::TurnDiffTracker::new(),
+-        )),
+-        call_id: "action".to_owned(),
+-        tool_name: codex_tools::ToolName::namespaced("team", "send_message"),
+-        source: crate::tools::context::ToolCallSource::Direct,
+-        environments: Default::default(),
+-        payload: crate::tools::context::ToolPayload::Function {
+-            arguments: expected["arguments"].as_str().unwrap().to_owned(),
+-        },
+-    };
+-    crate::tools::review_native_tool_call(&invocation).await?;
+-    let requests = request_log.requests();
+-    assert_eq!(requests.len(), 3);
+-    let reviewer = requests[0].body_json()["client_metadata"]["thread_id"].clone();
+-    for request in &requests {
+-        assert_eq!(
+-            request.body_json()["client_metadata"]["thread_id"],
+-            reviewer
+-        );
+-        let calls = request
+-            .inputs_of_type("function_call")
+-            .into_iter()
+-            .map(|mut item| {
+-                item.as_object_mut()
+-                    .unwrap()
+-                    .remove("internal_chat_message_metadata_passthrough");
+-                item
+-            })
+-            .collect::<Vec<_>>();
+-        assert_eq!(calls, vec![expected.clone()]);
+-        assert_eq!(request.inputs_of_type("function_call_output").len(), 1);
+-    }
+-    Ok(())
+-}
+-
+ #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+ async fn guardian_review_exhausts_three_failures_with_one_terminal_event() -> anyhow::Result<()> {
+     skip_if_no_network!(Ok(()));
 diff --git a/codex-rs/core/src/responses_metadata.rs b/codex-rs/core/src/responses_metadata.rs
-index 2d82bb719e..bcc2f9e945 100644
+index 27bd6e4e0c..3638a92f65 100644
 --- a/codex-rs/core/src/responses_metadata.rs
 +++ b/codex-rs/core/src/responses_metadata.rs
 @@ -67,7 +67,6 @@ pub(crate) const WORKSPACES_KEY: &str = "workspaces";
@@ -1014,16 +1911,16 @@ index 2d82bb719e..bcc2f9e945 100644
 -    pub(crate) guardian_recorded_items: bool,
      /// Guardian parent reference; projected only onto a Guardian request.
      pub(crate) parent_response_id: Option<String>,
-     pub(crate) installation_id: String,
-@@ -284,7 +280,6 @@ impl CodexResponsesMetadata {
-     ) -> Self {
+     /// Transport-only parent pin; never projected into headers or body metadata.
+@@ -287,7 +283,6 @@ impl CodexResponsesMetadata {
          Self {
              parent_response_id: None,
+             parent_routing_affinity: None,
 -            guardian_recorded_items: false,
              installation_id,
              session_id,
              thread_id,
-@@ -425,7 +420,6 @@ impl CodexResponsesMetadata {
+@@ -428,7 +423,6 @@ impl CodexResponsesMetadata {
          let has_request_identity =
              request_kind.is_some_and(CodexResponsesRequestKind::has_thread_identity);
          CodexTurnMetadataPayload {
@@ -1031,7 +1928,7 @@ index 2d82bb719e..bcc2f9e945 100644
              installation_id: has_request_identity.then_some(self.installation_id.as_str()),
              session_id: has_thread_identity.then_some(self.session_id.as_str()),
              thread_id: has_thread_identity.then_some(self.thread_id.as_str()),
-@@ -552,8 +546,6 @@ fn non_empty_workspaces(
+@@ -555,8 +549,6 @@ fn non_empty_workspaces(
  
  #[derive(Serialize)]
  struct CodexTurnMetadataPayload<'a> {
@@ -1041,7 +1938,7 @@ index 2d82bb719e..bcc2f9e945 100644
      installation_id: Option<&'a str>,
      #[serde(default, skip_serializing_if = "Option::is_none")]
 diff --git a/codex-rs/core/src/session/mod.rs b/codex-rs/core/src/session/mod.rs
-index aba497125c..83df4a043f 100644
+index cc418ca5ed..da0cc4636c 100644
 --- a/codex-rs/core/src/session/mod.rs
 +++ b/codex-rs/core/src/session/mod.rs
 @@ -150,8 +150,6 @@ use codex_protocol::protocol::ItemCompletedEvent;
@@ -1053,7 +1950,7 @@ index aba497125c..83df4a043f 100644
  use codex_protocol::protocol::RawResponseItemEvent;
  use codex_protocol::protocol::SessionSource;
  use codex_protocol::protocol::SubAgentSource;
-@@ -2775,30 +2773,6 @@ impl Session {
+@@ -2797,30 +2795,6 @@ impl Session {
      }
  
      async fn deliver_event_raw(&self, event: Event) {
@@ -1085,7 +1982,7 @@ index aba497125c..83df4a043f 100644
          if let Some(status) = agent_status_from_event(&event.msg) {
              self.agent_status.send_replace(status);
 diff --git a/codex-rs/core/src/session/session.rs b/codex-rs/core/src/session/session.rs
-index 9c415e6020..ce15a8f9a0 100644
+index a41f1471e4..01adf8052a 100644
 --- a/codex-rs/core/src/session/session.rs
 +++ b/codex-rs/core/src/session/session.rs
 @@ -61,9 +61,6 @@ pub(crate) struct Session {
@@ -1098,15 +1995,15 @@ index 9c415e6020..ce15a8f9a0 100644
      pub(super) agent_status: watch::Sender<AgentStatus>,
      pub(super) state: Mutex<SessionState>,
      /// Orders accepted settings commits and their persisted events with compaction checkpoints.
-@@ -727,7 +724,6 @@ impl Session {
+@@ -724,7 +721,6 @@ impl Session {
              request_kind,
          );
          ExecutionMetadata::from_settings(&step_context.settings).apply_to(&mut responses_metadata);
 -        responses_metadata.guardian_recorded_items = self.parent_observer_event_tx.get().is_some();
-         responses_metadata.tool_namespaces_info = if step_context
-             .turn
-             .config
-@@ -1868,7 +1864,6 @@ impl Session {
+         if responses_metadata.subagent_header.as_deref()
+             == Some(crate::guardian::GUARDIAN_REVIEWER_NAME)
+             && let Some(pending) = self
+@@ -1892,7 +1888,6 @@ impl Session {
                  thread_id,
                  installation_id,
                  tx_event: tx_event.clone(),
@@ -1115,10 +2012,10 @@ index 9c415e6020..ce15a8f9a0 100644
                  state: Mutex::new(state),
                  thread_settings_persistence: Semaphore::new(/*permits*/ 1),
 diff --git a/codex-rs/core/src/session/tests.rs b/codex-rs/core/src/session/tests.rs
-index 182e03e588..52b6fcded0 100644
+index 68022ae9d2..717eaa360a 100644
 --- a/codex-rs/core/src/session/tests.rs
 +++ b/codex-rs/core/src/session/tests.rs
-@@ -6999,7 +6999,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
+@@ -7135,7 +7135,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
          thread_id,
          installation_id: "11111111-1111-4111-8111-111111111111".to_string(),
          tx_event,
@@ -1126,7 +2023,7 @@ index 182e03e588..52b6fcded0 100644
          agent_status: agent_status_tx,
          state: Mutex::new(state),
          thread_settings_persistence: Semaphore::new(/*permits*/ 1),
-@@ -9284,7 +9283,6 @@ where
+@@ -9429,7 +9428,6 @@ where
          thread_id,
          installation_id: "11111111-1111-4111-8111-111111111111".to_string(),
          tx_event,
@@ -1135,10 +2032,10 @@ index 182e03e588..52b6fcded0 100644
          state: Mutex::new(state),
          thread_settings_persistence: Semaphore::new(/*permits*/ 1),
 diff --git a/codex-rs/core/src/session/turn.rs b/codex-rs/core/src/session/turn.rs
-index 65cbd64a18..ea0a301ff7 100644
+index e4a092ed65..eda06cac48 100644
 --- a/codex-rs/core/src/session/turn.rs
 +++ b/codex-rs/core/src/session/turn.rs
-@@ -2294,7 +2294,6 @@ pub(super) fn realtime_text_for_event(msg: &EventMsg) -> Option<RealtimeEventTex
+@@ -2313,7 +2313,6 @@ pub(super) fn realtime_text_for_event(msg: &EventMsg) -> Option<RealtimeEventTex
          | EventMsg::EnteredReviewMode(_)
          | EventMsg::ExitedReviewMode(_)
          | EventMsg::RawResponseItem(_)
@@ -1146,6 +2043,178 @@ index 65cbd64a18..ea0a301ff7 100644
          | EventMsg::RawResponseCompleted(_)
          | EventMsg::ItemStarted(_)
          | EventMsg::HookStarted(_)
+@@ -3196,10 +3195,6 @@ async fn try_run_sampling_request(
+                 sess.emit_turn_moderation_metadata(&turn_context, metadata)
+                     .await;
+             }
+-            ResponseEvent::GuardianAssessment(_) => {
+-                // Request-scoped extensions may consume this evidence. It does not
+-                // authorize tools here and must not enter conversation history.
+-            }
+             ResponseEvent::SafetyBuffering(buffering) => {
+                 sess.send_event(
+                     &turn_context,
+diff --git a/codex-rs/core/src/tools/mod.rs b/codex-rs/core/src/tools/mod.rs
+index 3344ed84b3..73473f41d1 100644
+--- a/codex-rs/core/src/tools/mod.rs
++++ b/codex-rs/core/src/tools/mod.rs
+@@ -11,8 +11,6 @@ pub(crate) mod hosted_spec;
+ pub(crate) mod lifecycle;
+ pub(crate) mod metadata_metrics;
+ mod multi_agent_tool;
+-mod native_tool_review;
+-pub(crate) use native_tool_review::review as review_native_tool_call;
+ pub(crate) mod network_approval;
+ pub(crate) mod orchestrator;
+ pub(crate) mod parallel;
+diff --git a/codex-rs/core/src/tools/multi_agent_tool.rs b/codex-rs/core/src/tools/multi_agent_tool.rs
+index 3e8e77410c..2b271af752 100644
+--- a/codex-rs/core/src/tools/multi_agent_tool.rs
++++ b/codex-rs/core/src/tools/multi_agent_tool.rs
+@@ -4,7 +4,6 @@
+ use crate::session::session::Session;
+ use crate::tools::context::ToolInvocation;
+ use crate::tools::registry::CoreToolRuntime;
+-use codex_protocol::openai_models::GuardianScope;
+ use codex_tools::JsonSchema;
+ use codex_tools::ResponsesApiNamespace;
+ use codex_tools::ResponsesApiNamespaceTool;
+@@ -118,16 +117,6 @@ impl ToolExecutor<ToolInvocation> for MultiAgentV2ToolOverrides {
+ }
+ 
+ impl CoreToolRuntime for MultiAgentV2ToolOverrides {
+-    fn requires_guardian_review(&self, invocation: &ToolInvocation) -> bool {
+-        invocation
+-            .turn
+-            .config
+-            .features
+-            .enabled(codex_features::Feature::GuardianNativeMultiAgentHistory)
+-            && GuardianScope::for_multi_agent_tool(&self.tool_name(), self.namespace.as_deref())
+-                .is_some()
+-    }
+-
+     fn wait_until_ready<'a>(&'a self, session: &'a Arc<Session>) -> Option<BoxFuture<'a, ()>> {
+         self.handler.wait_until_ready(session)
+     }
+diff --git a/codex-rs/core/src/tools/native_tool_review.rs b/codex-rs/core/src/tools/native_tool_review.rs
+deleted file mode 100644
+index bb65bedffb..0000000000
+--- a/codex-rs/core/src/tools/native_tool_review.rs
++++ /dev/null
+@@ -1,113 +0,0 @@
+-//! Reviews opted-in function calls synchronously before dispatch, preserving their native wire data.
+-
+-use crate::function_tool::FunctionCallError;
+-use crate::guardian::GuardianApprovalRequest;
+-use crate::guardian::GuardianReviewContext;
+-use crate::guardian::GuardianReviewOptions;
+-use crate::guardian::new_guardian_review_id;
+-use crate::guardian::spawn_approval_decision;
+-use crate::tools::context::ToolCallSource;
+-use crate::tools::context::ToolInvocation;
+-use crate::tools::context::ToolPayload;
+-use crate::tools::sandboxing::ApprovalRequestReasons;
+-use codex_analytics::GuardianApprovalRequestSource;
+-use codex_protocol::models::ResponseItem;
+-use codex_protocol::protocol::ReviewDecision;
+-
+-pub(crate) async fn review(invocation: &ToolInvocation) -> Result<(), FunctionCallError> {
+-    let ToolPayload::Function { arguments } = &invocation.payload else {
+-        return Err(FunctionCallError::RespondToModel(
+-            "Native review requires a function call".to_owned(),
+-        ));
+-    };
+-    let mut item = invocation
+-        .session
+-        .clone_history()
+-        .await
+-        .raw_items()
+-        .rev()
+-        .find(|item| {
+-            matches!(
+-                item,
+-                ResponseItem::FunctionCall { call_id, .. } if call_id == &invocation.call_id
+-            )
+-        })
+-        .cloned()
+-        .unwrap_or_else(|| ResponseItem::FunctionCall {
+-            id: None,
+-            name: invocation.tool_name.name.clone(),
+-            namespace: invocation.tool_name.namespace.clone(),
+-            arguments: arguments.clone(),
+-            call_id: invocation.call_id.clone(),
+-            encrypted_content: None,
+-            status: None,
+-            encrypted_function_args: matches!(
+-                invocation.source,
+-                ToolCallSource::DirectPlaintextMessage | ToolCallSource::CodeMode { .. }
+-            )
+-            .then(Vec::new),
+-            internal_chat_message_metadata_passthrough: None,
+-        });
+-    if let ResponseItem::FunctionCall {
+-        arguments: reviewed_arguments,
+-        encrypted_content,
+-        ..
+-    } = &mut item
+-        && reviewed_arguments != arguments
+-    {
+-        // A hook rewrite invalidates replay of the original call, but not encrypted argument fields.
+-        reviewed_arguments.clone_from(arguments);
+-        *encrypted_content = None;
+-    }
+-    let context = GuardianReviewContext::from(&invocation.step_context);
+-    // Native tool review has no user-approval fallback. An unsuccessful required review must stop dispatch.
+-    let require_guardian = codex_guardian_reviewer::routes_approval_policy_to_guardian(
+-        context.approval_policy,
+-        context.approvals_reviewer,
+-    );
+-    let decision = spawn_approval_decision(
+-        invocation.session.clone(),
+-        context,
+-        new_guardian_review_id(),
+-        GuardianApprovalRequest::NativeToolCall {
+-            id: invocation.call_id.clone(),
+-            call: Box::new(item),
+-        },
+-        ApprovalRequestReasons::default(),
+-        GuardianReviewOptions {
+-            require_guardian,
+-            require_synchronous_review: true,
+-            plugin_attribution_override: None,
+-            approval_request_source: GuardianApprovalRequestSource::MainTurn,
+-            external_cancel: Some(invocation.cancellation_token.clone()),
+-        },
+-    )
+-    .await
+-    .map_err(|_| {
+-        FunctionCallError::RespondToModel("automatic approval review did not complete".to_owned())
+-    })?;
+-    match decision {
+-        None | Some(ReviewDecision::Approved | ReviewDecision::ApprovedForSession) => Ok(()),
+-        Some(ReviewDecision::Denied { rejection }) => {
+-            Err(FunctionCallError::RespondToModel(rejection))
+-        }
+-        Some(ReviewDecision::TimedOut) => Err(FunctionCallError::RespondToModel(
+-            codex_prompts::ResolvedModelMessages::from_model(
+-                &invocation.step_context.settings.model_info,
+-            )
+-            .auto_review()
+-            .timeout_instructions
+-            .to_owned(),
+-        )),
+-        Some(ReviewDecision::Abort) => Err(FunctionCallError::RespondToModel(
+-            "automatic approval review was cancelled".to_owned(),
+-        )),
+-        Some(
+-            ReviewDecision::ApprovedExecpolicyAmendment { .. }
+-            | ReviewDecision::ApprovedMcpPolicyAmendment
+-            | ReviewDecision::NetworkPolicyAmendment { .. },
+-        ) => Err(FunctionCallError::RespondToModel(
+-            "automatic approval review returned an unsupported decision".to_owned(),
+-        )),
+-    }
+-}
 diff --git a/codex-rs/core/src/tools/network_approval.rs b/codex-rs/core/src/tools/network_approval.rs
 index 5971d10683..579b45dfa6 100644
 --- a/codex-rs/core/src/tools/network_approval.rs
@@ -1286,8 +2355,128 @@ index a1a88e4454..46fd29d030 100644
                      let approval_ctx = ApprovalContext {
                          review_context: GuardianReviewContext::from(&tool_ctx.step_context),
                          cancellation_token: Some(tool_ctx.cancellation_token.clone()),
+diff --git a/codex-rs/core/src/tools/registry.rs b/codex-rs/core/src/tools/registry.rs
+index 3dccc2eece..7ebfe2beeb 100644
+--- a/codex-rs/core/src/tools/registry.rs
++++ b/codex-rs/core/src/tools/registry.rs
+@@ -62,11 +62,6 @@ pub use codex_tools::ToolExposure;
+ /// Implementers provide the shared `ToolExecutor` behavior plus optional
+ /// core-owned metadata for hooks, telemetry, tool search, and argument diffs.
+ pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
+-    /// Opts this invocation into synchronous native-call review before the handler runs.
+-    fn requires_guardian_review(&self, _invocation: &ToolInvocation) -> bool {
+-        false
+-    }
+-
+     /// The handler observes its cancellation token and must finish before dispatch is aborted.
+     fn finishes_on_cancellation(&self) -> bool {
+         false
+@@ -882,12 +877,6 @@ impl ToolRegistry {
+             }
+         }
+ 
+-        if tool.requires_guardian_review(&invocation)
+-            && let Err(err) = super::review_native_tool_call(&invocation).await
+-        {
+-            return Err(fail_before_execution(&invocation, err).await);
+-        }
+-
+         let invocation_guard = reservation.activate(&invocation);
+         if tool.mcp_server_name().is_none() {
+             notify_tool_start(&invocation, /*mcp_tool*/ None)
+diff --git a/codex-rs/core/src/tools/registry_tests.rs b/codex-rs/core/src/tools/registry_tests.rs
+index 01f18aa364..c2b7280955 100644
+--- a/codex-rs/core/src/tools/registry_tests.rs
++++ b/codex-rs/core/src/tools/registry_tests.rs
+@@ -120,25 +120,7 @@ impl LifecycleTestHandler {
+     }
+ }
+ 
+-impl CoreToolRuntime for LifecycleTestHandler {
+-    fn requires_guardian_review(&self, _invocation: &ToolInvocation) -> bool {
+-        self.tool_name.name == "reviewed_tool"
+-    }
+-}
+-
+-impl codex_extension_api::ApprovalReviewContributor for LifecycleTestHandler {
+-    fn decide<'a>(
+-        &'a self,
+-        _input: &'a codex_extension_api::ApprovalDecisionInput<'_>,
+-    ) -> codex_extension_api::ExtensionFuture<'a, Option<codex_extension_api::ApprovalDecision>>
+-    {
+-        Box::pin(async {
+-            Some(codex_extension_api::ApprovalDecision::Reviewed(
+-                codex_protocol::protocol::ReviewDecision::denied("review denied"),
+-            ))
+-        })
+-    }
+-}
++impl CoreToolRuntime for LifecycleTestHandler {}
+ 
+ fn test_spec(tool_name: &codex_tools::ToolName) -> codex_tools::ToolSpec {
+     codex_tools::ToolSpec::Function(codex_tools::ResponsesApiTool {
+@@ -771,14 +753,8 @@ async fn dispatch_uses_canonical_tool_names_for_lifecycle_contributors() -> anyh
+         tool_name: failing_tool.clone(),
+         result: LifecycleTestResult::Err,
+     }) as Arc<dyn CoreToolRuntime>;
+-    let reviewed_tool = codex_tools::ToolName::namespaced("extensions", "reviewed_tool");
+-    let reviewed_handler = Arc::new(LifecycleTestHandler {
+-        tool_name: reviewed_tool.clone(),
+-        result: LifecycleTestResult::Err,
+-    });
+-    builder.approval_review_contributor(reviewed_handler.clone());
+     session.services.extensions = Arc::new(builder.build());
+-    let registry = ToolRegistry::from_tools([ok_handler, failing_handler, reviewed_handler]);
++    let registry = ToolRegistry::from_tools([ok_handler, failing_handler]);
+     let session = Arc::new(session);
+     let turn = Arc::new(turn);
+ 
+@@ -809,17 +785,6 @@ async fn dispatch_uses_canonical_tool_names_for_lifecycle_contributors() -> anyh
+         Err(err) => err,
+     };
+     assert_eq!(err.to_string(), "handler failed");
+-    let denied = registry
+-        .dispatch_any_with_state(
+-            test_invocation(session, turn, "reviewed-call", reviewed_tool.clone()),
+-            /*call_state*/ None,
+-        )
+-        .await;
+-    assert_eq!(
+-        denied.err().expect("review must deny").to_string(),
+-        "review denied"
+-    );
+-
+     let expected = vec![
+         RecordedToolLifecycle::Start {
+             call_id: "ok-call".to_string(),
+@@ -843,13 +808,6 @@ async fn dispatch_uses_canonical_tool_names_for_lifecycle_contributors() -> anyh
+                 handler_executed: true,
+             },
+         },
+-        RecordedToolLifecycle::Finish {
+-            call_id: "reviewed-call".to_string(),
+-            tool_name: reviewed_tool,
+-            outcome: codex_extension_api::ToolCallOutcome::Failed {
+-                handler_executed: false,
+-            },
+-        },
+     ];
+     let actual = records
+         .lock()
+diff --git a/codex-rs/core/src/turn_timing.rs b/codex-rs/core/src/turn_timing.rs
+index de45b7403d..adac4a295a 100644
+--- a/codex-rs/core/src/turn_timing.rs
++++ b/codex-rs/core/src/turn_timing.rs
+@@ -494,7 +494,6 @@ fn response_event_records_turn_ttft(event: &ResponseEvent) -> bool {
+         | ResponseEvent::ServerModel(_)
+         | ResponseEvent::ModelVerifications(_)
+         | ResponseEvent::TurnModerationMetadata(_)
+-        | ResponseEvent::GuardianAssessment(_)
+         | ResponseEvent::SafetyBuffering(_)
+         | ResponseEvent::ServerReasoningIncluded(_)
+         | ResponseEvent::ToolCallInputDelta { .. }
 diff --git a/codex-rs/core/tests/suite/hooks.rs b/codex-rs/core/tests/suite/hooks.rs
-index 1f76244051..17b21de85d 100644
+index 175b68983c..d1593f8638 100644
 --- a/codex-rs/core/tests/suite/hooks.rs
 +++ b/codex-rs/core/tests/suite/hooks.rs
 @@ -48,6 +48,7 @@ use codex_thread_store::InMemoryThreadStore;
@@ -1298,9 +2487,9 @@ index 1f76244051..17b21de85d 100644
  use core_test_support::responses;
  use core_test_support::responses::ev_apply_patch_custom_tool_call;
  use core_test_support::responses::ev_assistant_message;
-@@ -3469,17 +3470,7 @@ allow_local_binding = true
-             )
-             .expect("failed to write permission request hook test fixture");
+@@ -3481,17 +3482,7 @@ allow_local_binding = true
+                 );
+             fs::write(script_path, script).expect("record network hook process cwd");
          })
 -        .with_cloud_config_bundle(
 -            CloudConfigBundleFixture::loader_with_enterprise_requirement(
@@ -1317,11 +2506,188 @@ index 1f76244051..17b21de85d 100644
          .with_config(move |config| {
              trust_discovered_hooks(config);
              config.approvals_reviewer = codex_config::types::ApprovalsReviewer::AutoReview;
+diff --git a/codex-rs/core/tests/suite/model_request.rs b/codex-rs/core/tests/suite/model_request.rs
+index 3163db9886..0dd5e3d7e7 100644
+--- a/codex-rs/core/tests/suite/model_request.rs
++++ b/codex-rs/core/tests/suite/model_request.rs
+@@ -2,7 +2,6 @@
+ use anyhow::Result;
+ use codex_core::TurnInputRequest;
+ use codex_extension_api::ExtensionRegistryBuilder;
+-use codex_extension_api::GuardianAssessment;
+ use codex_extension_api::ModelRequestContributor;
+ use codex_extension_api::ModelRequestInput;
+ use codex_extension_api::ModelRequestKind;
+@@ -21,7 +20,6 @@ use core_test_support::test_codex::test_codex;
+ use core_test_support::wait_for_event;
+ use futures::StreamExt;
+ use pretty_assertions::assert_eq;
+-use serde_json::json;
+ use std::sync::Arc;
+ use tokio::sync::Semaphore;
+ use tokio::time::Duration;
+@@ -33,8 +31,6 @@ struct Gates {
+     output_waiting: Semaphore,
+     cancelled: Semaphore,
+     output_items: std::sync::atomic::AtomicUsize,
+-    guardian_assessments: std::sync::Mutex<Vec<(GuardianAssessment, usize)>>,
+-    metadata_event_types: std::sync::Mutex<Vec<&'static str>>,
+ }
+ #[derive(Debug)]
+ struct Contributor(Arc<Gates>);
+@@ -64,27 +60,6 @@ impl ModelResponseInterceptor for Permit {
+                 let mut events = Vec::new();
+                 let mut output_items = 0;
+                 while let Some(event) = stream.next().await {
+-                    let metadata_event_type = match &event {
+-                        Ok(ResponseEvent::ModelVerifications(_)) => Some("verification"),
+-                        Ok(ResponseEvent::TurnModerationMetadata(_)) => Some("moderation"),
+-                        Ok(ResponseEvent::SafetyBuffering(_)) => Some("buffering"),
+-                        Ok(ResponseEvent::GuardianAssessment(_)) => Some("guardian"),
+-                        _ => None,
+-                    };
+-                    if let Some(metadata_event_type) = metadata_event_type {
+-                        self.gates
+-                            .metadata_event_types
+-                            .lock()
+-                            .expect("metadata events mutex is not poisoned")
+-                            .push(metadata_event_type);
+-                    }
+-                    if let Ok(ResponseEvent::GuardianAssessment(assessment)) = &event {
+-                        self.gates
+-                            .guardian_assessments
+-                            .lock()
+-                            .expect("guardian assessments mutex is not poisoned")
+-                            .push((assessment.clone(), output_items));
+-                    }
+                     if matches!(&event, Ok(ResponseEvent::OutputItemDone(_))) {
+                         output_items += 1;
+                     }
+@@ -124,10 +99,6 @@ async fn model_request_gates_output_and_cancellation() -> Result<()> {
+     let server = responses::start_mock_server().await;
+     let response = sse(vec![
+         ev_response_created("r1"),
+-        json!({
+-            "type": "response.metadata", "response_id": "r1",
+-            "metadata": {"guardian": {"item_id": "m1", "requires_review": false}}
+-        }),
+         ev_assistant_message("m1", "first"),
+         ev_assistant_message("m2", "done"),
+         ev_completed("r1"),
+@@ -138,8 +109,6 @@ async fn model_request_gates_output_and_cancellation() -> Result<()> {
+         output_waiting: Semaphore::new(0),
+         cancelled: Semaphore::new(0),
+         output_items: std::sync::atomic::AtomicUsize::new(0),
+-        guardian_assessments: std::sync::Mutex::new(Vec::new()),
+-        metadata_event_types: std::sync::Mutex::new(Vec::new()),
+     });
+     let mut registry = ExtensionRegistryBuilder::new();
+     registry.model_request_contributor(Arc::new(Contributor(gates.clone())));
+@@ -155,17 +124,6 @@ async fn model_request_gates_output_and_cancellation() -> Result<()> {
+         .await??
+         .forget();
+     assert_eq!(model.requests().len(), 1);
+-    assert_eq!(
+-        *gates.guardian_assessments.lock().unwrap(),
+-        vec![(
+-            GuardianAssessment {
+-                response_id: "r1".into(),
+-                item_id: "m1".into(),
+-                requires_review: false,
+-            },
+-            0
+-        )]
+-    );
+     assert_eq!(
+         gates.output_items.load(std::sync::atomic::Ordering::SeqCst),
+         2
+@@ -204,12 +162,6 @@ async fn model_request_gates_output_and_cancellation() -> Result<()> {
+         .await??
+         .forget();
+     assert_eq!(model.requests().len(), 2);
+-    assert!(
+-        !model.requests()[1]
+-            .body_json()
+-            .to_string()
+-            .contains("requires_review")
+-    );
+     Ok(())
+ }
+ 
+@@ -219,26 +171,6 @@ async fn model_request_gates_websocket_output_but_not_warmup() -> Result<()> {
+         vec![ev_response_created("warm"), ev_completed("warm")],
+         vec![
+             ev_response_created("response"),
+-            json!({
+-                "type": "response.metadata", "response_id": "response",
+-                "metadata": {
+-                    "guardian": {"item_id": "message", "requires_review": true},
+-                    "openai_verification_recommendation": ["trusted_access_for_cyber"],
+-                    "openai_chatgpt_moderation_metadata": {"presentation": "inline"},
+-                    "type": "safety_buffering", "use_cases": ["cyber"],
+-                    "reasons": ["user_risk"], "future_metadata": true
+-                }
+-            }),
+-            json!({
+-                "type": "response.metadata", "response_id": "response",
+-                "metadata": {
+-                    "guardian": {"item_id": "other", "requires_review": "false"},
+-                    "openai_verification_recommendation": ["trusted_access_for_cyber"],
+-                    "openai_chatgpt_moderation_metadata": {"presentation": "inline"},
+-                    "type": "safety_buffering", "use_cases": ["cyber"],
+-                    "reasons": ["user_risk"]
+-                }
+-            }),
+             ev_assistant_message("message", "done"),
+             ev_completed("response"),
+         ],
+@@ -249,8 +181,6 @@ async fn model_request_gates_websocket_output_but_not_warmup() -> Result<()> {
+         output_waiting: Semaphore::new(0),
+         cancelled: Semaphore::new(0),
+         output_items: std::sync::atomic::AtomicUsize::new(0),
+-        guardian_assessments: std::sync::Mutex::new(Vec::new()),
+-        metadata_event_types: std::sync::Mutex::new(Vec::new()),
+     });
+     let mut registry = ExtensionRegistryBuilder::new();
+     registry.model_request_contributor(Arc::new(Contributor(gates.clone())));
+@@ -268,32 +198,6 @@ async fn model_request_gates_websocket_output_but_not_warmup() -> Result<()> {
+         .await??
+         .forget();
+     let requests = server.single_connection();
+-    assert_eq!(
+-        *gates
+-            .metadata_event_types
+-            .lock()
+-            .expect("metadata events mutex is not poisoned"),
+-        vec![
+-            "verification",
+-            "moderation",
+-            "buffering",
+-            "guardian",
+-            "verification",
+-            "moderation",
+-            "buffering",
+-        ]
+-    );
+-    assert_eq!(
+-        *gates.guardian_assessments.lock().unwrap(),
+-        vec![(
+-            GuardianAssessment {
+-                response_id: "response".into(),
+-                item_id: "message".into(),
+-                requires_review: true,
+-            },
+-            0
+-        )]
+-    );
+     assert_eq!(requests.len(), 2);
+     assert_eq!(requests[0].body_json()["generate"], false);
+     assert_eq!(
 diff --git a/codex-rs/core/tests/suite/network_approval.rs b/codex-rs/core/tests/suite/network_approval.rs
-index dc2328ce36..192cfc31e1 100644
+index eb947c3688..3e407ec2a7 100644
 --- a/codex-rs/core/tests/suite/network_approval.rs
 +++ b/codex-rs/core/tests/suite/network_approval.rs
-@@ -1166,7 +1166,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
+@@ -1181,7 +1181,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
      assert_eq!(approval.cwd, test.config.cwd.clone().into());
      assert_eq!(
          approval.reason.as_deref(),
@@ -1331,10 +2697,10 @@ index dc2328ce36..192cfc31e1 100644
      test.codex
          .submit(Op::ExecApproval {
 diff --git a/codex-rs/exec-server-protocol/src/protocol.rs b/codex-rs/exec-server-protocol/src/protocol.rs
-index dad1132447..fbb2496f26 100644
+index 5ff06e05f8..411776d490 100644
 --- a/codex-rs/exec-server-protocol/src/protocol.rs
 +++ b/codex-rs/exec-server-protocol/src/protocol.rs
-@@ -153,9 +153,6 @@ pub struct EnvironmentCapabilities {
+@@ -155,9 +155,6 @@ pub struct EnvironmentCapabilities {
      /// Whether `exec` accepts instructions for launching an executor-local network proxy.
      #[serde(default)]
      network_proxy_launch: bool,
@@ -1344,7 +2710,7 @@ index dad1132447..fbb2496f26 100644
      /// Whether the selected shell can mask executor environment credentials.
      #[serde(default, skip_serializing_if = "std::ops::Not::not")]
      credential_masking: bool,
-@@ -317,7 +314,6 @@ impl EnvironmentInfo {
+@@ -322,7 +319,6 @@ impl EnvironmentInfo {
              temp_dir,
              capabilities: EnvironmentCapabilities {
                  network_proxy_launch: true,
@@ -1352,7 +2718,7 @@ index dad1132447..fbb2496f26 100644
                  credential_masking,
                  credential_masking_custom_providers: credential_masking,
                  capability_discovery_sandbox: true,
-@@ -1543,7 +1539,6 @@ mod tests {
+@@ -1571,7 +1567,6 @@ mod tests {
              capabilities,
              EnvironmentCapabilities {
                  network_proxy_launch: true,
@@ -1361,7 +2727,7 @@ index dad1132447..fbb2496f26 100644
                  credential_masking_custom_providers: false,
                  capability_discovery_sandbox: true,
 diff --git a/codex-rs/exec-server/src/client.rs b/codex-rs/exec-server/src/client.rs
-index e8140904f5..d243b99d99 100644
+index 53743bb518..b42cf3fcc1 100644
 --- a/codex-rs/exec-server/src/client.rs
 +++ b/codex-rs/exec-server/src/client.rs
 @@ -845,31 +845,9 @@ impl ExecServerClient {
@@ -1396,7 +2762,7 @@ index e8140904f5..d243b99d99 100644
      /// Returns shared cached executor metadata, fetching it lazily if initialization omitted it.
      pub async fn environment_info(&self) -> Result<Arc<EnvironmentInfo>, ExecServerError> {
          self.inner
-@@ -1129,7 +1107,6 @@ impl ExecServerClient {
+@@ -1144,7 +1122,6 @@ impl ExecServerClient {
          params: ExecParams,
          network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
      ) -> Result<Session, ExecServerError> {
@@ -1517,7 +2883,7 @@ index 9f4a1cb8b7..0000000000
 -    Ok(account.account)
 -}
 diff --git a/codex-rs/exec/src/lib.rs b/codex-rs/exec/src/lib.rs
-index db35aaa6bb..d771247394 100644
+index 43cf70b21d..ebd37e0fde 100644
 --- a/codex-rs/exec/src/lib.rs
 +++ b/codex-rs/exec/src/lib.rs
 @@ -6,7 +6,6 @@
@@ -1528,7 +2894,7 @@ index db35aaa6bb..d771247394 100644
  mod event_processor;
  mod event_processor_with_human_output;
  pub(crate) mod event_processor_with_jsonl_output;
-@@ -1211,21 +1210,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
+@@ -1218,21 +1217,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
              items,
              output_schema,
          } => {
@@ -1551,6 +2917,103 @@ index db35aaa6bb..d771247394 100644
              let response: TurnStartResponse = send_request_with_response(
                  &client,
                  ClientRequest::TurnStart {
+diff --git a/codex-rs/ext/extension-api/src/lib.rs b/codex-rs/ext/extension-api/src/lib.rs
+index 147b52ff1b..45fdd9f155 100644
+--- a/codex-rs/ext/extension-api/src/lib.rs
++++ b/codex-rs/ext/extension-api/src/lib.rs
+@@ -126,7 +126,6 @@ pub use user_instructions::UserInstructionsProvider;
+ pub use contributors::ToolDispatchInput;
+ 
+ mod model_request;
+-pub use model_request::GuardianAssessment;
+ pub use model_request::ModelRequestContributor;
+ pub use model_request::ModelRequestInput;
+ pub use model_request::ModelRequestKind;
+diff --git a/codex-rs/ext/extension-api/src/model_request.rs b/codex-rs/ext/extension-api/src/model_request.rs
+index 0f477aa99e..67803d28d3 100644
+--- a/codex-rs/ext/extension-api/src/model_request.rs
++++ b/codex-rs/ext/extension-api/src/model_request.rs
+@@ -1,6 +1,5 @@
+ //! Request-scoped interception of model response streams.
+ pub use codex_api::ApiError as ModelResponseError;
+-pub use codex_api::GuardianAssessment;
+ pub use codex_api::ResponseEvent;
+ use futures::stream::BoxStream;
+ use std::collections::HashMap;
+diff --git a/codex-rs/ext/guardian-reviewer/src/outcome.rs b/codex-rs/ext/guardian-reviewer/src/outcome.rs
+index 3f6b378af9..738ae555f2 100644
+--- a/codex-rs/ext/guardian-reviewer/src/outcome.rs
++++ b/codex-rs/ext/guardian-reviewer/src/outcome.rs
+@@ -92,40 +92,43 @@ pub enum GuardianReviewSessionOutcome {
+     StaleAuthorization,
+ }
+ 
+-impl GuardianReviewSessionOutcome {
+-    /// Extract the assessment produced by one reviewer session, preserving failures.
+-    pub fn into_assessment(self) -> Result<GuardianAssessment, GuardianReviewError> {
+-        match self {
+-            Self::Completed(Ok(Some(message))) => {
+-                crate::parse_guardian_assessment(&message).map_err(GuardianReviewError::parse)
++impl From<GuardianReviewSessionOutcome> for GuardianReviewOutcome {
++    fn from(outcome: GuardianReviewSessionOutcome) -> Self {
++        match outcome {
++            GuardianReviewSessionOutcome::Completed(Ok(Some(message))) => {
++                match crate::parse_guardian_assessment(&message) {
++                    Ok(assessment) => Self::Completed(assessment),
++                    Err(error) => Self::Error(GuardianReviewError::parse(error)),
++                }
++            }
++            GuardianReviewSessionOutcome::Completed(Ok(None)) => {
++                Self::Error(GuardianReviewError::session(anyhow::anyhow!(
++                    "guardian review completed without an assessment payload"
++                )))
++            }
++            GuardianReviewSessionOutcome::Completed(Err(error)) => {
++                Self::Error(GuardianReviewError::session(error))
++            }
++            GuardianReviewSessionOutcome::PromptBuildFailed(error) => {
++                Self::Error(GuardianReviewError::prompt_build(error))
++            }
++            GuardianReviewSessionOutcome::InputBudgetExceeded => {
++                Self::Error(GuardianReviewError::InputBudgetExceeded)
+             }
+-            Self::Completed(Ok(None)) => Err(GuardianReviewError::session(anyhow::anyhow!(
+-                "guardian review completed without an assessment payload"
+-            ))),
+-            Self::Completed(Err(error)) => Err(GuardianReviewError::session(error)),
+-            Self::PromptBuildFailed(error) => Err(GuardianReviewError::prompt_build(error)),
+-            Self::InputBudgetExceeded => Err(GuardianReviewError::InputBudgetExceeded),
+-            Self::SessionFailed {
++            GuardianReviewSessionOutcome::SessionFailed {
+                 error,
+                 error_info,
+                 retry_at,
+-            } => Err(GuardianReviewError::Session {
++            } => Self::Error(GuardianReviewError::Session {
+                 message: error.to_string(),
+                 error_info,
+                 retry_at,
+             }),
+-            Self::TimedOut => Err(GuardianReviewError::Timeout),
+-            Self::Aborted => Err(GuardianReviewError::Cancelled),
+-            Self::StaleAuthorization => Err(GuardianReviewError::StaleAuthorization),
+-        }
+-    }
+-}
+-
+-impl From<GuardianReviewSessionOutcome> for GuardianReviewOutcome {
+-    fn from(outcome: GuardianReviewSessionOutcome) -> Self {
+-        match outcome.into_assessment() {
+-            Ok(assessment) => Self::Completed(assessment),
+-            Err(error) => Self::Error(error),
++            GuardianReviewSessionOutcome::TimedOut => Self::Error(GuardianReviewError::Timeout),
++            GuardianReviewSessionOutcome::Aborted => Self::Error(GuardianReviewError::Cancelled),
++            GuardianReviewSessionOutcome::StaleAuthorization => {
++                Self::Error(GuardianReviewError::StaleAuthorization)
++            }
+         }
+     }
+ }
 diff --git a/codex-rs/ext/guardian-v3/BUILD.bazel b/codex-rs/ext/guardian-v3/BUILD.bazel
 deleted file mode 100644
 index 4c3d858d75..0000000000
@@ -1615,7 +3078,7 @@ index 203762e654..0000000000
 -    LocalBoard::new(sqlite, root).with_options(local_board_options())
 -}
 diff --git a/codex-rs/features/src/feature_configs.rs b/codex-rs/features/src/feature_configs.rs
-index 71ee10be44..0d0bcf5b98 100644
+index 1995ea9945..3ff3bc8d36 100644
 --- a/codex-rs/features/src/feature_configs.rs
 +++ b/codex-rs/features/src/feature_configs.rs
 @@ -284,20 +284,6 @@ where
@@ -1640,7 +3103,7 @@ index 71ee10be44..0d0bcf5b98 100644
  #[serde(deny_unknown_fields)]
  pub struct MultiAgentV2ConfigToml {
 diff --git a/codex-rs/features/src/lib.rs b/codex-rs/features/src/lib.rs
-index 8576b87693..94a696d828 100644
+index 129b09668c..f079c08401 100644
 --- a/codex-rs/features/src/lib.rs
 +++ b/codex-rs/features/src/lib.rs
 @@ -28,7 +28,6 @@ pub use feature_configs::GuardianV2ConfigToml;
@@ -1651,7 +3114,7 @@ index 8576b87693..94a696d828 100644
  pub use feature_configs::MultiAgentV2ConfigToml;
  pub use feature_configs::NetworkProxyConfigToml;
  pub use feature_configs::NetworkProxyDomainPermissionToml;
-@@ -383,8 +382,6 @@ pub enum Feature {
+@@ -398,8 +397,6 @@ pub enum Feature {
      SendMessageToUserAsync,
      /// Enable automatic review for approval prompts.
      GuardianApproval,
@@ -1660,7 +3123,7 @@ index 8576b87693..94a696d828 100644
      /// Removed compatibility flag for always-on thread-owned Guardian context.
      GuardianThreadContext,
      /// Reuse encrypted parent compaction when restarting Guardian review sessions.
-@@ -404,8 +401,6 @@ pub enum Feature {
+@@ -421,8 +418,6 @@ pub enum Feature {
      GuardianV2,
      /// Run Decisions alongside Guardian V2 for measurement without changing approvals.
      GuardianV2DecisionsComparison,
@@ -1669,7 +3132,7 @@ index 8576b87693..94a696d828 100644
      /// Removed compatibility flag for the unused Guardian extension prototype.
      GuardianExt,
      /// Enable persisted thread goals and automatic goal continuation.
-@@ -590,6 +585,16 @@ impl Features {
+@@ -607,6 +602,17 @@ impl Features {
      }
  
      pub fn enabled(&self, f: Feature) -> bool {
@@ -1678,6 +3141,7 @@ index 8576b87693..94a696d828 100644
 +            Feature::GuardianApproval
 +                | Feature::GuardianV2
 +                | Feature::GuardianV2DecisionsComparison
++                | Feature::GuardianNativeMultiAgentHistory
 +                | Feature::CliDaybreak
 +                | Feature::ApiKeyCyberAccessPrograms
 +        ) {
@@ -1686,7 +3150,7 @@ index 8576b87693..94a696d828 100644
          self.enabled.contains(&f)
      }
  
-@@ -905,8 +910,6 @@ pub struct FeaturesToml {
+@@ -922,8 +928,6 @@ pub struct FeaturesToml {
      )]
      pub guardianv2: Option<FeatureToml<GuardianV2ConfigToml>>,
      #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1695,7 +3159,7 @@ index 8576b87693..94a696d828 100644
      pub multi_agent_v2: Option<FeatureToml<MultiAgentV2ConfigToml>>,
      #[serde(default, skip_serializing_if = "Option::is_none")]
      pub token_budget: Option<FeatureToml<TokenBudgetConfigToml>>,
-@@ -969,9 +972,6 @@ impl FeaturesToml {
+@@ -986,9 +990,6 @@ impl FeaturesToml {
          {
              entries.insert(Feature::GuardianThreadContext.key().to_string(), enabled);
          }
@@ -1705,7 +3169,7 @@ index 8576b87693..94a696d828 100644
          if let Some(enabled) = self.multi_agent_v2.as_ref().and_then(FeatureToml::enabled) {
              entries.insert(Feature::MultiAgentV2.key().to_string(), enabled);
          }
-@@ -1469,14 +1469,14 @@ pub const FEATURES: &[FeatureSpec] = &[
+@@ -1498,14 +1499,14 @@ pub const FEATURES: &[FeatureSpec] = &[
      FeatureSpec {
          id: Feature::CliDaybreak,
          key: "cli_daybreak",
@@ -1724,7 +3188,7 @@ index 8576b87693..94a696d828 100644
      },
      FeatureSpec {
          id: Feature::EnableRequestCompression,
-@@ -1917,13 +1917,7 @@ pub const FEATURES: &[FeatureSpec] = &[
+@@ -1976,13 +1977,7 @@ pub const FEATURES: &[FeatureSpec] = &[
      FeatureSpec {
          id: Feature::GuardianApproval,
          key: "guardian_approval",
@@ -1739,7 +3203,16 @@ index 8576b87693..94a696d828 100644
          default_enabled: false,
      },
      FeatureSpec {
-@@ -1971,19 +1965,13 @@ pub const FEATURES: &[FeatureSpec] = &[
+@@ -2006,7 +2001,7 @@ pub const FEATURES: &[FeatureSpec] = &[
+     FeatureSpec {
+         id: Feature::GuardianNativeMultiAgentHistory,
+         key: "guardian_native_multi_agent_history",
+-        stage: Stage::UnderDevelopment,
++        stage: Stage::Removed,
+         default_enabled: false,
+     },
+     FeatureSpec {
+@@ -2036,19 +2031,13 @@ pub const FEATURES: &[FeatureSpec] = &[
      FeatureSpec {
          id: Feature::GuardianV2,
          key: "guardianv2",
@@ -1810,10 +3283,10 @@ index c791fb4684..a0fd13decf 100644
  fn guardian_thread_context_is_ignored_with_a_migration_notice() {
      let enabled_context = "[guardianv2]\nthread_context = true";
 diff --git a/codex-rs/network-proxy/src/config.rs b/codex-rs/network-proxy/src/config.rs
-index 91a201f3ef..55841b78bc 100644
+index 2db5eb7358..29a1e4e358 100644
 --- a/codex-rs/network-proxy/src/config.rs
 +++ b/codex-rs/network-proxy/src/config.rs
-@@ -146,10 +146,6 @@ pub struct NetworkProxyConfig {
+@@ -150,10 +150,6 @@ pub struct NetworkProxyConfig {
      pub mode: NetworkMode,
      #[serde(default)]
      pub domains: Option<NetworkDomainPermissions>,
@@ -1824,7 +3297,7 @@ index 91a201f3ef..55841b78bc 100644
      #[serde(default)]
      pub unix_sockets: Option<NetworkUnixSocketPermissions>,
      /// Omission is resolved for the selected sandbox; ordinary proxy execution defaults to false.
-@@ -191,7 +187,6 @@ impl Default for NetworkProxyConfig {
+@@ -195,7 +191,6 @@ impl Default for NetworkProxyConfig {
              dangerously_allow_all_unix_sockets: None,
              mode: NetworkMode::default(),
              domains: None,
@@ -1832,7 +3305,7 @@ index 91a201f3ef..55841b78bc 100644
              unix_sockets: None,
              allow_local_binding: None,
              mitm: false,
-@@ -732,7 +727,6 @@ mod tests {
+@@ -736,7 +731,6 @@ mod tests {
                  dangerously_allow_all_unix_sockets: None,
                  mode: NetworkMode::Full,
                  domains: None,
@@ -2083,10 +3556,10 @@ index 332d8a99c0..ec327bb902 100644
          };
          // Domain permissions serialize as a sorted map.
 diff --git a/codex-rs/network-proxy/src/runtime.rs b/codex-rs/network-proxy/src/runtime.rs
-index cd09549cb4..c70c4dc39c 100644
+index 2c826c4eb3..9430271ff1 100644
 --- a/codex-rs/network-proxy/src/runtime.rs
 +++ b/codex-rs/network-proxy/src/runtime.rs
-@@ -181,7 +181,6 @@ pub struct ConfigState {
+@@ -184,7 +184,6 @@ pub struct ConfigState {
      pub(crate) brokerage_created_default_allowlist: bool,
      pub allow_set: DomainPatternSet,
      pub deny_set: DomainPatternSet,
@@ -2094,7 +3567,7 @@ index cd09549cb4..c70c4dc39c 100644
      pub mitm: Option<Arc<MitmState>>,
      pub mitm_hooks: MitmHooksByHost,
      pub constraints: NetworkProxyConstraints,
-@@ -817,12 +816,11 @@ impl NetworkProxyState {
+@@ -862,12 +861,11 @@ impl NetworkProxyState {
              Ok(host) => host,
              Err(_) => return Ok(HostBlockDecision::Blocked(HostBlockReason::NotAllowed)),
          };
@@ -2108,7 +3581,7 @@ index cd09549cb4..c70c4dc39c 100644
                  guard.allow_set.clone(),
                  // Keep explicit controller restrictions even if the executor launched with true.
                  allow_local_binding
-@@ -838,15 +836,13 @@ impl NetworkProxyState {
+@@ -883,15 +881,13 @@ impl NetworkProxyState {
          // Decision order matters:
          //  1) explicit deny always wins
          //  2) local/private networking is opt-in (defense-in-depth)
@@ -2126,7 +3599,7 @@ index cd09549cb4..c70c4dc39c 100644
          if !allow_local_binding {
              // If the intent is "prevent access to local/internal networks", we must not rely solely
              // on string checks like `localhost` / `127.0.0.1`. Attackers can use DNS rebinding or
-@@ -1385,7 +1381,6 @@ pub(crate) fn network_proxy_state_for_policy(
+@@ -1430,7 +1426,6 @@ pub(crate) fn network_proxy_state_for_policy(
          constraints: NetworkProxyConstraints::default(),
          deny_set: crate::policy::compile_denylist(&config.denied_domains().unwrap_or_default())
              .unwrap(),
@@ -2135,10 +3608,10 @@ index cd09549cb4..c70c4dc39c 100644
          mitm_hooks: crate::mitm_hook::compile_mitm_hooks(&config).unwrap(),
          config,
 diff --git a/codex-rs/network-proxy/src/state.rs b/codex-rs/network-proxy/src/state.rs
-index 262b7270c2..b31367170e 100644
+index fe94a577e3..a2f029c2a6 100644
 --- a/codex-rs/network-proxy/src/state.rs
 +++ b/codex-rs/network-proxy/src/state.rs
-@@ -92,7 +92,6 @@ pub fn build_config_state(
+@@ -93,7 +93,6 @@ pub fn build_config_state(
          .map_err(NetworkProxyConstraintError::into_anyhow)?;
      let deny_set = compile_denylist(&denied_domains)?;
      let allow_set = compile_allowlist(&allowed_domains)?;
@@ -2146,7 +3619,7 @@ index 262b7270c2..b31367170e 100644
      let mitm_hooks = compile_mitm_hooks(&config)?;
      let mitm = if config.mitm {
          Some(Arc::new(MitmState::new(MitmUpstreamConfig {
-@@ -108,7 +107,6 @@ pub fn build_config_state(
+@@ -109,7 +108,6 @@ pub fn build_config_state(
          brokerage_created_default_allowlist,
          allow_set,
          deny_set,
@@ -2154,8 +3627,20 @@ index 262b7270c2..b31367170e 100644
          mitm,
          mitm_hooks,
          constraints,
+diff --git a/codex-rs/otel/src/events/session_telemetry.rs b/codex-rs/otel/src/events/session_telemetry.rs
+index ced543ac75..53dbe31737 100644
+--- a/codex-rs/otel/src/events/session_telemetry.rs
++++ b/codex-rs/otel/src/events/session_telemetry.rs
+@@ -1409,7 +1409,6 @@ impl SessionTelemetry {
+             ResponseEvent::ServerModel(_) => "server_model".into(),
+             ResponseEvent::ModelVerifications(_) => "model_verifications".into(),
+             ResponseEvent::TurnModerationMetadata(_) => "turn_moderation_metadata".into(),
+-            ResponseEvent::GuardianAssessment(_) => "guardian_assessment".into(),
+             ResponseEvent::SafetyBuffering(_) => "safety_buffering".into(),
+             ResponseEvent::ServerReasoningIncluded(_) => "server_reasoning_included".into(),
+             ResponseEvent::RateLimits(_) => "rate_limits".into(),
 diff --git a/codex-rs/protocol/src/openai_models/guardian_v2.rs b/codex-rs/protocol/src/openai_models/guardian_v2.rs
-index 6a80d8dce2..c13a0dca9b 100644
+index d2cd8ceb43..c0373a29aa 100644
 --- a/codex-rs/protocol/src/openai_models/guardian_v2.rs
 +++ b/codex-rs/protocol/src/openai_models/guardian_v2.rs
 @@ -10,8 +10,8 @@ use super::ReasoningEffort;
@@ -2169,10 +3654,10 @@ index 6a80d8dce2..c13a0dca9b 100644
  }
  
 diff --git a/codex-rs/protocol/src/protocol.rs b/codex-rs/protocol/src/protocol.rs
-index 2ac7fe12a8..6d3b04a4d0 100644
+index 8c419c536c..407afb3258 100644
 --- a/codex-rs/protocol/src/protocol.rs
 +++ b/codex-rs/protocol/src/protocol.rs
-@@ -1653,12 +1653,6 @@ pub enum EventMsg {
+@@ -1701,12 +1701,6 @@ pub enum EventMsg {
      RawResponseItem(RawResponseItemEvent),
      RawResponseCompleted(RawResponseCompletedEvent),
  
@@ -2185,7 +3670,7 @@ index 2ac7fe12a8..6d3b04a4d0 100644
      ItemStarted(ItemStartedEvent),
      ItemCompleted(ItemCompletedEvent),
      HookStarted(HookStartedEvent),
-@@ -2050,20 +2044,6 @@ pub struct RawResponseItemEvent {
+@@ -2129,20 +2123,6 @@ pub struct RawResponseItemEvent {
      pub item: ResponseItem,
  }
  
@@ -2207,10 +3692,10 @@ index 2ac7fe12a8..6d3b04a4d0 100644
  ///
  /// Unlike TokenCountEvent, this is not accumulated, estimated, or replayed.
 diff --git a/codex-rs/rollout-trace/src/protocol_event.rs b/codex-rs/rollout-trace/src/protocol_event.rs
-index d68df83e6e..0119d3ace8 100644
+index ed49f8a943..bc4e6f53ed 100644
 --- a/codex-rs/rollout-trace/src/protocol_event.rs
 +++ b/codex-rs/rollout-trace/src/protocol_event.rs
-@@ -421,7 +421,6 @@ pub(crate) fn tool_runtime_trace_event(event: &EventMsg) -> Option<ToolRuntimeTr
+@@ -428,7 +428,6 @@ pub(crate) fn tool_runtime_trace_event(event: &EventMsg) -> Option<ToolRuntimeTr
          | EventMsg::ShutdownComplete
          | EventMsg::EnteredReviewMode(_)
          | EventMsg::ExitedReviewMode(_)
@@ -2218,7 +3703,7 @@ index d68df83e6e..0119d3ace8 100644
          | EventMsg::RawResponseItem(_)
          | EventMsg::RawResponseCompleted(_)
          | EventMsg::ItemStarted(_)
-@@ -502,7 +501,6 @@ pub(crate) fn wrapped_protocol_event_type(event: &EventMsg) -> Option<&'static s
+@@ -509,7 +508,6 @@ pub(crate) fn wrapped_protocol_event_type(event: &EventMsg) -> Option<&'static s
          | EventMsg::PlanUpdate(_)
          | EventMsg::EnteredReviewMode(_)
          | EventMsg::ExitedReviewMode(_)
@@ -2227,10 +3712,10 @@ index d68df83e6e..0119d3ace8 100644
          | EventMsg::RawResponseCompleted(_)
          | EventMsg::ItemStarted(_)
 diff --git a/codex-rs/rollout/src/policy.rs b/codex-rs/rollout/src/policy.rs
-index 93a1e3a5d8..51997cd91b 100644
+index b49049f6e9..6e7f4d73a0 100644
 --- a/codex-rs/rollout/src/policy.rs
 +++ b/codex-rs/rollout/src/policy.rs
-@@ -183,7 +183,6 @@ fn persisted_event_msg(
+@@ -184,7 +184,6 @@ fn persisted_event_msg(
          | EventMsg::ModelVerification(_)
          | EventMsg::TurnModerationMetadata(_)
          | EventMsg::AgentReasoningSectionBreak(_)
@@ -2238,8 +3723,1523 @@ index 93a1e3a5d8..51997cd91b 100644
          | EventMsg::RawResponseItem(_)
          | EventMsg::RawResponseCompleted(_)
          | EventMsg::SessionConfigured(_)
+diff --git a/codex-rs/tui/src/app.rs b/codex-rs/tui/src/app.rs
+index fbc109028f..ca996b0d27 100644
+--- a/codex-rs/tui/src/app.rs
++++ b/codex-rs/tui/src/app.rs
+@@ -264,7 +264,6 @@ mod resume_preparation;
+ mod right_click_paste;
+ pub(crate) use right_click_paste::PasteEnvironment;
+ mod safety_buffering;
+-mod safety_recourse;
+ mod server_version_notice;
+ mod session_lifecycle;
+ mod session_picker;
+diff --git a/codex-rs/tui/src/app/app_server_events.rs b/codex-rs/tui/src/app/app_server_events.rs
+index 9b22c93ddb..aa1564a54d 100644
+--- a/codex-rs/tui/src/app/app_server_events.rs
++++ b/codex-rs/tui/src/app/app_server_events.rs
+@@ -166,18 +166,8 @@ impl App {
+     async fn handle_server_notification_event(
+         &mut self,
+         app_server_client: &AppServerSession,
+-        mut notification: ServerNotification,
++        notification: ServerNotification,
+     ) {
+-        if let ServerNotification::TurnModerationMetadata(metadata) = &mut notification
+-            && (!super::safety_recourse::supports_server(app_server_client)
+-                || self
+-                    .primary_thread_id
+-                    .is_none_or(|id| id.to_string() != metadata.thread_id))
+-            && let Some(metadata) = metadata.metadata.as_object_mut()
+-        {
+-            metadata.remove("safety_block");
+-            metadata.remove("safety_recourse");
+-        }
+         // A picker can leave an old runtime's close notification queued while the same thread
+         // is resumed. Thread IDs survive reloads, so confirm that the displayed thread is still
+         // unloaded before routing a close that would exit the TUI or switch away from it.
+diff --git a/codex-rs/tui/src/app/event_dispatch.rs b/codex-rs/tui/src/app/event_dispatch.rs
+index 550965d65e..67cd3f713e 100644
+--- a/codex-rs/tui/src/app/event_dispatch.rs
++++ b/codex-rs/tui/src/app/event_dispatch.rs
+@@ -635,7 +635,16 @@ impl App {
+                             } else {
+                                 None
+                             };
+-                            self.detach_current_thread_for_fork(app_server, forked.session.thread_id).await;
++                            if !app_server.uses_embedded_app_server() {
++                                // Daemon tasks can start while the fork RPC is pending.
++                                for id in self.thread_event_channels.keys().copied()
++                                    .chain(self.agent_navigation.tracked_thread_ids())
++                                    .filter(|id| !self.side_threads.contains_key(id))
++                                {
++                                    self.agents_overview.dispatched_requests.entry(id).or_default();
++                                }
++                            }
++                            self.detach_current_thread_for_navigation(app_server, Some(forked.session.thread_id)).await;
+                             match self
+                                 .replace_chat_widget_with_app_server_thread(
+                                     tui,
+@@ -1241,16 +1250,6 @@ impl App {
+                 )
+                 .await;
+             }
+-            AppEvent::ContinueSafetyRecourse {
+-                thread_id,
+-                turn_id,
+-                prompt,
+-            } => {
+-                super::safety_recourse::continue_with_rewrite(
+-                    self, tui, app_server, thread_id, turn_id, prompt,
+-                )
+-                .await;
+-            }
+             AppEvent::AppendMessageHistoryEntry { thread_id, text } => {
+                 self.append_message_history_entry(thread_id, text);
+             }
+diff --git a/codex-rs/tui/src/app/safety_recourse.rs b/codex-rs/tui/src/app/safety_recourse.rs
+deleted file mode 100644
+index 121fd47524..0000000000
+--- a/codex-rs/tui/src/app/safety_recourse.rs
++++ /dev/null
+@@ -1,128 +0,0 @@
+-//! Check recourse availability and submit selected follow-ups on verified forks.
+-
+-use super::session_lifecycle::ThreadAttachPresentation;
+-use super::*;
+-use crate::app_server_session::ForkGoalContinuation;
+-use color_eyre::eyre::OptionExt;
+-use color_eyre::eyre::ensure;
+-
+-pub(super) fn supports_server(app_server: &AppServerSession) -> bool {
+-    // Remote servers before 0.151.0 silently ignore the required turn trigger.
+-    let minimum = semver::Version::new(/*major*/ 0, /*minor*/ 151, /*patch*/ 0);
+-    let Some(version) = app_server.server_version() else {
+-        return app_server.uses_embedded_app_server();
+-    };
+-    semver::Version::parse(version).is_ok_and(|version| version >= minimum)
+-}
+-
+-pub(super) async fn continue_with_rewrite(
+-    app: &mut App,
+-    tui: &mut tui::Tui,
+-    app_server: &mut AppServerSession,
+-    thread_id: ThreadId,
+-    turn_id: String,
+-    prompt: String,
+-) {
+-    if !supports_server(app_server)
+-        || app.active_thread_id != Some(thread_id)
+-        || app.primary_thread_id != Some(thread_id)
+-        || app.chat_widget.last_turn_id() != Some(turn_id.as_str())
+-        || app.chat_widget.is_user_turn_pending_or_running()
+-        || app.chat_widget.has_queued_follow_up_messages()
+-    {
+-        return;
+-    }
+-    let mut attached_fork = None;
+-    let result = async {
+-        ensure!(
+-            !app.pending_server_profiles.contains_key(&thread_id),
+-            "permissions are still updating"
+-        );
+-        let source = app_server
+-            .thread_read(thread_id, /*include_turns*/ false)
+-            .await?;
+-        let source_turns = app_server
+-            .thread_turns_page(thread_id, /*cursor*/ None, /*limit*/ 2)
+-            .await?;
+-        let is_blocked_turn = |turn: &Turn| turn.id == turn_id && turn.status == TurnStatus::Failed;
+-        ensure!(
+-            !source.ephemeral
+-                && source_turns.data.first().is_some_and(is_blocked_turn)
+-                && (source_turns.data.len() > 1 || source_turns.next_cursor.is_none()),
+-            "the blocked turn is no longer the latest turn"
+-        );
+-        let mut config = app.chat_widget.config_ref().clone();
+-        config.model = Some(app.chat_widget.current_model().to_string());
+-        config.model_reasoning_effort = app.chat_widget.current_reasoning_effort();
+-        config.daybreak_enabled = app.chat_widget.daybreak_enabled;
+-        let selected_profile = app.selected_server_profile(thread_id);
+-        let started = app_server
+-            .fork_thread_at(
+-                &app.local_settings,
+-                config.clone(),
+-                thread_id,
+-                /*last_turn_id*/ None,
+-                /*before_turn_id*/ Some(turn_id.clone()),
+-                // Deferring also copies the source's current goal, beyond the turn cutoff.
+-                ForkGoalContinuation::StartIfIdle,
+-                selected_profile.as_ref(),
+-            )
+-            .await?;
+-        let fork_id = started.session.thread_id;
+-        let fork_turns = app_server
+-            .thread_turns_page(fork_id, /*cursor*/ None, /*limit*/ 1)
+-            .await?;
+-        let latest = app_server
+-            .thread_turns_page(thread_id, /*cursor*/ None, /*limit*/ 1)
+-            .await?;
+-        ensure!(
+-            !started.blocks_direct_input
+-                && started.session.forked_from_id == Some(thread_id)
+-                && latest.data.first().is_some_and(is_blocked_turn)
+-                && (!fork_turns.data.is_empty() || fork_turns.next_cursor.is_none())
+-                && fork_turns.data.first().map(|turn| &turn.id)
+-                    == source_turns.data.get(1).map(|turn| &turn.id),
+-            "the fork boundary could not be verified"
+-        );
+-        app.config = config;
+-        if let Some(input) = app.chat_widget.capture_thread_input_state() {
+-            app.agents_overview.input_states.insert(thread_id, input);
+-        }
+-        app.detach_current_thread_for_fork(app_server, fork_id)
+-            .await;
+-        attached_fork = Some(fork_id);
+-        app.replace_chat_widget_with_app_server_thread(
+-            tui,
+-            started,
+-            ThreadAttachPresentation::SessionLineage,
+-            /*initial_user_message*/ None,
+-        )
+-        .await?;
+-        if selected_profile.is_some() {
+-            app.adopt_inherited_server_selection();
+-        }
+-        ensure!(!app.thread_unavailable(fork_id), "the fork is unavailable");
+-        let turn = app
+-            .chat_widget
+-            .prepare_safety_recourse_rewrite(&prompt)
+-            .ok_or_eyre("the follow-up could not be submitted")?;
+-        app.submit_thread_op(app_server, fork_id, turn).await
+-    }
+-    .await;
+-    match result {
+-        Ok(()) if app.chat_widget.is_user_turn_pending_or_running() => return,
+-        Ok(()) => {} // Submission was rejected and already showed its error.
+-        Err(error) if app.recover_transport_error(&error) && attached_fork.is_some() => return,
+-        Err(_) => {
+-            let text = history_cell::sanitize_user_text((&prompt).into());
+-            let message = format!("Couldn’t start a new chat for this rewrite. {text}");
+-            if !app.chat_widget.handle_turn_start_rejection(message.clone()) {
+-                app.chat_widget.add_error_message(message);
+-            }
+-        }
+-    }
+-    if attached_fork.is_some_and(|fork_id| app.active_thread_id == Some(fork_id)) {
+-        app.chat_widget
+-            .restore_user_message_to_composer(prompt.into());
+-    }
+-}
+diff --git a/codex-rs/tui/src/app/tests/backend_banner_fallback_tests.rs b/codex-rs/tui/src/app/tests/backend_banner_fallback_tests.rs
+index f6b6949f42..42f74c88a6 100644
+--- a/codex-rs/tui/src/app/tests/backend_banner_fallback_tests.rs
++++ b/codex-rs/tui/src/app/tests/backend_banner_fallback_tests.rs
+@@ -332,7 +332,6 @@ async fn backend_banner_fallback_handles_settings_failure_and_queued_manual_sele
+             client,
+             crate::app_server_session::ThreadParamsMode::Embedded,
+         );
+-        assert!(!crate::app::safety_recourse::supports_server(&server));
+         while events.try_recv().is_ok() {}
+         let pending_turn = if use_reserve && error_code.is_some() {
+             app.chat_widget
+diff --git a/codex-rs/tui/src/app/tests/safety_buffering.rs b/codex-rs/tui/src/app/tests/safety_buffering.rs
+index 8fe1861c74..fcd201a8eb 100644
+--- a/codex-rs/tui/src/app/tests/safety_buffering.rs
++++ b/codex-rs/tui/src/app/tests/safety_buffering.rs
+@@ -17,8 +17,6 @@ use codex_protocol::permissions::FileSystemSpecialPath;
+ use codex_protocol::permissions::NetworkSandboxPolicy;
+ use codex_protocol::turn_input::CyberAccessProgram;
+ use codex_utils_absolute_path::test_support::PathExt;
+-use core_test_support::context_snapshot;
+-use core_test_support::context_snapshot::ContextSnapshotOptions;
+ use core_test_support::responses;
+ use core_test_support::responses::ev_assistant_message;
+ use core_test_support::responses::ev_completed;
+@@ -170,150 +168,6 @@ async fn wait_for_turn_completed(
+     }
+ }
+ 
+-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+-async fn safety_recourse_handles_a_policy_block() -> Result<()> {
+-    let (mut app, mut events, _) = make_test_app_with_channels().await;
+-    let model = responses::start_mock_server().await;
+-    app_test_support::MockResponsesConfig::new(&model.uri())
+-        .with_root_config("instructions = 'Help the user.'")
+-        .write(app.config.codex_home.as_path())?;
+-    app.config = app
+-        .rebuild_config_for_cwd(app.config.cwd.to_path_buf())
+-        .await?;
+-    let mut server = crate::start_embedded_app_server_for_picker(&app.config).await?;
+-    let mut tui = crate::tui::test_support::make_test_tui()?;
+-    for (domain, error_domain) in [("cyber", "cyber"), ("bio", "bio"), ("cyber", "bio")] {
+-        let topic = if domain == "cyber" {
+-            "unauthorized_account_or_system_access"
+-        } else {
+-            "risky_biological_activities"
+-        };
+-        let bio_message = "This request has been flagged for possible biological risk.";
+-        let before_block = if domain == "bio" {
+-            ev_assistant_message("partial", "Checking the request.")
+-        } else {
+-            serde_json::json!({"type": "response.metadata", "metadata": {
+-                "type": "safety_buffering", "use_cases": [domain], "reasons": ["policy-check"]
+-            }})
+-        };
+-        let _model_requests = responses::mount_sse_once(
+-            &model,
+-            responses::sse(vec![
+-                ev_response_created("blocked"),
+-                before_block,
+-                serde_json::json!({"type": "response.metadata", "metadata": {
+-                    "openai_chatgpt_moderation_metadata": {"safety_block": {
+-                        "schema_version": 1, "domain": domain, "status": "loading"
+-                    }}
+-                }}),
+-                serde_json::json!({"type": "response.metadata", "metadata": {
+-                    "openai_chatgpt_moderation_metadata": {"safety_recourse": {
+-                        "schema_version": 1, "domain": domain, "source": "user_request",
+-                        "source_message": {"id": format!("{}🔒", "a".repeat(255)), "kind": "ordinary_message", "role": "user"},
+-                        "topic": topic,
+-                        "suggestions": [
+-                            {"label": "Recover an account", "prompt_text": "Help me recover my account safely."},
+-                            {"label": "Protect a system", "prompt_text": "Explain system protection."},
+-                            {"label": "Understand risks", "prompt_text": "Explain account security risks."}
+-                        ]
+-                    }}
+-                }}),
+-                serde_json::json!({"type": "response.failed", "response": {
+-                    "id": "blocked", "status": "failed",
+-                    "error": {"code": format!("{error_domain}_policy"), "message": (error_domain == "bio").then_some(bio_message)}
+-                }}),
+-            ]),
+-        )
+-        .await;
+-        let started = server.start_thread(&app.config).await?;
+-        let source_id = started.session.thread_id;
+-        app.replace_chat_widget_with_app_server_thread(
+-            &mut tui,
+-            started,
+-            ThreadAttachPresentation::SessionLineage,
+-            /*initial_user_message*/ None,
+-        )
+-        .await?;
+-        let selected_model = "gpt-5.1";
+-        app.chat_widget.set_model(selected_model);
+-        submit_prompt(&mut app, "Blocked original prompt");
+-        app.submit_thread_op(&mut server, source_id, next_user_turn_event(&mut events))
+-            .await?;
+-        app.chat_widget
+-            .apply_external_edit(UNSENT_DRAFT.to_string());
+-        loop {
+-            let event = server.next_event().await.expect("moderation metadata");
+-            let is_metadata = matches!(&event.event, AppServerEvent::ServerNotification(notification)
+-            if matches!(notification.as_ref(), ServerNotification::TurnModerationMetadata(_)));
+-            app.handle_backend_event(&server, event).await;
+-            drain_active_thread_events(&mut app);
+-            if is_metadata {
+-                break;
+-            }
+-        }
+-        let loading = render_bottom_popup(&app.chat_widget, /*width*/ 80);
+-        let loading = loading.split(" (").next().unwrap_or_default();
+-        while let Ok(event) = events.try_recv() {
+-            if let AppEvent::InsertHistoryCell(cell) = event {
+-                assert!(!cell.as_any().is::<history_cell::SafetyAccessBlockCell>());
+-            }
+-        }
+-        wait_for_turn_completed(&mut app, &mut server, source_id).await;
+-        let notice = next_history_message(&mut events);
+-        assert!(!render_bottom_popup(&app.chat_widget, /*width*/ 80).contains("This content can"));
+-        if domain != error_domain {
+-            let generic =
+-                history_cell::new_safety_access_block_event().display_lines(/*width*/ 80);
+-            assert_eq!(notice, lines_to_single_string(&generic));
+-            continue;
+-        }
+-        if domain == "bio" {
+-            assert!(loading.contains("Finding an explanation and safer ways to continue…"));
+-            assert!(notice.contains("research and safety considerations."));
+-            continue;
+-        }
+-        insta::assert_snapshot!("safety_recourse", format!("{loading}\n\n{notice}"));
+-        let picker = render_bottom_popup(&app.chat_widget, /*width*/ 80);
+-        let goal = server
+-            .thread_goal_set(
+-                source_id,
+-                Some("Excluded objective".into()),
+-                Some(codex_app_server_protocol::ThreadGoalStatus::Paused),
+-                /*token_budget*/ None,
+-            )
+-            .await?
+-            .goal;
+-        responses::mount_sse_once(&model, responses::sse_completed("rewrite")).await;
+-        let draft = app.chat_widget.capture_thread_input_state().unwrap();
+-        app.chat_widget.handle_key_event(KeyCode::Enter.into());
+-        assert_eq!(render_bottom_popup(&app.chat_widget, /*width*/ 80), picker);
+-        let selection = std::iter::from_fn(|| events.try_recv().ok())
+-            .find(|event| matches!(event, AppEvent::ContinueSafetyRecourse { .. }))
+-            .expect("rewrite selection");
+-        app.handle_event(&mut tui, &mut server, selection).await?;
+-        let fork_id = app.active_thread_id.expect("forked thread");
+-        assert_eq!(server.thread_goal_get(fork_id).await?.goal, None);
+-        assert_eq!(server.thread_goal_get(source_id).await?.goal, Some(goal));
+-        assert_eq!(app.agents_overview.input_states[&source_id], draft);
+-        wait_for_turn_completed(&mut app, &mut server, fork_id).await;
+-        let requests = responses::received_responses_requests(&model).await;
+-        assert_eq!(requests[1].body_json()["model"], selected_model);
+-        insta::assert_snapshot!(
+-            "safety_recourse_request_history",
+-            context_snapshot::format_request_history_snapshot(
+-                "The fork excludes the blocked turn and submits the selected rewrite.",
+-                &requests,
+-                &ContextSnapshotOptions::default().rewrite_known_segments(),
+-            )
+-        );
+-        let header = requests[1].header("x-codex-turn-metadata").unwrap();
+-        let metadata: Value = serde_json::from_str(&header)?;
+-        assert_eq!(metadata["turn_trigger"], "safety_recourse_follow_up");
+-    }
+-    server.shutdown().await?;
+-    Ok(())
+-}
+-
+ #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+ async fn active_turn_interrupt_is_nonblocking_and_coalesces_repeated_requests() -> Result<()> {
+     Box::pin(interrupt_after_inactive_steer(SteerSwitch::WithinTask)).await
+diff --git a/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse.snap b/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse.snap
+deleted file mode 100644
+index 1cbc45ef1d..0000000000
+--- a/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse.snap
++++ /dev/null
+@@ -1,20 +0,0 @@
+----
+-source: tui/src/app/tests/safety_buffering.rs
+-expression: "format!(\"{loading}\\n\\n{notice}\")"
+----
+-ⓘ This content can’t be shown
+-  We take extra care with some cybersecurity requests. If you’re doing
+-  authorized security work, apply for Daybreak to get broader access.
+-  Learn more: https://help.openai.com/en/articles/20001326
+-  Apply for Daybreak: https://openai.com/form/enterprise-trusted-access-for-
+-  cyber/
+-• Finding an explanation and safer ways to continue…
+-
+-ⓘ This content can’t be shown
+-  We take extra caution with requests that could enable access to accounts or
+-  systems beyond permitted scope. We can still help with an overview of
+-  account security and recovery. If you’re doing authorized security work,
+-  apply for Daybreak to get broader access.
+-  Learn more: https://help.openai.com/en/articles/20001326
+-  Apply for Daybreak: https://openai.com/form/enterprise-trusted-access-for-
+-  cyber/
+diff --git a/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse_request_history.snap b/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse_request_history.snap
+deleted file mode 100644
+index b4ca45aeee..0000000000
+--- a/codex-rs/tui/src/app/tests/snapshots/codex_tui__app__tests__safety_buffering__safety_recourse_request_history.snap
++++ /dev/null
+@@ -1,32 +0,0 @@
+----
+-source: tui/src/app/tests/safety_buffering.rs
+-assertion_line: 284
+-expression: "context_snapshot::format_request_history_snapshot(\"The fork excludes the blocked turn and submits the selected rewrite.\",\n&requests, &ContextSnapshotOptions::default().rewrite_known_segments(),)"
+----
+-Scenario: The fork excludes the blocked turn and submits the selected rewrite.
+-
+-## Window 1
+--- request 1 (turn) --
+-00:message/developer:
+-    Help the user.
+-01:message/developer[3]:
+-    [01] <SKILLS_INSTRUCTIONS>
+-    [02] <PERMISSIONS_INSTRUCTIONS>
+-    [03] <COLLABORATION_MODE>
+-02:message/user:
+-    <ENVIRONMENT_CONTEXT>
+-03:message/user:
+-    Blocked original prompt
+-
+-## Window 2 (after request 1: input diverged at item 03, settings changed (prompt_cache_key))
+--- request 2 (turn) --
+-00:message/developer:
+-    Help the user.
+-01:message/developer[3]:
+-    [01] <SKILLS_INSTRUCTIONS>
+-    [02] <PERMISSIONS_INSTRUCTIONS>
+-    [03] <COLLABORATION_MODE>
+-02:message/user:
+-    <ENVIRONMENT_CONTEXT>
+-03:message/user:
+-    Help me recover my account safely.
+diff --git a/codex-rs/tui/src/app/tests/startup.rs b/codex-rs/tui/src/app/tests/startup.rs
+index b52eae3d1c..c6c48483de 100644
+--- a/codex-rs/tui/src/app/tests/startup.rs
++++ b/codex-rs/tui/src/app/tests/startup.rs
+@@ -1428,7 +1428,6 @@ async fn remote_overview_startup_hides_disabled_older_server_notice() -> Result<
+         ThreadParamsMode::Remote,
+     );
+ 
+-    assert!(crate::app::safety_recourse::supports_server(&session));
+     assert_eq!(
+         app.initialize_server_version_notice("2.1.0", session.server_version()),
+         None
+diff --git a/codex-rs/tui/src/app/thread_routing.rs b/codex-rs/tui/src/app/thread_routing.rs
+index e4ecae0ec9..55042b535e 100644
+--- a/codex-rs/tui/src/app/thread_routing.rs
++++ b/codex-rs/tui/src/app/thread_routing.rs
+@@ -118,30 +118,6 @@ impl App {
+         }
+     }
+ 
+-    pub(super) async fn detach_current_thread_for_fork(
+-        &mut self,
+-        app_server: &mut AppServerSession,
+-        fork_id: ThreadId,
+-    ) {
+-        if !app_server.uses_embedded_app_server() {
+-            // Daemon tasks can start while the fork RPC is pending.
+-            for id in self
+-                .thread_event_channels
+-                .keys()
+-                .copied()
+-                .chain(self.agent_navigation.tracked_thread_ids())
+-                .filter(|id| !self.side_threads.contains_key(id))
+-            {
+-                self.agents_overview
+-                    .dispatched_requests
+-                    .entry(id)
+-                    .or_default();
+-            }
+-        }
+-        self.detach_current_thread_for_navigation(app_server, Some(fork_id))
+-            .await;
+-    }
+-
+     pub(super) async fn activate_thread_for_replay(
+         &mut self,
+         thread_id: ThreadId,
+diff --git a/codex-rs/tui/src/app/user_turn_submission.rs b/codex-rs/tui/src/app/user_turn_submission.rs
+index 229d21e22b..4f41521265 100644
+--- a/codex-rs/tui/src/app/user_turn_submission.rs
++++ b/codex-rs/tui/src/app/user_turn_submission.rs
+@@ -11,7 +11,6 @@ pub(super) async fn try_submit_user_turn(
+     op: &AppCommand,
+ ) -> Result<bool> {
+     let AppCommand::UserTurn {
+-        turn_trigger,
+         client_user_message_id,
+         items,
+         cwd,
+@@ -29,9 +28,6 @@ pub(super) async fn try_submit_user_turn(
+         return Ok(false);
+     };
+     if let Some(turn_id) = app.active_turn_id_for_thread(thread_id).await {
+-        if *turn_trigger != "user" {
+-            color_eyre::eyre::bail!("the fork already has an active turn");
+-        }
+         let mut steer_turn_id = turn_id;
+         let mut retried_after_turn_mismatch = false;
+         loop {
+@@ -159,7 +155,6 @@ pub(super) async fn try_submit_user_turn(
+     let response = app_server
+         .turn_start(
+             thread_id,
+-            turn_trigger,
+             client_user_message_id.clone(),
+             items.to_vec(),
+             cwd.clone(),
+diff --git a/codex-rs/tui/src/app_command.rs b/codex-rs/tui/src/app_command.rs
+index d67471c057..f1f3cb2e14 100644
+--- a/codex-rs/tui/src/app_command.rs
++++ b/codex-rs/tui/src/app_command.rs
+@@ -117,7 +117,6 @@ pub(crate) enum AppCommand {
+         command: String,
+     },
+     UserTurn {
+-        turn_trigger: &'static str,
+         client_user_message_id: String,
+         items: Vec<UserInput>,
+         cwd: PathBuf,
+@@ -225,7 +224,6 @@ impl AppCommand {
+ 
+     #[allow(clippy::too_many_arguments)]
+     pub(crate) fn user_turn(
+-        turn_trigger: &'static str,
+         client_user_message_id: String,
+         items: Vec<UserInput>,
+         cwd: PathBuf,
+@@ -239,7 +237,6 @@ impl AppCommand {
+         collaboration_mode: Option<CollaborationMode>,
+     ) -> Self {
+         Self::UserTurn {
+-            turn_trigger,
+             client_user_message_id,
+             items,
+             cwd,
+diff --git a/codex-rs/tui/src/app_event.rs b/codex-rs/tui/src/app_event.rs
+index 2adc3036ae..07505dc770 100644
+--- a/codex-rs/tui/src/app_event.rs
++++ b/codex-rs/tui/src/app_event.rs
+@@ -466,13 +466,6 @@ pub(crate) enum AppEvent {
+         prompt: UserMessage,
+     },
+ 
+-    /// Fork before a blocked turn and send the selected safer follow-up.
+-    ContinueSafetyRecourse {
+-        thread_id: ThreadId,
+-        turn_id: String,
+-        prompt: String,
+-    },
+-
+     /// Deliver a synthetic history lookup response to a specific thread channel.
+     ThreadHistoryEntryResponse {
+         thread_id: ThreadId,
+diff --git a/codex-rs/tui/src/app_server_session.rs b/codex-rs/tui/src/app_server_session.rs
+index 683e7328e2..8d2ead6f7d 100644
+--- a/codex-rs/tui/src/app_server_session.rs
++++ b/codex-rs/tui/src/app_server_session.rs
+@@ -1518,7 +1518,6 @@ impl AppServerSession {
+     pub(crate) async fn turn_start(
+         &mut self,
+         thread_id: ThreadId,
+-        turn_trigger: &str,
+         client_user_message_id: String,
+         items: Vec<UserInput>,
+         cwd: PathBuf,
+@@ -1537,7 +1536,7 @@ impl AppServerSession {
+         let request_id = self.next_request_id();
+         let mut params = TurnStartParams {
+             thread_id: thread_id.to_string(),
+-            turn_trigger: Some(turn_trigger.to_string()),
++            turn_trigger: Some("user".to_string()),
+             client_user_message_id: Some(client_user_message_id),
+             input: items,
+             output_schema,
+@@ -3286,7 +3285,6 @@ mod tests {
+         let (turn, sent_params) = tokio::join!(
+             app_server.turn_start(
+                 thread_id,
+-                "user",
+                 client_user_message_id.clone(),
+                 input.clone(),
+                 test_path_buf("/local/workspace"),
+diff --git a/codex-rs/tui/src/app_server_session/reasoning_defaults_tests.rs b/codex-rs/tui/src/app_server_session/reasoning_defaults_tests.rs
+index e93065510d..904187679f 100644
+--- a/codex-rs/tui/src/app_server_session/reasoning_defaults_tests.rs
++++ b/codex-rs/tui/src/app_server_session/reasoning_defaults_tests.rs
+@@ -135,7 +135,6 @@ stream_max_retries = 0
+             let turn = app_server
+                 .turn_start(
+                     started.session.thread_id,
+-                    "user",
+                     "tui-user-message".to_string(),
+                     vec![UserInput::Text {
+                         text: "hello".to_string(),
+diff --git a/codex-rs/tui/src/app_server_session/workspace_roots_tests.rs b/codex-rs/tui/src/app_server_session/workspace_roots_tests.rs
+index 56d56be83a..7edfc83ae0 100644
+--- a/codex-rs/tui/src/app_server_session/workspace_roots_tests.rs
++++ b/codex-rs/tui/src/app_server_session/workspace_roots_tests.rs
+@@ -92,7 +92,6 @@ stream_max_retries = 0
+                 app_server
+                     .turn_start(
+                         thread_id,
+-                        "user",
+                         "user-message".to_string(),
+                         vec![UserInput::Text {
+                             text: "hello".to_string(),
+diff --git a/codex-rs/tui/src/chatwidget.rs b/codex-rs/tui/src/chatwidget.rs
+index 68868be0c7..da2d0536ff 100644
+--- a/codex-rs/tui/src/chatwidget.rs
++++ b/codex-rs/tui/src/chatwidget.rs
+@@ -379,7 +379,6 @@ mod review;
+ mod review_popups;
+ use self::review::ReviewState;
+ mod safety_buffering;
+-mod safety_recourse;
+ mod service_tiers;
+ mod settings;
+ mod settings_popups;
+@@ -621,7 +620,6 @@ pub(crate) struct ChatWidget {
+     last_unified_wait: Option<UnifiedExecWaitState>,
+     unified_exec_wait_streak: Option<UnifiedExecWaitStreak>,
+     turn_lifecycle: TurnLifecycleState,
+-    safety_recourse: Option<safety_recourse::PendingRecourse>,
+     realtime_conversation: RealtimeConversationUiState,
+     realtime_conversation_available_for_thread: bool,
+     safety_buffering: SafetyBufferingState,
+diff --git a/codex-rs/tui/src/chatwidget/constructor.rs b/codex-rs/tui/src/chatwidget/constructor.rs
+index 7b2d08c691..8d4bbbd182 100644
+--- a/codex-rs/tui/src/chatwidget/constructor.rs
++++ b/codex-rs/tui/src/chatwidget/constructor.rs
+@@ -193,7 +193,6 @@ impl ChatWidget {
+             last_unified_wait: None,
+             unified_exec_wait_streak: None,
+             turn_lifecycle: TurnLifecycleState::new(prevent_idle_sleep),
+-            safety_recourse: None,
+             realtime_conversation: RealtimeConversationUiState::default(),
+             realtime_conversation_available_for_thread: false,
+             safety_buffering: SafetyBufferingState::default(),
+diff --git a/codex-rs/tui/src/chatwidget/input_flow.rs b/codex-rs/tui/src/chatwidget/input_flow.rs
+index fd7fb8f86c..ce5da8c93b 100644
+--- a/codex-rs/tui/src/chatwidget/input_flow.rs
++++ b/codex-rs/tui/src/chatwidget/input_flow.rs
+@@ -213,7 +213,6 @@ impl ChatWidget {
+                 .queued_user_messages
+                 .push_back(QueuedUserMessage {
+                     user_message,
+-                    prepared_images: None,
+                     action,
+                     delivery: MessageDelivery::Unsent,
+                     pending_pastes,
+@@ -280,7 +279,6 @@ impl ChatWidget {
+                 QueuedInputAction::Literal => {
+                     let QueuedUserMessage {
+                         user_message,
+-                        prepared_images,
+                         pending_pastes,
+                         source,
+                         ..
+@@ -309,12 +307,11 @@ impl ChatWidget {
+                             );
+                     }
+                     submitted_follow_up = self
+-                        .submit_user_message_with_prepared_images(
++                        .submit_user_message_with_history_and_shell_escape_policy(
+                             user_message,
+                             history_record,
+                             ShellEscapePolicy::Disallow,
+                             source,
+-                            prepared_images,
+                         )
+                         .0;
+                     if !submitted_follow_up {
+diff --git a/codex-rs/tui/src/chatwidget/input_submission.rs b/codex-rs/tui/src/chatwidget/input_submission.rs
+index 7d0c7403b5..9998e77583 100644
+--- a/codex-rs/tui/src/chatwidget/input_submission.rs
++++ b/codex-rs/tui/src/chatwidget/input_submission.rs
+@@ -111,27 +111,6 @@ impl ChatWidget {
+         .1
+     }
+ 
+-    pub(crate) fn prepare_safety_recourse_rewrite(&mut self, prompt: &str) -> Option<AppCommand> {
+-        if !self.is_session_configured()
+-            || self.is_user_turn_pending_or_running()
+-            || self.pending_image_submission.is_some()
+-            || self.input_queue.rate_limit_recovery_pending
+-            || self.safety_recourse.is_some()
+-        {
+-            return None;
+-        }
+-        let op = self
+-            .submit_user_message_with_history_and_shell_escape_policy(
+-                prompt.into(),
+-                UserMessageHistoryRecord::UserMessageText,
+-                ShellEscapePolicy::Disallow,
+-                UserMessageSource::SafetyRecourse,
+-            )
+-            .1?;
+-        self.safety_buffering_source = UserMessageSource::Prompt;
+-        Some(op)
+-    }
+-
+     pub(super) fn submit_user_message_with_history_and_shell_escape_policy(
+         &mut self,
+         user_message: UserMessage,
+@@ -161,10 +140,7 @@ impl ChatWidget {
+             return (false, None);
+         }
+         self.empty_state_animation.borrow_mut().dismiss();
+-        if self.input_queue.rate_limit_recovery_pending
+-            || self.pending_image_submission.is_some()
+-            || self.safety_recourse.is_some()
+-        {
++        if self.input_queue.rate_limit_recovery_pending || self.pending_image_submission.is_some() {
+             let model_prompt = source == UserMessageSource::Prompt
+                 && (shell_escape_policy == ShellEscapePolicy::Disallow
+                     || !user_message.text.starts_with('!'));
+@@ -178,7 +154,6 @@ impl ChatWidget {
+                 queue_index,
+                 QueuedUserMessage {
+                     source,
+-                    prepared_images,
+                     ..QueuedUserMessage::new(
+                         user_message,
+                         match shell_escape_policy {
+@@ -476,11 +451,6 @@ impl ChatWidget {
+         let service_tier = self.service_tier_update_for_core();
+         let active_permission_profile = self.config.permissions.active_permission_profile();
+         let op = AppCommand::user_turn(
+-            if source == UserMessageSource::SafetyRecourse {
+-                "safety_recourse_follow_up"
+-            } else {
+-                "user"
+-            },
+             client_user_message_id.clone(),
+             items,
+             self.config.cwd.to_path_buf(),
+@@ -518,11 +488,10 @@ impl ChatWidget {
+             ));
+         }
+ 
+-        // The app submits recourse turns directly to the verified fork.
+-        if source != UserMessageSource::SafetyRecourse && !self.submit_op(op.clone()) {
++        if !self.submit_op(op.clone()) {
+             return (false, None);
+         }
+-        if source != UserMessageSource::QuestionAnswer {
++        if source == UserMessageSource::Prompt {
+             self.bottom_pane.clear_pending_questions();
+         }
+         self.dismiss_backend_banner_for_new_turn();
+diff --git a/codex-rs/tui/src/chatwidget/protocol.rs b/codex-rs/tui/src/chatwidget/protocol.rs
+index be7da50c03..0cb7a7a984 100644
+--- a/codex-rs/tui/src/chatwidget/protocol.rs
++++ b/codex-rs/tui/src/chatwidget/protocol.rs
+@@ -87,14 +87,6 @@ impl ChatWidget {
+                 self.on_thread_settings_updated(notification);
+             }
+             ServerNotification::TurnStarted(notification) => {
+-                if self
+-                    .bottom_pane
+-                    .dismiss_view_by_id(safety_recourse::VIEW_ID)
+-                    && self.bottom_pane.no_modal_or_popup_active()
+-                {
+-                    self.on_modal_or_popup_closed();
+-                }
+-                self.safety_recourse = None;
+                 if from_replay {
+                     self.restore_realtime_transcripts_before_turn(&notification.turn.id);
+                 } else {
+@@ -219,7 +211,7 @@ impl ChatWidget {
+                             notification.error.additional_details,
+                         );
+                     }
+-                } else if from_replay || !safety_recourse::defer_error(self, &notification) {
++                } else {
+                     self.last_non_retry_error = Some((
+                         notification.turn_id.clone(),
+                         notification.error.message.clone(),
+@@ -250,11 +242,6 @@ impl ChatWidget {
+             ServerNotification::ModelSafetyBufferingUpdated(notification) => {
+                 self.on_model_safety_buffering_updated(notification, replay_kind)
+             }
+-            ServerNotification::TurnModerationMetadata(notification) => {
+-                if !from_replay {
+-                    safety_recourse::on_metadata(self, notification);
+-                }
+-            }
+             ServerNotification::AuthRecoveryStarted(notification) => {
+                 self.add_info_message(notification.message, /*hint*/ None)
+             }
+@@ -401,6 +388,7 @@ impl ChatWidget {
+             | ServerNotification::ExternalAgentConfigImportProgress(_)
+             | ServerNotification::ExternalAgentConfigImportCompleted(_)
+             | ServerNotification::FsChanged(_)
++            | ServerNotification::TurnModerationMetadata(_)
+             | ServerNotification::FuzzyFileSearchSessionUpdated(_)
+             | ServerNotification::FuzzyFileSearchSessionCompleted(_)
+             | ServerNotification::ThreadRealtimeItemAdded(_)
+@@ -442,9 +430,6 @@ impl ChatWidget {
+         // client can submit the same text and it still needs its own user cell.
+         self.last_rendered_user_message_display = None;
+         let mut question_drafts = None;
+-        let live_turn =
+-            replay_kind.is_none() && self.last_turn_id() == Some(notification.turn.id.as_str());
+-        let mut recourse = self.safety_recourse.take_if(|_| live_turn);
+         let was_replaying_turn_completion = self.thread_usage.replaying_turn_completion;
+         self.thread_usage.replaying_turn_completion = replay_kind.is_some();
+         match notification.turn.status {
+@@ -519,11 +504,7 @@ impl ChatWidget {
+                 if replay_kind.is_none() {
+                     question_drafts = self.take_question_drafts();
+                 }
+-                let error = notification
+-                    .turn
+-                    .error
+-                    .or_else(|| recourse.as_mut()?.deferred_error.take());
+-                if let Some(error) = error {
++                if let Some(error) = notification.turn.error {
+                     if replay_kind.is_none()
+                         && error.codex_error_info
+                             == Some(AppServerCodexErrorInfo::MisalignmentPolicyViolation)
+@@ -533,8 +514,6 @@ impl ChatWidget {
+                             error.misalignment,
+                         );
+                         self.last_non_retry_error = None;
+-                    } else if safety_recourse::render_failure(self, recourse, &error) {
+-                        self.last_non_retry_error = None;
+                     } else if self.last_non_retry_error.as_ref()
+                         == Some(&(notification.turn.id.clone(), error.message.clone()))
+                     {
+diff --git a/codex-rs/tui/src/chatwidget/rendering.rs b/codex-rs/tui/src/chatwidget/rendering.rs
+index 4f31674e5b..d32142a67a 100644
+--- a/codex-rs/tui/src/chatwidget/rendering.rs
++++ b/codex-rs/tui/src/chatwidget/rendering.rs
+@@ -258,17 +258,14 @@ impl ChatWidget {
+             options.separate_status_line = options.command_popup_placement
+                 != crate::bottom_pane::CommandPopupPlacement::AboveComposer;
+             let bottom_pane = self.bottom_pane.backdrop_with_options(options);
+-            let above_composer = if self.quick_dial_menu {
+-                RenderableItem::Owned(Box::new(self.quick_dial_hud()))
+-            } else if let Some(pending) = &self.safety_recourse
+-                && !self.bottom_pane.has_active_view()
+-            {
+-                RenderableItem::Borrowed(&pending.notice)
+-            } else {
++            if !self.quick_dial_menu {
+                 return bottom_pane;
+-            };
++            }
+             let mut column = FlexRenderable::new();
+-            column.push(/*flex*/ 1, above_composer);
++            column.push(
++                /*flex*/ 1,
++                RenderableItem::Owned(Box::new(self.quick_dial_hud())),
++            );
+             column.push(/*flex*/ 0, bottom_pane);
+             RenderableItem::Owned(Box::new(column))
+         }
+diff --git a/codex-rs/tui/src/chatwidget/safety_buffering.rs b/codex-rs/tui/src/chatwidget/safety_buffering.rs
+index 4b7d512f49..dc3fb0b805 100644
+--- a/codex-rs/tui/src/chatwidget/safety_buffering.rs
++++ b/codex-rs/tui/src/chatwidget/safety_buffering.rs
+@@ -114,7 +114,6 @@ impl ChatWidget {
+         } = notification;
+         if matches!(replay_kind, Some(ReplayKind::ResumeInitialMessages))
+             || !self.turn_lifecycle.agent_turn_running
+-            || self.safety_recourse.is_some()
+             || self.turn_lifecycle.last_turn_id.as_deref() != Some(turn_id.as_str())
+             || self
+                 .safety_buffering
+diff --git a/codex-rs/tui/src/chatwidget/safety_recourse.rs b/codex-rs/tui/src/chatwidget/safety_recourse.rs
+deleted file mode 100644
+index 602ddf46e5..0000000000
+--- a/codex-rs/tui/src/chatwidget/safety_recourse.rs
++++ /dev/null
+@@ -1,145 +0,0 @@
+-//! Turn-scoped safety recourse: match the terminal policy error and offer safer rewrites.
+-
+-mod metadata;
+-
+-use super::*;
+-use codex_app_server_protocol::TurnError;
+-use codex_app_server_protocol::TurnModerationMetadataNotification;
+-use metadata::Domain;
+-use metadata::Recourse;
+-
+-pub(super) const VIEW_ID: &str = "safety-recourse";
+-
+-pub(super) struct PendingRecourse {
+-    domain: Domain,
+-    pub(super) notice: Box<dyn HistoryCell>,
+-    result: Option<Recourse>,
+-    pub(super) deferred_error: Option<TurnError>,
+-}
+-
+-pub(super) fn on_metadata(chat: &mut ChatWidget, notification: TurnModerationMetadataNotification) {
+-    if !chat.turn_lifecycle.agent_turn_running
+-        || !matches_turn(chat, &notification.thread_id, &notification.turn_id)
+-        || chat.side_conversation_active()
+-        || chat.config_ref().ephemeral
+-        || chat.blocks_direct_input
+-        || (chat.safety_recourse.is_some() && chat.has_queued_follow_up_messages())
+-    {
+-        return;
+-    }
+-    let Some((domain, result)) = metadata::parse(notification.metadata) else {
+-        return;
+-    };
+-    let pending = chat.safety_recourse.get_or_insert(PendingRecourse {
+-        domain,
+-        notice: Box::new(match domain {
+-            Domain::Bio => history_cell::new_safety_access_block_event(),
+-            Domain::Cyber => history_cell::new_cyber_policy_error_event(chat.cyber_policy_notice()),
+-        }),
+-        result: None,
+-        deferred_error: None,
+-    });
+-    if pending.domain == domain && pending.result.is_none() {
+-        pending.result = result;
+-        chat.clear_safety_buffering();
+-        chat.bottom_pane.ensure_status_indicator();
+-        chat.set_status_header("Finding an explanation and safer ways to continue…".into());
+-    }
+-}
+-
+-fn matches_turn(chat: &ChatWidget, thread_id: &str, turn_id: &str) -> bool {
+-    chat.last_turn_id() == Some(turn_id)
+-        && chat
+-            .thread_id()
+-            .is_some_and(|id| id.to_string() == thread_id)
+-}
+-
+-fn matches_error(domain: Domain, error: &TurnError) -> bool {
+-    match domain {
+-        Domain::Bio => super::turn_runtime::is_bio_policy_error(&error.message),
+-        Domain::Cyber => error.codex_error_info == Some(AppServerCodexErrorInfo::CyberPolicy),
+-    }
+-}
+-
+-pub(super) fn defer_error(chat: &mut ChatWidget, notification: &ErrorNotification) -> bool {
+-    if matches_turn(chat, &notification.thread_id, &notification.turn_id)
+-        && let Some(pending) = &mut chat.safety_recourse
+-        && matches_error(pending.domain, &notification.error)
+-    {
+-        pending.deferred_error = Some(notification.error.clone());
+-        return true;
+-    }
+-    false
+-}
+-
+-pub(super) fn render_failure(
+-    chat: &mut ChatWidget,
+-    pending: Option<PendingRecourse>,
+-    error: &TurnError,
+-) -> bool {
+-    let Some(pending) = pending else {
+-        return false;
+-    };
+-    let Some(result) = pending.result else {
+-        return false;
+-    };
+-    if chat.has_queued_follow_up_messages() || !matches_error(pending.domain, error) {
+-        return false;
+-    }
+-    let (Some(thread_id), Some(turn_id)) = (chat.thread_id(), chat.last_turn_id()) else {
+-        return false;
+-    };
+-    let mut items = Vec::new();
+-    let subtitle = (!result.suggestions.is_empty())
+-        .then(|| "Choosing a rewrite sends it in a new chat.".into());
+-    for (label, prompt) in result.suggestions {
+-        let turn_id = turn_id.to_string();
+-        items.push(SelectionItem {
+-            name: label,
+-            actions: vec![Box::new(move |tx| {
+-                tx.send(AppEvent::ContinueSafetyRecourse {
+-                    thread_id,
+-                    turn_id: turn_id.clone(),
+-                    prompt: prompt.clone(),
+-                })
+-            })],
+-            ..Default::default()
+-        });
+-    }
+-    let mut cell = match pending.domain {
+-        Domain::Bio => history_cell::new_safety_access_block_event(),
+-        Domain::Cyber => {
+-            let notice = chat.cyber_policy_notice();
+-            if notice == crate::daybreak::Notice::Disabled {
+-                items.push(SelectionItem {
+-                    name: "Enable Daybreak".into(),
+-                    actions: vec![Box::new(move |tx| {
+-                        tx.send(AppEvent::PersistDaybreakSelection {
+-                            thread_id,
+-                            enabled: true,
+-                        })
+-                    })],
+-                    dismiss_on_select: true,
+-                    ..Default::default()
+-                });
+-            }
+-            history_cell::new_cyber_policy_error_event(notice)
+-        }
+-    };
+-    cell.explanation = Some(result.explanation);
+-    chat.input_queue.submit_pending_steers_after_interrupt = false;
+-    chat.finalize_turn();
+-    chat.add_to_history(cell);
+-    if !items.is_empty() {
+-        chat.bottom_pane.show_selection_view(SelectionViewParams {
+-            view_id: Some(VIEW_ID),
+-            title: Some("Here are a few ways I can help:".into()),
+-            subtitle,
+-            items,
+-            ..SelectionViewParams::picker()
+-        });
+-        chat.defer_input_until_settings_applied();
+-    }
+-    chat.request_redraw();
+-    true
+-}
+diff --git a/codex-rs/tui/src/chatwidget/safety_recourse/metadata.rs b/codex-rs/tui/src/chatwidget/safety_recourse/metadata.rs
+deleted file mode 100644
+index 1f8dfaa686..0000000000
+--- a/codex-rs/tui/src/chatwidget/safety_recourse/metadata.rs
++++ /dev/null
+@@ -1,188 +0,0 @@
+-//! Validates and renders the desktop safety-recourse metadata contract.
+-
+-use serde::Deserialize;
+-use serde_json::Value;
+-use std::collections::HashSet;
+-
+-#[derive(Clone, Copy, Deserialize, Eq, PartialEq)]
+-#[serde(rename_all = "snake_case")]
+-pub(super) enum Domain {
+-    Bio,
+-    Cyber,
+-}
+-
+-#[derive(Deserialize)]
+-#[serde(deny_unknown_fields)]
+-struct Block {
+-    schema_version: u8,
+-    domain: Domain,
+-    status: String,
+-}
+-
+-#[derive(Deserialize)]
+-#[serde(deny_unknown_fields)]
+-struct WireResult {
+-    schema_version: u8,
+-    domain: Domain,
+-    source: String,
+-    source_message: SourceMessage,
+-    topic: String,
+-    suggestions: [Suggestion; 3],
+-}
+-
+-#[derive(Deserialize)]
+-#[serde(deny_unknown_fields)]
+-struct SourceMessage {
+-    id: String,
+-    kind: String,
+-    role: String,
+-}
+-
+-#[derive(Deserialize)]
+-#[serde(deny_unknown_fields)]
+-struct Suggestion {
+-    label: String,
+-    prompt_text: String,
+-}
+-
+-pub(super) struct Recourse {
+-    pub(super) explanation: String,
+-    pub(super) suggestions: Vec<(String, String)>,
+-}
+-
+-pub(super) fn parse(mut value: Value) -> Option<(Domain, Option<Recourse>)> {
+-    let object = value.as_object_mut()?;
+-    let recourse = object.remove("safety_recourse").filter(|v| !v.is_null());
+-    let Some(value) = recourse else {
+-        let block: Block = serde_json::from_value(object.remove("safety_block")?).ok()?;
+-        return (block.schema_version == 1 && block.status == "loading")
+-            .then_some((block.domain, None));
+-    };
+-    let wire: WireResult = serde_json::from_value(value).ok()?;
+-    let message = &wire.source_message;
+-    if wire.schema_version != 1 || !valid_text(&message.id, /*max_chars*/ 256) {
+-        return None;
+-    }
+-    let (bio_lead, cyber_lead, bio_offer) = match (
+-        wire.source.as_str(),
+-        message.kind.as_str(),
+-        message.role.as_str(),
+-    ) {
+-        ("user_request", "ordinary_message", "user") => (
+-            "with requests involving ",
+-            "with requests that could enable ",
+-            None,
+-        ),
+-        ("assistant_response", "ordinary_message", "assistant") => (
+-            "when a response would provide information about ",
+-            "when a response could enable ",
+-            None,
+-        ),
+-        ("file_content", "file_tool_call", "assistant")
+-        | ("file_content", "file_tool_result", "tool") => (
+-            "when content from a file involves ",
+-            "when content could enable ",
+-            Some("You can continue without this file or get an overview of "),
+-        ),
+-        ("web_search_result", "web_tool_call", "assistant")
+-        | ("web_search_result", "web_tool_result", "tool") => (
+-            "when a web search result contains information about ",
+-            "when content could enable ",
+-            Some("You can retry without web search or get an overview of "),
+-        ),
+-        ("other_tool", "other_tool_call", "assistant")
+-        | ("other_tool", "other_tool_result", "tool") => {
+-            ("when content involves ", "when content could enable ", None)
+-        }
+-        _ => return None,
+-    };
+-    let (concern, help) = match (wire.domain, wire.topic.as_str()) {
+-        (Domain::Bio, "biological_agent_access_and_safeguards") => (
+-            "access to biological materials and related safety controls",
+-            "access processes and safeguards",
+-        ),
+-        (Domain::Bio, "biological_agent_growth_or_production") => (
+-            "growing or producing biological agents",
+-            "the science and safety considerations",
+-        ),
+-        (Domain::Bio, "risky_biological_experimentation_or_modification") => (
+-            "biological experimentation or modification that could pose safety risks",
+-            "the research goals and safety considerations",
+-        ),
+-        (Domain::Bio, "harmful_biological_exposure_or_release") => (
+-            "biological exposure or release that could cause harm",
+-            "the risks, prevention, and response",
+-        ),
+-        (Domain::Bio, "risky_biological_activities") => (
+-            "biological activities that could pose safety risks",
+-            "biological research and safety considerations",
+-        ),
+-        (Domain::Cyber, "unauthorized_account_or_system_access") => (
+-            "access to accounts or systems beyond permitted scope",
+-            "account security and recovery",
+-        ),
+-        (Domain::Cyber, "high_risk_cybersecurity_tools") => (
+-            "system disruption or the development of high-risk cyber tools",
+-            "system protection and incident recovery",
+-        ),
+-        (Domain::Cyber, "sensitive_data_or_private_communications") => (
+-            "sensitive data collection or private communications monitoring",
+-            "data protection and privacy safeguards",
+-        ),
+-        (Domain::Cyber, "software_vulnerabilities_or_security_weaknesses") => (
+-            "capability or technique development for bypassing security controls",
+-            "safe assessment and remediation",
+-        ),
+-        (Domain::Cyber, "risky_cybersecurity_activities") => (
+-            "cyber activities that pose security or safety risks",
+-            "cybersecurity fundamentals and defensive best practices",
+-        ),
+-        _ => return None,
+-    };
+-    let mut prompts = HashSet::new();
+-    let mut suggestions = Vec::new();
+-    let labels = wire
+-        .suggestions
+-        .each_ref()
+-        .map(|s| s.label.trim().to_lowercase());
+-    for suggestion in &wire.suggestions {
+-        if !valid_text(&suggestion.label, /*max_chars*/ 80)
+-            || !valid_text(&suggestion.prompt_text, /*max_chars*/ 2_000)
+-            || !prompts.insert(suggestion.prompt_text.trim())
+-        {
+-            return None;
+-        }
+-        // Only offer actions the composer can safely submit or restore.
+-        let label = suggestion.label.trim();
+-        let prompt = suggestion.prompt_text.trim();
+-        let label_key = label.to_lowercase();
+-        if suggestion.label.contains(char::is_control)
+-            || suggestion.label.contains(['\u{2028}', '\u{2029}'])
+-            || prompt.len() > 1_000
+-            || prompt.starts_with(['!', '/'])
+-            || crate::async_question_reply::parse(prompt).is_some()
+-            || super::super::skills::contains_tool_mention(prompt)
+-            || (wire.domain == Domain::Cyber && label.eq_ignore_ascii_case("Enable Daybreak"))
+-            || labels.iter().filter(|key| **key == label_key).count() > 1
+-        {
+-            continue;
+-        }
+-        suggestions.push((label.into(), prompt.into()));
+-    }
+-    let overview = "We can still help with an overview of ";
+-    let (lead, offer) = match wire.domain {
+-        Domain::Bio => (bio_lead, bio_offer.unwrap_or(overview)),
+-        Domain::Cyber => (cyber_lead, overview),
+-    };
+-    let explanation = format!("We take extra caution {lead}{concern}. {offer}{help}.");
+-    let result = Recourse {
+-        explanation,
+-        suggestions,
+-    };
+-    Some((wire.domain, Some(result)))
+-}
+-
+-fn valid_text(value: &str, max_chars: usize) -> bool {
+-    let value = value.trim();
+-    !value.is_empty() && value.chars().count() <= max_chars
+-}
+diff --git a/codex-rs/tui/src/chatwidget/session_flow.rs b/codex-rs/tui/src/chatwidget/session_flow.rs
+index a1ff412d4d..90c06a91d2 100644
+--- a/codex-rs/tui/src/chatwidget/session_flow.rs
++++ b/codex-rs/tui/src/chatwidget/session_flow.rs
+@@ -125,7 +125,6 @@ impl ChatWidget {
+             self.clear_thread_usage_state();
+         }
+         self.turn_lifecycle.reset_thread();
+-        self.safety_recourse = None;
+         self.clear_safety_buffering();
+         self.thread_name = session.thread_name.clone();
+         self.current_goal_status_indicator = None;
+diff --git a/codex-rs/tui/src/chatwidget/skills.rs b/codex-rs/tui/src/chatwidget/skills.rs
+index bc04a38fff..5c1350cc6c 100644
+--- a/codex-rs/tui/src/chatwidget/skills.rs
++++ b/codex-rs/tui/src/chatwidget/skills.rs
+@@ -21,7 +21,6 @@ use codex_protocol::parse_command::ParsedCommand;
+ use codex_utils_absolute_path::AbsolutePathBuf;
+ use codex_utils_path_uri::LegacyAppPathString;
+ use codex_utils_path_uri::PathUri;
+-use codex_utils_plugins::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
+ use codex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
+ 
+ impl ChatWidget {
+@@ -209,15 +208,6 @@ pub(crate) fn collect_tool_mentions(
+     mentions
+ }
+ 
+-/// Generated follow-ups must not activate a skill, app, or plugin through their text.
+-pub(super) fn contains_tool_mention(text: &str) -> bool {
+-    let mentions = extract_tool_mentions_from_text(text);
+-    let plugins = extract_tool_mentions_from_text_with_sigil(text, PLUGIN_TEXT_MENTION_SIGIL);
+-    !mentions.names.is_empty()
+-        || !mentions.linked_paths.is_empty()
+-        || !plugins.linked_paths.is_empty()
+-}
+-
+ pub(crate) fn find_skill_mentions_with_tool_mentions(
+     mentions: &ToolMentions,
+     skills: &[SkillMetadata],
+diff --git a/codex-rs/tui/src/chatwidget/snapshots/codex_tui__chatwidget__tests__daybreak_recourse_picker.snap b/codex-rs/tui/src/chatwidget/snapshots/codex_tui__chatwidget__tests__daybreak_recourse_picker.snap
+deleted file mode 100644
+index e1009f3b4f..0000000000
+--- a/codex-rs/tui/src/chatwidget/snapshots/codex_tui__chatwidget__tests__daybreak_recourse_picker.snap
++++ /dev/null
+@@ -1,14 +0,0 @@
+----
+-source: tui/src/chatwidget/tests/status_and_layout.rs
+-expression: "render_bottom_popup(&chat, 80)"
+----
+-  Here are a few ways I can help:
+-  Choosing a rewrite sends it in a new chat.
+-
+-
+-› 1. Overview
+-  2. Recovery
+-  3. Prevention
+-  4. Enable Daybreak
+-
+-  enter select · esc back
+diff --git a/codex-rs/tui/src/chatwidget/tests/composer_submission.rs b/codex-rs/tui/src/chatwidget/tests/composer_submission.rs
+index 4b77a7722d..f1e0b40973 100644
+--- a/codex-rs/tui/src/chatwidget/tests/composer_submission.rs
++++ b/codex-rs/tui/src/chatwidget/tests/composer_submission.rs
+@@ -389,7 +389,6 @@ async fn parent_owned_thread_preserves_queued_input_before_draining() {
+     let (mut chat, _rx, mut op_rx) = make_chatwidget_manual(/*model_override*/ Some("gpt-5")).await;
+     let queued_message = QueuedUserMessage {
+         user_message: UserMessage::from("keep this queued prompt"),
+-        prepared_images: None,
+         action: QueuedInputAction::Plain,
+         delivery: MessageDelivery::Unsent,
+         pending_pastes: vec![("[Image 1]".to_string(), "pasted contents".to_string())],
+@@ -2433,13 +2432,10 @@ async fn reconnect_resumes_unsent_input_and_reconciles_confirmed_submissions() {
+     for pending_start in [false, true] {
+         let (mut chat, _rx, _ops) = make_chatwidget_manual(/*model_override*/ None).await;
+         chat.thread_id = Some(ThreadId::new());
+-        if pending_start {
+-            chat.prepare_safety_recourse_rewrite("first message")
+-                .unwrap();
+-        } else {
++        if !pending_start {
+             handle_turn_started(&mut chat, "turn-1");
+-            chat.submit_user_message("first message".into());
+         }
++        chat.submit_user_message("first message".into());
+         let client_id = if pending_start {
+             chat.input_queue
+                 .pending_user_message_client_id
+@@ -2453,8 +2449,6 @@ async fn reconnect_resumes_unsent_input_and_reconciles_confirmed_submissions() {
+             .push_back(UserMessage::from("follow-up").into());
+         chat.pause_for_disconnect();
+         let mut input = chat.capture_thread_input_state();
+-        let saved_source = input.as_ref().unwrap().safety_buffering_source;
+-        assert_eq!(saved_source, UserMessageSource::Prompt);
+         // Missing history and unrelated receipts never authorize resubmitting uncertain input.
+         for ids in [
+             vec![],
+@@ -2832,7 +2826,6 @@ fn image_preparation_keeps_input_responsive_and_preserves_pending_input() {
+                 if scenario == "rate_limit_recovery" {
+                     chat.input_queue.rate_limit_recovery_pending = true;
+                     chat.on_images_prepared(id);
+-                    std::fs::remove_file(&message.local_images[0].path).unwrap();
+                     assert_eq!(
+                         chat.input_queue
+                             .queued_user_messages
+@@ -2841,10 +2834,6 @@ fn image_preparation_keeps_input_responsive_and_preserves_pending_input() {
+                             .collect::<Vec<_>>(),
+                         vec![message, UserMessage::from("x")],
+                     );
+-                    chat.input_queue.rate_limit_recovery_pending = false;
+-                    assert!(chat.maybe_send_next_queued_input());
+-                    assert_matches!(next_submit_op(&mut ops), Op::UserTurn { items, .. }
+-                        if matches!(items.first(), Some(UserInput::Image { .. })));
+                 } else if scenario == "model_change" {
+                     chat.handle_paste("new draft".into());
+                     let mut models = chat.model_catalog.try_list_models().unwrap();
+diff --git a/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs b/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs
+index 9074c5ec03..00ef7e37ee 100644
+--- a/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs
++++ b/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs
+@@ -185,60 +185,6 @@ async fn daybreak_refusal_offers_enable_for_the_next_turn() {
+     );
+     assert!(ops.try_recv().is_err());
+ 
+-    let error = AppServerTurnError {
+-        message: "blocked".into(),
+-        codex_error_info: Some(CodexErrorInfo::CyberPolicy),
+-        misalignment: None,
+-        additional_details: None,
+-    };
+-    let reply = r#"<send_user_message_question_reply>{"questionItemId":"q","question":"Q","answer":"\u0024google-drive"}</send_user_message_question_reply>"#;
+-    let long_prompt = "界".repeat(334);
+-    for (label, prompt, eligible) in [
+-        ("Hidden\nrow", "Explain access", false),
+-        ("Overview", "Use $connector", false),
+-        ("Overview", "Use [@tool](plugin://tool)", false),
+-        ("Overview", reply, false),
+-        ("Overview", &long_prompt, false),
+-        ("Recovery", "Explain access", false),
+-        ("Enable Daybreak", "Explain access", false),
+-        ("Overview", "Explain access", true),
+-    ] {
+-        handle_turn_started(&mut chat, "recourse");
+-        safety_recourse::on_metadata(
+-            &mut chat,
+-            codex_app_server_protocol::TurnModerationMetadataNotification {
+-                thread_id: thread_id.to_string(),
+-                turn_id: "recourse".into(),
+-                metadata: json!({"safety_recourse": {
+-                    "schema_version": 1, "domain": "cyber", "source": "user_request",
+-                    "source_message": {"id":"1", "kind":"ordinary_message", "role":"user"},
+-                    "topic": "unauthorized_account_or_system_access",
+-                    "suggestions": [
+-                        {"label": label, "prompt_text": prompt},
+-                        {"label": "Recovery", "prompt_text": "Explain account recovery"},
+-                        {"label": "Prevention", "prompt_text": "Explain account protection"}
+-                    ]
+-                }}),
+-            },
+-        );
+-        let pending = chat.safety_recourse.take();
+-        assert!(safety_recourse::render_failure(&mut chat, pending, &error));
+-        let picker = render_bottom_popup(&chat, /*width*/ 80);
+-        assert!(picker.contains("Prevention"));
+-        assert_eq!(picker.contains("3. Prevention"), eligible);
+-        if !eligible {
+-            chat.handle_key_event(KeyCode::Esc.into());
+-        }
+-    }
+-    assert_chatwidget_snapshot!(
+-        "daybreak_recourse_picker",
+-        render_bottom_popup(&chat, /*width*/ 80)
+-    );
+-    chat.handle_key_event(KeyCode::Char('4').into());
+-    assert!(std::iter::from_fn(|| events.try_recv().ok()).any(|event| matches!(
+-        event, AppEvent::PersistDaybreakSelection { thread_id: id, enabled: true } if id == thread_id
+-    )));
+-
+     chat.set_parent_owned_thread();
+     handle_error(
+         &mut chat,
+diff --git a/codex-rs/tui/src/chatwidget/turn_runtime.rs b/codex-rs/tui/src/chatwidget/turn_runtime.rs
+index ef5954a853..d9726d2fc4 100644
+--- a/codex-rs/tui/src/chatwidget/turn_runtime.rs
++++ b/codex-rs/tui/src/chatwidget/turn_runtime.rs
+@@ -11,20 +11,9 @@ const LEGACY_SAFETY_ACCESS_BLOCK_PREFIX: &str =
+ const BIO_POLICY_SAFETY_ACCESS_BLOCK_PREFIX: &str =
+     "This content was flagged for possible biological risk.";
+ 
+-pub(super) fn is_bio_policy_error(message: &str) -> bool {
+-    is_safety_access_block_message(message)
+-        || serde_json::from_str::<serde_json::Value>(message).is_ok_and(|response| {
+-            response["error"]["code"].as_str() == Some("bio_policy")
+-                || response["error"]["message"]
+-                    .as_str()
+-                    .is_some_and(is_safety_access_block_message)
+-        })
+-}
+-
+ fn is_safety_access_block_message(message: &str) -> bool {
+     message.starts_with(LEGACY_SAFETY_ACCESS_BLOCK_PREFIX)
+         || message.starts_with(BIO_POLICY_SAFETY_ACCESS_BLOCK_PREFIX)
+-        || message.starts_with("This request has been flagged for possible biological risk.")
+ }
+ 
+ impl ChatWidget {
+@@ -352,7 +341,6 @@ impl ChatWidget {
+         self.reasoning_header = None;
+         self.clear_context_compaction();
+         self.clear_safety_buffering();
+-        self.safety_recourse = None;
+         // Drop preview-only stream tail content on any termination path before
+         // failed-cell finalization, so transient tail cells are never persisted.
+         self.clear_active_stream_tail();
+@@ -426,19 +414,15 @@ impl ChatWidget {
+         true
+     }
+ 
+-    pub(super) fn cyber_policy_notice(&self) -> crate::daybreak::Notice {
++    pub(super) fn on_cyber_policy_error(&mut self) {
+         let can_enable_daybreak =
+             self.daybreak_account_eligible() && !self.side_conversation_active();
+-        crate::daybreak::notice_for_setting(
++        let notice = crate::daybreak::notice_for_setting(
+             &self.model_catalog.models,
+             self.current_model(),
+             self.daybreak_enabled && can_enable_daybreak,
+             can_enable_daybreak,
+-        )
+-    }
+-
+-    pub(super) fn on_cyber_policy_error(&mut self) {
+-        let notice = self.cyber_policy_notice();
++        );
+         self.input_queue.submit_pending_steers_after_interrupt = false;
+         self.finalize_turn();
+         self.add_to_history(history_cell::new_cyber_policy_error_event(notice));
+@@ -555,7 +539,14 @@ impl ChatWidget {
+             .is_some_and(is_app_server_cyber_policy_error)
+         {
+             self.on_cyber_policy_error();
+-        } else if is_bio_policy_error(&message) {
++        } else if is_safety_access_block_message(&message)
++            || serde_json::from_str::<serde_json::Value>(&message).is_ok_and(|response| {
++                response["error"]["code"].as_str() == Some("bio_policy")
++                    || response["error"]["message"]
++                        .as_str()
++                        .is_some_and(is_safety_access_block_message)
++            })
++        {
+             self.input_queue.submit_pending_steers_after_interrupt = false;
+             self.finalize_turn();
+             self.add_to_history(history_cell::new_safety_access_block_event());
+diff --git a/codex-rs/tui/src/chatwidget/user_messages.rs b/codex-rs/tui/src/chatwidget/user_messages.rs
+index 2cc3331382..729d7982eb 100644
+--- a/codex-rs/tui/src/chatwidget/user_messages.rs
++++ b/codex-rs/tui/src/chatwidget/user_messages.rs
+@@ -65,7 +65,6 @@ pub(super) enum ShellEscapePolicy {
+ pub(super) enum UserMessageSource {
+     Prompt,
+     QuestionAnswer,
+-    SafetyRecourse,
+ }
+ 
+ /// Whether a recovered message can be submitted without risking a duplicate.
+@@ -78,7 +77,6 @@ pub(super) enum MessageDelivery {
+ #[derive(Debug, Clone, PartialEq)]
+ pub(super) struct QueuedUserMessage {
+     pub(super) user_message: UserMessage,
+-    pub(super) prepared_images: Option<Vec<UserInput>>,
+     pub(super) action: QueuedInputAction,
+     pub(super) delivery: MessageDelivery,
+     pub(super) pending_pastes: Vec<(String, String)>,
+@@ -89,7 +87,6 @@ impl QueuedUserMessage {
+     pub(super) fn new(user_message: UserMessage, action: QueuedInputAction) -> Self {
+         Self {
+             user_message,
+-            prepared_images: None,
+             action,
+             delivery: MessageDelivery::Unsent,
+             pending_pastes: Vec::new(),
 diff --git a/codex-rs/tui/src/debug_config.rs b/codex-rs/tui/src/debug_config.rs
-index 01a7802d06..70eb6042b0 100644
+index e7eb4d814a..231278f0c3 100644
 --- a/codex-rs/tui/src/debug_config.rs
 +++ b/codex-rs/tui/src/debug_config.rs
 @@ -557,7 +557,6 @@ fn format_network_constraints(network: &NetworkConstraints) -> String {
@@ -2268,31 +5268,116 @@ index 01a7802d06..70eb6042b0 100644
                      header_injections: Some(vec![NetworkHeaderInjectionToml {
                          host: "api.example.com".to_string(),
                          methods: vec!["POST".to_string()],
-@@ -1070,7 +1065,7 @@ interrupt_message = false
+@@ -1072,7 +1067,7 @@ interrupt_message = false
              "enforce_residency: us (source: {requirements_source})"
          )));
          assert!(rendered.contains(&format!(
--            "experimental_network: enabled=true, domains={{example.com=allow}}, review_domains={{api.example.com}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
-+            "experimental_network: enabled=true, domains={{example.com=allow}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
+-            "network_proxy: enabled=true, domains={{example.com=allow}}, review_domains={{api.example.com}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
++            "network_proxy: enabled=true, domains={{example.com=allow}}, header_injections=1 hosts={{api.example.com}} (source: {requirements_source})"
          )));
          assert!(!rendered.contains("secret-looking-value"));
          assert!(
+diff --git a/codex-rs/tui/src/history_cell/notices.rs b/codex-rs/tui/src/history_cell/notices.rs
+index 9f5e2137f0..06d7b2f13a 100644
+--- a/codex-rs/tui/src/history_cell/notices.rs
++++ b/codex-rs/tui/src/history_cell/notices.rs
+@@ -145,7 +145,6 @@ pub(crate) fn new_server_version_warning(
+ #[derive(Debug)]
+ pub(crate) struct SafetyAccessBlockCell {
+     title: &'static str,
+-    pub(crate) explanation: Option<String>,
+     body: &'static str,
+     actions: &'static [(&'static str, &'static str)],
+ }
+@@ -155,8 +154,7 @@ const SAFETY_ACCESS_BLOCK_LEARN_MORE_URL: &str = "https://help.openai.com/en/art
+ pub(crate) fn new_safety_access_block_event() -> SafetyAccessBlockCell {
+     SafetyAccessBlockCell {
+         title: "This content can't be shown",
+-        explanation: Some("We take extra caution with requests involving biological research and applications that could pose safety risks.".into()),
+-        body: "Eligible researchers can apply for Trusted Access.",
++        body: "We take extra caution with requests involving biological research and applications that could pose safety risks. Eligible researchers can apply for Trusted Access.",
+         actions: &[
+             (
+                 "Trusted Access",
+@@ -173,7 +171,7 @@ pub(crate) fn new_cyber_policy_error_event(
+     use crate::daybreak::Notice;
+     let (body, actions): (_, &'static [(&str, &str)]) = match notice {
+         Notice::Apply => (
+-            "If you’re doing authorized security work, apply for Daybreak to get broader access.",
++            "We take extra care with some cybersecurity requests. If you’re doing authorized security work, apply for Daybreak to get broader access.",
+             &[
+                 ("Learn more", SAFETY_ACCESS_BLOCK_LEARN_MORE_URL),
+                 (
+@@ -197,22 +195,11 @@ pub(crate) fn new_cyber_policy_error_event(
+     };
+     SafetyAccessBlockCell {
+         title: "This content can’t be shown",
+-        explanation: (notice == Notice::Apply)
+-            .then(|| "We take extra care with some cybersecurity requests.".into()),
+         body,
+         actions,
+     }
+ }
+ 
+-impl SafetyAccessBlockCell {
+-    fn message(&self) -> String {
+-        match &self.explanation {
+-            Some(explanation) => format!("{explanation} {}", self.body),
+-            None => self.body.to_owned(),
+-        }
+-    }
+-}
+-
+ impl HistoryCell for SafetyAccessBlockCell {
+     fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
+         visible_lines(self.display_hyperlink_lines(width))
+@@ -222,7 +209,7 @@ impl HistoryCell for SafetyAccessBlockCell {
+         let mut lines = vec![HyperlinkLine::new(
+             vec!["ⓘ ".fg(accent_color()), self.title.bold()].into(),
+         )];
+-        let body = Line::from(vec!["  ".into(), self.message().dim()]);
++        let body = Line::from(vec!["  ".into(), self.body.dim()]);
+         let wrap_width = width.saturating_sub(2).max(1) as usize;
+         let wrapped = adaptive_wrap_line(
+             &body,
+@@ -255,7 +242,7 @@ impl HistoryCell for SafetyAccessBlockCell {
+     }
+ 
+     fn raw_lines(&self) -> Vec<Line<'static>> {
+-        let mut lines = vec![Line::from(self.title), Line::from(self.message())];
++        let mut lines = vec![Line::from(self.title), Line::from(self.body)];
+         lines.extend(
+             self.actions
+                 .iter()
+diff --git a/codex-rs/tui/src/history_cell/tests.rs b/codex-rs/tui/src/history_cell/tests.rs
+index cc7f2f668c..caf701e25e 100644
+--- a/codex-rs/tui/src/history_cell/tests.rs
++++ b/codex-rs/tui/src/history_cell/tests.rs
+@@ -932,8 +932,6 @@ fn safety_access_block_event_snapshot() {
+     let cell = new_safety_access_block_event();
+     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
+     insta::assert_snapshot!(rendered);
+-    let body = cell.display_lines(u16::MAX)[1].to_string();
+-    assert_eq!(cell.raw_lines()[1].to_string(), body.trim_start());
+ }
+ 
+ #[test]
 diff --git a/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap b/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
-index 64120d4aed..7d4455cb1c 100644
+index 0f9464caf5..28d470ab65 100644
 --- a/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
 +++ b/codex-rs/tui/src/snapshots/codex_tui__debug_config__tests__debug_config_requirement_sources.snap
 @@ -25,5 +25,5 @@ Requirements:
    - features: guardian_approval=true (source: MDM managed_config.toml (legacy))
    - mcp_servers: docs (source: MDM managed_config.toml (legacy))
    - enforce_residency: us (source: MDM managed_config.toml (legacy))
--  - experimental_network: enabled=true, domains={example.com=allow}, review_domains={api.example.com}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
-+  - experimental_network: enabled=true, domains={example.com=allow}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
+-  - network_proxy: enabled=true, domains={example.com=allow}, review_domains={api.example.com}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
++  - network_proxy: enabled=true, domains={example.com=allow}, header_injections=1 hosts={api.example.com} (source: MDM managed_config.toml (legacy))
    - permissions.filesystem.deny_read: /home/alice/.gitconfig (source: /etc/codex/requirements.toml)
 diff --git a/sdk/python/src/openai_codex/generated/v2_all.py b/sdk/python/src/openai_codex/generated/v2_all.py
-index ffd4ddef96..9877f4091d 100644
+index c3a2c63d9c..0d3892b868 100644
 --- a/sdk/python/src/openai_codex/generated/v2_all.py
 +++ b/sdk/python/src/openai_codex/generated/v2_all.py
-@@ -2927,13 +2927,6 @@ class NetworkRequirements(BaseModel):
+@@ -2994,13 +2994,6 @@ class NetworkRequirements(BaseModel):
              description="When true, only managed allowlist entries are respected while managed network enforcement is active.",
          ),
      ] = None

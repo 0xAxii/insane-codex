@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-upstream_tag="${1:-rust-v0.165.0}"
+upstream_tag="${1:-rust-v0.166.0}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd "${script_dir}/.." && pwd)"
 patch_file="${repo_dir}/patches/no-client-guardrails.patch"

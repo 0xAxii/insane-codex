@@ -2,7 +2,11 @@
 set -euo pipefail
 
 repo="0xAxii/insane-codex"
-install_dir="${INSANE_CODEX_INSTALL_DIR:-${HOME}/.local/bin}"
+version="${INSANE_CODEX_VERSION:-0.167.0}"
+bin_dir="${INSANE_CODEX_INSTALL_DIR:-${HOME}/.local/bin}"
+libexec_root="${INSANE_CODEX_LIBEXEC_DIR:-${HOME}/.local/libexec}"
+version_dir="${libexec_root}/insane-codex-v${version}"
+binary="${version_dir}/insane-codex"
 release_base="${INSANE_CODEX_RELEASE_BASE:-https://github.com/${repo}/releases/latest/download}"
 
 case "$(uname -s)-$(uname -m)" in
@@ -41,17 +45,20 @@ curl --fail --location --retry 3 --silent --show-error \
   "${release_base}/${asset}" -o "${temp_dir}/${asset}"
 
 tar -C "${temp_dir}" -xzf "${temp_dir}/${asset}"
-mkdir -p "${install_dir}"
-install -m 755 "${temp_dir}/insane-codex" "${install_dir}/insane-codex"
+mkdir -p "${version_dir}" "${bin_dir}"
+install -m 755 "${temp_dir}/insane-codex" "${binary}"
+"${binary}" --version
+ln -sfn "${binary}" "${bin_dir}/insane-codex"
 
-echo "installed: ${install_dir}/insane-codex"
-"${install_dir}/insane-codex" --version
+echo "installed: ${binary}"
+echo "entrypoint: ${bin_dir}/insane-codex"
+"${bin_dir}/insane-codex" --version
 
 case ":${PATH}:" in
-  *":${install_dir}:"*) ;;
+  *":${bin_dir}:"*) ;;
   *)
     echo
     echo "Add this directory to PATH before running insane-codex:"
-    echo "  export PATH=\"${install_dir}:\$PATH\""
+    echo "  export PATH=\"${bin_dir}:\$PATH\""
     ;;
 esac

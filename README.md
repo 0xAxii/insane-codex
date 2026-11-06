@@ -9,16 +9,28 @@ Codex CLI는 터미널에서 AI에게 코드 작성이나 명령 실행을 맡�
 
 ## 무엇이 달라지나요?
 
+### 권한: `--yolo` 동작으로 고정
+
+실행 권한은 항상 승인 요청 없음(`never`)과 전체 접근(`danger-full-access`)으로
+고정됩니다. CLI 옵션, `config.toml`, 권한 프로필, 재개한 세션과 app-server의
+런타임 설정 갱신으로 이 값을 바꿀 수 없습니다. `/permissions`에는 다른 선택지를
+표시하지 않습니다.
+
+다른 명령과 기능은 삭제하지 않습니다. 권한 관련 프로토콜 타입도 기존 클라이언트와
+데이터 형식의 호환성을 위해 남겨 두되, 실행 시 선택 가능한 권한 프로필은
+`:full-access` 하나뿐입니다.
+
 ### Guardian: 실행 승인 요청을 자동으로 검토하는 기능
 
 Codex가 명령을 실행할 때 추가 승인을 요청하는 경우가 있습니다.
 Guardian은 이런 요청을 자동으로 검토해 승인 여부를 판단합니다.
 
-패치를 적용하면 Guardian은 판단을 내리지 않고, 기존 사용자 승인 절차에 처리를 맡깁니다.
+패치를 적용하면 Guardian은 판단을 내리지 않습니다. 이 빌드는 승인 정책도 `never`로
+고정하므로 일반 실행에서 사용자 또는 Guardian 승인 요청을 만들지 않습니다.
 특정 모델에서 자동 검토를 요구하던 조건과 Guardian v2 등록도 제거합니다.
 Guardian v3, 검토 기록 전달, 응답 스트림의 Guardian 평가 처리도 포함하지 않습니다.
-v0.166.0에서 추가된 네이티브 도구와 멀티 에이전트 호출의 사전 검토 경로도
-제거합니다.
+v0.166.0에서 추가된 네이티브 도구와 멀티 에이전트 호출의 사전 검토 경로,
+v0.167.0에서 추가된 `thread/guardianReview` 직접 검토 경로도 제거합니다.
 
 ### Daybreak: 보안 관련 접근 프로그램 선택
 
@@ -29,7 +41,7 @@ Daybreak는 서버의 보안 관련 접근 프로그램(access program) 이름�
 
 ### 안전 차단 후속 처리
 
-v0.166.0의 원본 TUI는 서버가 생물·사이버 정책으로 요청을 차단하면 설명과 안전한
+v0.167.0의 원본 TUI는 서버가 생물·사이버 정책으로 요청을 차단하면 설명과 안전한
 재작성 문구를 표시할 수 있습니다. 재작성 문구를 고르면 차단된 턴 이전에서 새 대화를
 만들어 다시 제출하며, 사이버 차단에서는 Daybreak 활성화도 제안합니다.
 
@@ -40,7 +52,7 @@ v0.166.0의 원본 TUI는 서버가 생물·사이버 정책으로 요청을 차
 
 v0.165.0은 관리 설정의 `review_domains`에 지정된 주소를 일반 허용 규칙보다 먼저
 승인 절차로 보내는 기능을 추가했습니다. 패치는 이 설정과 전달·적용 경로를 제거합니다.
-기존 네트워크 샌드박스와 사용자가 직접 승인하는 기능은 그대로 유지합니다.
+네트워크 관련 명령과 구성 타입은 유지하지만, 로컬 실행 권한은 전체 접근으로 고정됩니다.
 
 ### 재시도할 때의 승인 처리
 
@@ -50,7 +62,7 @@ v0.165.0은 관리 설정의 `review_domains`에 지정된 주소를 일반 허�
 ## 변경 범위
 
 캐시, 외부 도구 연결(MCP), 스킬, 플러그인 등은 기준 버전의 구현을 유지합니다.
-명령의 접근 범위를 제한하는 샌드박스와 사용자 승인 기능도 유지합니다.
+다른 명령과 일반 기능도 유지하며 권한 선택 동작만 전체 접근으로 고정합니다.
 서버와 모델 자체의 정책은 이 패치의 수정 대상에 포함되지 않습니다.
 
 관련 타입과 저장 필드 등 일부 코드는 남아 있습니다. 파일별 변경 내용과
@@ -61,7 +73,8 @@ v0.165.0은 관리 설정의 `review_domains`에 지정된 주소를 일반 허�
 ### macOS와 Linux
 
 macOS와 Linux에서는 설치 스크립트가 운영체제와 CPU를 확인하고 알맞은 실행 파일을
-내려받아 `~/.local/bin/insane-codex`에 설치합니다.
+`~/.local/libexec/insane-codex-v0.167.0/insane-codex`에 설치합니다. 검증이 끝난 뒤
+`~/.local/bin/insane-codex` 심볼릭 링크만 새 버전으로 바꿉니다.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0xAxii/insane-codex/main/scripts/install.sh | bash
@@ -118,14 +131,17 @@ Git과 Rust 빌드 도구가 설치되어 있어야 합니다. 저장소를 받�
 ```bash
 git clone https://github.com/0xAxii/insane-codex.git
 cd insane-codex
-./scripts/build.sh rust-v0.166.0
+./scripts/build.sh rust-v0.167.0
 ```
 
 빌드한 실행 파일을 `insane-codex` 명령으로 등록합니다.
 
 ```bash
-mkdir -p "$HOME/.local/bin"
-ln -sf "$(pwd)/dist/codex-rust-v0.166.0-$(uname -m)" \
+mkdir -p "$HOME/.local/libexec/insane-codex-v0.167.0" "$HOME/.local/bin"
+install -m 755 "$(pwd)/dist/codex-rust-v0.167.0-$(uname -m)" \
+  "$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex"
+"$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex" --version
+ln -sfn "$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex" \
   "$HOME/.local/bin/insane-codex"
 ```
 
@@ -159,7 +175,7 @@ insane-codex
 
 | 항목          | 내용                                                                                       |
 | ------------- | ------------------------------------------------------------------------------------------ |
-| 기준 원본     | OpenAI Codex CLI **0.166.0** (`rust-v0.166.0`)                                             |
+| 기준 원본     | OpenAI Codex CLI **0.167.0** (`rust-v0.167.0`)                                             |
 | 저장소에 포함 | 패치, 빌드·설치 스크립트, 문서                                                             |
 | 실행 파일     | GitHub Releases에서 macOS·Linux·Windows용 파일을 제공합니다.                               |
 | 업데이트      | 자동으로 업데이트되지 않습니다. 새 버전은 패치 적용 여부를 확인한 뒤 다시 빌드해야 합니다. |

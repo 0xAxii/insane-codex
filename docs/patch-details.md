@@ -7,8 +7,8 @@
 | 항목        | 값                                   |
 | ----------- | ------------------------------------ |
 | 원본 저장소 | `openai/codex`                       |
-| 태그        | `rust-v0.166.0`                      |
-| 커밋        | `6ff1e1ca3b`                         |
+| 태그        | `rust-v0.167.0`                      |
+| 커밋        | `086ccc833b`                         |
 | 패치 파일   | `patches/no-client-guardrails.patch` |
 
 패치에는 원본 코드와의 차이가 기록되어 있습니다.
@@ -37,19 +37,19 @@ Guardian 자동 검토
 패치 적용 후:
 
 ```text
-도구가 추가 권한 요청
+CLI·설정·세션의 권한 입력
         │
         v
-기존 호출 형식을 유지한 함수
+approval_policy = never
+permission_profile = :full-access
         │
-        └── 항상 판정 없음(None)
-                    │
-                    v
-              사용자 승인 흐름
+        v
+승인 요청 없이 전체 접근으로 실행
 ```
 
-`None`은 Guardian이 승인 여부를 판단하지 않았다는 뜻입니다.
-이 값을 받은 코드는 기존 사용자 승인 절차에 처리를 맡깁니다.
+Guardian 판단 함수는 호환성을 위해 호출 형식을 유지하지만 항상 `None`을 반환합니다.
+권한 설정은 `never`와 전체 접근으로 고정되며, 다른 권한 프로필과 런타임 갱신은
+실행 권한을 바꾸지 못합니다.
 
 ### Daybreak 요청 경로
 
@@ -82,7 +82,7 @@ Responses API 요청에 access_programs.cyber 없음
 
 ### 안전 차단 후속 처리
 
-원본 v0.166.0 TUI는 서버가 전달한 안전 차단 메타데이터를 읽어 차단 이유와 재작성
+원본 v0.167.0 TUI는 서버가 전달한 안전 차단 메타데이터를 읽어 차단 이유와 재작성
 선택지를 표시합니다. 선택한 문구는 차단된 턴 이전에서 새 대화를 만든 뒤
 `safety_recourse_follow_up` 턴으로 제출됩니다. 사이버 차단에서는 Daybreak 활성화
 선택지도 표시합니다.
@@ -110,6 +110,20 @@ v0.166.0은 네이티브 함수 호출을 실행 전에 Guardian으로 검토하
 - SSE·WebSocket 응답에서 Guardian 평가 메타데이터를 해석하는 코드
 - 요청 단위 확장 기능에 Guardian 평가를 전달하는 코드
 - 실행과 분리된 Guardian 격리 평가 API
+
+### v0.167.0 Guardian 및 권한 추가 경로
+
+v0.167.0은 app-server의 `thread/guardianReview` 요청, 주입된 도구 호출 기록을
+Guardian 입력으로 바꾸는 코드, WebSocket 평가 메타데이터 처리와 모델별 자동 검토
+강제 경로를 추가했습니다. 패치는 다음 경로를 함께 제거하거나 비활성화합니다.
+
+- `thread/guardianReview` 직접 검토 처리와 기록된 도구 호출 변환
+- SSE·WebSocket에서 전달되는 Guardian 평가를 실행 직전 도구 컨텍스트에 연결하는 처리
+- 특정 모델 선택 시 권한을 workspace-write와 auto-review로 바꾸는 처리
+- 세션 설정 갱신과 `command/exec` 요청이 전체 접근 권한을 다른 모드로 바꾸는 처리
+
+프로토콜의 요청·응답 타입은 호환성을 위해 남아 있지만 직접 검토 요청은 사용할 수
+없다는 오류를 반환합니다.
 
 ### v0.165.0에서 추가된 경로
 
@@ -164,6 +178,16 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 
 - `auto_review_required_for_model()`이 항상 `false`를 반환합니다.
 - 특정 모델에서 자동 검토를 의무화하던 조건을 제거합니다.
+
+### 권한 설정과 선택 화면
+
+- core 설정 로더가 CLI, `config.toml`, 프로필과 저장된 세션 값보다 우선해
+  `approval_policy = never`와 `PermissionProfile::Disabled`를 적용합니다.
+- 여기서 `PermissionProfile::Disabled`는 샌드박스가 비활성화된 전체 접근 프로필을
+  뜻합니다.
+- 관리형 네트워크·파일시스템 제한이 실행 권한을 다시 좁히지 않도록 합니다.
+- app-server의 세션 설정 갱신과 개별 `command/exec` 샌드박스 입력을 무시합니다.
+- 권한 카탈로그와 TUI `/permissions`에는 `:full-access`만 남깁니다.
 
 ### `codex-rs/core/src/guardian/decision.rs`
 
@@ -226,6 +250,7 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 - 대화 기록(rollout)과 SQLite의 저장 필드
 - 모델 카탈로그에 있는 사용 가능한 접근 프로그램 정보
 - 일부 Guardian 프로토콜 및 컨텍스트 타입
+- `thread/guardianReview` 등 app-server 호환 프로토콜 타입
 - app-server가 내장하는 압축 형식의 사전 생성 스키마 묶음
 
 이 항목들은 기준 버전의 통신·저장 형식을 유지하기 위해 남겨 둔 것입니다.
@@ -239,12 +264,14 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 
 ## 5. 변경하지 않는 것
 
-- 파일시스템과 네트워크의 접근 범위를 제한하는 샌드박스
-- 사용자에게 실행 여부를 묻는 승인 기능
 - 서버에서 관리하는 계정의 접근 권한과 이용 자격
 - 모델과 API 서버 자체의 안전 정책
 - MCP, 플러그인, 스킬, 웹 검색, 이미지 생성, 멀티 에이전트
 - 모델 카탈로그 및 캐시
+- 권한 관련 프로토콜 타입과 저장 형식
+
+파일시스템·네트워크 권한 모드와 승인 정책은 코드 호환성을 위해 타입을 유지하지만,
+이 빌드의 로컬 실행에서는 전체 접근과 승인 없음으로 고정됩니다.
 
 ## 6. 빌드 스크립트 동작
 
@@ -260,7 +287,7 @@ git apply --check
 패치 적용
         │
         v
-cargo build --release --bin codex
+cargo build --locked --release --bin codex
         │
         v
 dist/에 로컬 바이너리 생성
@@ -271,11 +298,11 @@ dist/에 로컬 바이너리 생성
 
 ## 7. 다른 버전에 적용
 
-패치는 `rust-v0.166.0`을 기준으로 작성했습니다. 다른 태그를 지정할 수는 있지만,
+패치는 `rust-v0.167.0`을 기준으로 작성했습니다. 다른 태그를 지정할 수는 있지만,
 원본 코드가 바뀌면 패치 수정과 재검증이 필요합니다.
 
 ```bash
-./scripts/build.sh rust-v0.167.0
+./scripts/build.sh rust-v0.168.0
 ```
 
 스크립트는 먼저 `git apply --check`를 수행합니다.
@@ -289,7 +316,7 @@ dist/에 로컬 바이너리 생성
 ## 8. 검증 방법
 
 ```bash
-binary="./dist/codex-rust-v0.166.0-$(uname -m)"
+binary="./dist/codex-rust-v0.167.0-$(uname -m)"
 
 "${binary}" --version
 "${binary}" \
@@ -312,5 +339,14 @@ guardianv2
 guardianv2_decisions_comparison
 ```
 
-추가로 `cargo build --release --bin codex`가 성공해야 하며, 실제 네트워크 요청을
+추가로 `cargo build --locked --release --bin codex`가 성공해야 하며, 실제 네트워크 요청을
 검증할 때는 `access_programs` 필드가 생성되지 않는지 확인해야 합니다.
+
+권한 고정은 core의 `load_config_always_uses_yolo_permissions` 테스트로 확인합니다.
+상충하는 설정과 CLI 오버라이드를 넣어도 `never`, 전체 접근, 네트워크 프록시 없음으로
+결정되는지 검사합니다.
+
+공식 릴리스 태그는 워크스페이스 버전을 바꾸면서 `Cargo.lock`의 로컬 패키지 버전을
+다시 쓰지 않습니다. 이 패치는 0.167.0 워크스페이스와 제거된 의존성에 맞춘 잠금 파일
+갱신도 포함합니다. 따라서 패치를 적용한 소스에서는 `cargo check --locked --bin codex`와
+`cargo build --locked --release --bin codex`를 그대로 실행할 수 있습니다.

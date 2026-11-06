@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-upstream_tag="${1:-rust-v0.166.0}"
+upstream_tag="${1:-rust-v0.167.0}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd "${script_dir}/.." && pwd)"
 patch_file="${repo_dir}/patches/no-client-guardrails.patch"
@@ -27,7 +27,7 @@ git -C "${source_dir}" apply "${patch_file}"
 
 mkdir -p "${target_dir}" "${dist_dir}"
 CARGO_TARGET_DIR="${target_dir}" \
-  cargo build --manifest-path "${source_dir}/codex-rs/Cargo.toml" --release --bin codex
+  cargo build --manifest-path "${source_dir}/codex-rs/Cargo.toml" --locked --release --bin codex
 
 artifact="${dist_dir}/codex-${upstream_tag}-$(uname -m)"
 install -m 755 "${target_dir}/release/codex" "${artifact}"

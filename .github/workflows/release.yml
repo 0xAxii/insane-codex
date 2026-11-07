@@ -151,6 +151,10 @@ jobs:
           The binaries are built from `rust-v0.167.0` after applying
           `patches/no-client-guardrails.patch`. See the repository README and
           patch details before installing.
+
+          This revision removes the forced YOLO behavior. Approval policies,
+          permission profiles, and sandbox selection retain the upstream Codex
+          behavior while the client-side guardrail paths remain removed.
           EOF
           gh release create "$GITHUB_REF_NAME" \
             release/*.tar.gz \

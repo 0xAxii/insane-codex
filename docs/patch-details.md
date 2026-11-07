@@ -37,19 +37,17 @@ Guardian 자동 검토
 패치 적용 후:
 
 ```text
-CLI·설정·세션의 권한 입력
+도구가 추가 권한 요청
         │
         v
-approval_policy = never
-permission_profile = :full-access
+Guardian 자동 검토 생략
         │
         v
-승인 요청 없이 전체 접근으로 실행
+기존 사용자 승인 절차
 ```
 
 Guardian 판단 함수는 호환성을 위해 호출 형식을 유지하지만 항상 `None`을 반환합니다.
-권한 설정은 `never`와 전체 접근으로 고정되며, 다른 권한 프로필과 런타임 갱신은
-실행 권한을 바꾸지 못합니다.
+승인 정책, 권한 프로필, 샌드박스와 런타임 권한 갱신은 원본 구현을 유지합니다.
 
 ### Daybreak 요청 경로
 
@@ -111,7 +109,7 @@ v0.166.0은 네이티브 함수 호출을 실행 전에 Guardian으로 검토하
 - 요청 단위 확장 기능에 Guardian 평가를 전달하는 코드
 - 실행과 분리된 Guardian 격리 평가 API
 
-### v0.167.0 Guardian 및 권한 추가 경로
+### v0.167.0 Guardian 추가 경로
 
 v0.167.0은 app-server의 `thread/guardianReview` 요청, 주입된 도구 호출 기록을
 Guardian 입력으로 바꾸는 코드, WebSocket 평가 메타데이터 처리와 모델별 자동 검토
@@ -119,8 +117,7 @@ Guardian 입력으로 바꾸는 코드, WebSocket 평가 메타데이터 처리�
 
 - `thread/guardianReview` 직접 검토 처리와 기록된 도구 호출 변환
 - SSE·WebSocket에서 전달되는 Guardian 평가를 실행 직전 도구 컨텍스트에 연결하는 처리
-- 특정 모델 선택 시 권한을 workspace-write와 auto-review로 바꾸는 처리
-- 세션 설정 갱신과 `command/exec` 요청이 전체 접근 권한을 다른 모드로 바꾸는 처리
+- 특정 모델 선택 시 자동 검토자를 강제로 선택하는 처리
 
 프로토콜의 요청·응답 타입은 호환성을 위해 남아 있지만 직접 검토 요청은 사용할 수
 없다는 오류를 반환합니다.
@@ -178,16 +175,6 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 
 - `auto_review_required_for_model()`이 항상 `false`를 반환합니다.
 - 특정 모델에서 자동 검토를 의무화하던 조건을 제거합니다.
-
-### 권한 설정과 선택 화면
-
-- core 설정 로더가 CLI, `config.toml`, 프로필과 저장된 세션 값보다 우선해
-  `approval_policy = never`와 `PermissionProfile::Disabled`를 적용합니다.
-- 여기서 `PermissionProfile::Disabled`는 샌드박스가 비활성화된 전체 접근 프로필을
-  뜻합니다.
-- 관리형 네트워크·파일시스템 제한이 실행 권한을 다시 좁히지 않도록 합니다.
-- app-server의 세션 설정 갱신과 개별 `command/exec` 샌드박스 입력을 무시합니다.
-- 권한 카탈로그와 TUI `/permissions`에는 `:full-access`만 남깁니다.
 
 ### `codex-rs/core/src/guardian/decision.rs`
 
@@ -270,8 +257,8 @@ v0.165.0에는 Guardian v3의 설정과 로컬 증거 저장소 기반 코드가
 - 모델 카탈로그 및 캐시
 - 권한 관련 프로토콜 타입과 저장 형식
 
-파일시스템·네트워크 권한 모드와 승인 정책은 코드 호환성을 위해 타입을 유지하지만,
-이 빌드의 로컬 실행에서는 전체 접근과 승인 없음으로 고정됩니다.
+파일시스템·네트워크 권한 모드, 승인 정책과 `/permissions` 선택 화면도 원본 동작을
+유지합니다. `--yolo`는 원본 Codex처럼 사용자가 명시적으로 선택할 때만 적용됩니다.
 
 ## 6. 빌드 스크립트 동작
 
@@ -341,10 +328,6 @@ guardianv2_decisions_comparison
 
 추가로 `cargo build --locked --release --bin codex`가 성공해야 하며, 실제 네트워크 요청을
 검증할 때는 `access_programs` 필드가 생성되지 않는지 확인해야 합니다.
-
-권한 고정은 core의 `load_config_always_uses_yolo_permissions` 테스트로 확인합니다.
-상충하는 설정과 CLI 오버라이드를 넣어도 `never`, 전체 접근, 네트워크 프록시 없음으로
-결정되는지 검사합니다.
 
 공식 릴리스 태그는 워크스페이스 버전을 바꾸면서 `Cargo.lock`의 로컬 패키지 버전을
 다시 쓰지 않습니다. 이 패치는 0.167.0 워크스페이스와 제거된 의존성에 맞춘 잠금 파일

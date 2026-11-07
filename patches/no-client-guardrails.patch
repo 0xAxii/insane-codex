@@ -1774,29 +1774,6 @@ index c234acb..12b03a2 100644
              }
              ClientRequest::ThreadInjectItems { params, .. } => {
                  self.turn_processor
-diff --git a/codex-rs/app-server/src/request_processors/command_exec_processor.rs b/codex-rs/app-server/src/request_processors/command_exec_processor.rs
-index 1d5c3c7..13e88fd 100644
---- a/codex-rs/app-server/src/request_processors/command_exec_processor.rs
-+++ b/codex-rs/app-server/src/request_processors/command_exec_processor.rs
-@@ -239,18 +239,6 @@ impl CommandExecRequestProcessor {
-                 config.managed_network_requirements_enabled(),
-                 config.effective_workspace_roots(),
-             )
--        } else if let Some(policy) = sandbox_policy.map(|policy| policy.to_core()) {
--            let mut permissions = self.config.permissions.clone();
--            permissions
--                .set_legacy_sandbox_policy(policy, &sandbox_cwd)
--                .map_err(|err| invalid_request(format!("invalid sandbox policy: {err}")))?;
--            (
--                permissions.effective_permission_profile(),
--                self.config.permissions.network.clone(),
--                self.config.permissions.permission_profile().clone(),
--                self.config.managed_network_requirements_enabled(),
--                self.config.effective_workspace_roots(),
--            )
-         } else {
-             (
-                 self.config.permissions.effective_permission_profile(),
 diff --git a/codex-rs/app-server/src/request_processors/config_processor.rs b/codex-rs/app-server/src/request_processors/config_processor.rs
 index 5a47e3e..6c3dd52 100644
 --- a/codex-rs/app-server/src/request_processors/config_processor.rs
@@ -3072,187 +3049,6 @@ index a8d5865..17c81d8 100644
      /// Record raw Responses API items without starting a new turn.
      pub async fn inject_response_items(&self, items: Vec<ResponseItem>) -> CodexResult<()> {
          self.inject_response_items_for_turn(items).await?;
-diff --git a/codex-rs/core/src/config/config_tests.rs b/codex-rs/core/src/config/config_tests.rs
-index 8b2548f..525c268 100644
---- a/codex-rs/core/src/config/config_tests.rs
-+++ b/codex-rs/core/src/config/config_tests.rs
-@@ -235,6 +235,44 @@ async fn load_config_normalizes_relative_cwd_override() -> std::io::Result<()> {
-     Ok(())
- }
- 
-+#[tokio::test]
-+async fn load_config_always_uses_yolo_permissions() -> std::io::Result<()> {
-+    let codex_home = tempdir()?;
-+    let config = Config::load_from_base_config_with_overrides(
-+        ConfigToml {
-+            approval_policy: Some(AskForApproval::OnRequest),
-+            approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
-+            sandbox_mode: Some(SandboxMode::ReadOnly),
-+            ..Default::default()
-+        },
-+        ConfigOverrides {
-+            approval_policy: Some(AskForApproval::UnlessTrusted),
-+            approvals_reviewer: Some(ApprovalsReviewer::AutoReview),
-+            sandbox_mode: Some(SandboxMode::WorkspaceWrite),
-+            permission_profile: Some(PermissionProfile::read_only()),
-+            ..Default::default()
-+        },
-+        codex_home.abs(),
-+    )
-+    .await?;
-+
-+    assert_eq!(
-+        config.permissions.approval_policy.value(),
-+        AskForApproval::Never
-+    );
-+    assert_eq!(config.approvals_reviewer, ApprovalsReviewer::User);
-+    assert_eq!(
-+        config.permissions.effective_permission_profile(),
-+        PermissionProfile::Disabled
-+    );
-+    assert_eq!(
-+        config.legacy_sandbox_policy(),
-+        SandboxPolicy::DangerFullAccess
-+    );
-+    assert!(config.permissions.network.is_none());
-+    Ok(())
-+}
-+
- #[tokio::test]
- async fn load_config_applies_optional_mcp_startup_grace() -> std::io::Result<()> {
-     let codex_home = tempdir()?;
-diff --git a/codex-rs/core/src/config/mod.rs b/codex-rs/core/src/config/mod.rs
-index 8d93436..6284fa6 100644
---- a/codex-rs/core/src/config/mod.rs
-+++ b/codex-rs/core/src/config/mod.rs
-@@ -387,9 +387,9 @@ impl Permissions {
- 
-     pub(crate) fn set_permission_profile_state(
-         &mut self,
--        permission_profile_state: PermissionProfileState,
-+        _permission_profile_state: PermissionProfileState,
-     ) {
--        self.permission_profile_state = permission_profile_state;
-+        // This build keeps one runtime permission profile: unrestricted access.
-     }
- 
-     /// Apply a permission profile snapshot emitted by core session state.
-@@ -399,10 +399,9 @@ impl Permissions {
-     /// through config instead of constructing a snapshot directly.
-     pub fn set_permission_profile_from_session_snapshot(
-         &mut self,
--        snapshot: PermissionProfileSnapshot,
-+        _snapshot: PermissionProfileSnapshot,
-     ) -> ConstraintResult<()> {
--        self.permission_profile_state
--            .set_permission_profile_snapshot(snapshot)
-+        Ok(())
-     }
- 
-     /// Replace the current permission constraints with a trusted session
-@@ -410,11 +409,8 @@ impl Permissions {
-     /// after their local config constraints reject the snapshot.
-     pub fn replace_permission_profile_from_session_snapshot(
-         &mut self,
--        snapshot: PermissionProfileSnapshot,
-+        _snapshot: PermissionProfileSnapshot,
-     ) -> ConstraintResult<()> {
--        let permission_profile = Constrained::allow_only(snapshot.permission_profile().clone());
--        self.permission_profile_state =
--            PermissionProfileState::from_constrained_snapshot(permission_profile, snapshot)?;
-         Ok(())
-     }
- 
-@@ -3432,6 +3428,11 @@ impl Config {
-             config_layer_stack.requirements(),
-             &mut startup_warnings,
-         );
-+        cfg.approval_policy = Some(AskForApproval::Never);
-+        cfg.approvals_reviewer = Some(ApprovalsReviewer::User);
-+        cfg.sandbox_mode = Some(SandboxMode::DangerFullAccess);
-+        cfg.default_permissions = None;
-+        cfg.permissions = None;
-         // Packaged defaults supply a URL even when no override was configured.
-         let chatgpt_base_url_is_explicit =
-             config_layer_stack.requirements().chatgpt_base_url.is_some()
-@@ -3458,10 +3459,10 @@ impl Config {
-             allow_login_shell: _,
-             feedback: _,
-             otel: _,
--            approval_policy: mut constrained_approval_policy,
--            approvals_reviewer: mut constrained_approvals_reviewer,
-+            approval_policy: _,
-+            approvals_reviewer: _,
-             auto_review_required_models: _,
--            permission_profile: mut constrained_permission_profile,
-+            permission_profile: _,
-             windows_sandbox_mode: mut constrained_windows_sandbox_mode,
-             web_search_mode: mut constrained_web_search_mode,
-             allow_managed_hooks_only: _,
-@@ -3475,26 +3476,40 @@ impl Config {
-             marketplaces: _,
-             exec_policy: _,
-             enforce_residency,
--            network: network_requirements,
-+            network: _,
-             application: _,
--            filesystem: filesystem_requirements,
-+            filesystem: _,
-             additional_developer_instructions: _,
-             guardian_policy_config_source: _,
-             guardian_extra_policy_source: _,
-         } = config_layer_stack.requirements().clone();
-+        let mut constrained_approval_policy = ConstrainedWithSource::new(
-+            Constrained::allow_only(AskForApproval::Never),
-+            /*source*/ None,
-+        );
-+        let mut constrained_approvals_reviewer = ConstrainedWithSource::new(
-+            Constrained::allow_only(ApprovalsReviewer::User),
-+            /*source*/ None,
-+        );
-+        let mut constrained_permission_profile = ConstrainedWithSource::new(
-+            Constrained::allow_only(PermissionProfile::Disabled),
-+            /*source*/ None,
-+        );
-+        let network_requirements: Option<Sourced<codex_config::NetworkConstraints>> = None;
-+        let filesystem_requirements: Option<Sourced<codex_config::FilesystemConstraints>> = None;
- 
-         // Destructure ConfigOverrides fully to ensure all overrides are applied.
-         let ConfigOverrides {
-             model,
-             review_model: override_review_model,
-             cwd,
--            approval_policy: approval_policy_override,
--            approvals_reviewer: approvals_reviewer_override,
--            sandbox_mode,
--            permission_profile,
--            default_permissions: default_permissions_override,
--            persisted_permission_profile_id,
--            persisted_permission_profile,
-+            approval_policy: _,
-+            approvals_reviewer: _,
-+            sandbox_mode: _,
-+            permission_profile: _,
-+            default_permissions: _,
-+            persisted_permission_profile_id: _,
-+            persisted_permission_profile: _,
-             model_provider,
-             service_tier: service_tier_override,
-             codex_self_exe,
-@@ -3511,6 +3526,13 @@ impl Config {
-             additional_writable_roots,
-             workspace_roots: workspace_roots_override,
-         } = overrides;
-+        let approval_policy_override = Some(AskForApproval::Never);
-+        let approvals_reviewer_override = Some(ApprovalsReviewer::User);
-+        let sandbox_mode = None;
-+        let permission_profile = Some(PermissionProfile::Disabled);
-+        let default_permissions_override = None::<String>;
-+        let persisted_permission_profile_id = None::<String>;
-+        let persisted_permission_profile = None::<PermissionProfile>;
-         let bypass_hook_trust = bypass_hook_trust.unwrap_or_default();
- 
-         if bypass_hook_trust {
 diff --git a/codex-rs/core/src/config/network_proxy_spec.rs b/codex-rs/core/src/config/network_proxy_spec.rs
 index 3d4591c..5c1b3c0 100644
 --- a/codex-rs/core/src/config/network_proxy_spec.rs
@@ -3302,46 +3098,6 @@ index d015fb6..d44b39f 100644
      assert_eq!(
          restricted.environment_policy(),
          EnvironmentNetworkPolicy::from_config(&owner, /*managed_allowed_domains_only*/ false)
-diff --git a/codex-rs/core/src/config/permission_profile_catalog.rs b/codex-rs/core/src/config/permission_profile_catalog.rs
-index 1ebad6a..d251a01 100644
---- a/codex-rs/core/src/config/permission_profile_catalog.rs
-+++ b/codex-rs/core/src/config/permission_profile_catalog.rs
-@@ -10,7 +10,6 @@ use codex_protocol::models::PermissionProfile;
- use super::ConstraintError;
- use super::ConstraintResult;
- use super::is_permission_allowed;
--use super::merge_managed_permission_profiles;
- use super::permissions::BUILT_IN_DANGER_FULL_ACCESS_PROFILE;
- use super::permissions::BUILT_IN_READ_ONLY_PROFILE;
- use super::permissions::BUILT_IN_WORKSPACE_PROFILE;
-@@ -28,20 +27,14 @@ pub struct PermissionProfileCatalogEntry {
- 
- /// Builds the effective catalog using supplied execution-host path facts.
- pub fn permission_profile_catalog(
--    config_layer_stack: &ConfigLayerStack,
--    context: &ConfigPathContext,
-+    _config_layer_stack: &ConfigLayerStack,
-+    _context: &ConfigPathContext,
- ) -> std::io::Result<Vec<PermissionProfileCatalogEntry>> {
--    let permissions = config_layer_stack
--        .effective_config()
--        .get("permissions")
--        .cloned()
--        .map(toml::Value::try_into::<PermissionsToml>)
--        .transpose()
--        .map_err(std::io::Error::other)?;
--    let requirements_toml = config_layer_stack.requirements_toml();
--    let permissions = merge_managed_permission_profiles(permissions.as_ref(), requirements_toml)?;
--
--    permission_profile_catalog_from_permissions(config_layer_stack, permissions.as_ref(), context)
-+    Ok(vec![PermissionProfileCatalogEntry {
-+        id: BUILT_IN_DANGER_FULL_ACCESS_PROFILE.to_string(),
-+        description: Some("Unrestricted access without approval prompts".to_string()),
-+        allowed: true,
-+    }])
- }
- 
- pub(super) fn permission_profile_catalog_from_permissions(
 diff --git a/codex-rs/core/src/cyber_access_program.rs b/codex-rs/core/src/cyber_access_program.rs
 index 4c3cd19..e36d51c 100644
 --- a/codex-rs/core/src/cyber_access_program.rs
@@ -5426,6 +5182,42 @@ index c6ddbd4..0000000
 -    test.codex.shutdown_and_wait().await?;
 -    Ok(())
 -}
+diff --git a/codex-rs/core/tests/suite/scenarios_managed_human_approval_tests.rs b/codex-rs/core/tests/suite/scenarios_managed_human_approval_tests.rs
+index 8176988..97da73b 100644
+--- a/codex-rs/core/tests/suite/scenarios_managed_human_approval_tests.rs
++++ b/codex-rs/core/tests/suite/scenarios_managed_human_approval_tests.rs
+@@ -20,7 +20,6 @@ use core_test_support::responses::ev_function_call;
+ use core_test_support::responses::mount_sse_once;
+ #[cfg(not(target_os = "windows"))]
+ use pretty_assertions::assert_eq;
+-use tokio_util::sync::CancellationToken;
+ 
+ #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+ async fn managed_checkpoint_requires_fresh_human_decisions() -> Result<()> {
+@@ -140,23 +139,6 @@ justification = "A person must approve this command."
+         }
+         requests.push(result);
+     }
+-    // Direct Guardian review cannot substitute for the managed human checkpoint either.
+-    test.codex
+-        .inject_response_items(vec![serde_json::from_value(json!({
+-            "type": "function_call", "name": "exec_command", "call_id": "direct-review",
+-            "arguments": r#"{"cmd":"echo checkpoint-ok","login":false}"#,
+-        }))?])
+-        .await?;
+-    let error = test
+-        .codex
+-        .guardian_review(&CancellationToken::new())
+-        .await
+-        .expect_err("managed checkpoint requires a human");
+-    assert!(matches!(
+-        error.details(),
+-        codex_protocol::error::CodexErrorDetails::InvalidRequest(message)
+-            if message == "Managed command policy requires human approval."
+-    ));
+     let mut snapshot = context_snapshot::format_request_history_snapshot(
+         "Managed command checkpoints override saved allow rules and automatic review. Reusable decisions are rejected, and each successful execution requires a fresh human decision.",
+         &requests,
 diff --git a/codex-rs/core/tests/suite/snapshots/all__suite__scenarios__guardian_direct_review__guardian_direct_exec.snap b/codex-rs/core/tests/suite/snapshots/all__suite__scenarios__guardian_direct_review__guardian_direct_exec.snap
 deleted file mode 100644
 index c4d9605..0000000
@@ -7323,35 +7115,6 @@ index 7d0c740..9998e77 100644
              self.bottom_pane.clear_pending_questions();
          }
          self.dismiss_backend_banner_for_new_turn();
-diff --git a/codex-rs/tui/src/chatwidget/permission_popups.rs b/codex-rs/tui/src/chatwidget/permission_popups.rs
-index a91e85c..e99c1db 100644
---- a/codex-rs/tui/src/chatwidget/permission_popups.rs
-+++ b/codex-rs/tui/src/chatwidget/permission_popups.rs
-@@ -17,20 +17,10 @@ impl ChatWidget {
- 
-     /// Open a popup to choose the permissions mode.
-     pub(crate) fn open_permissions_popup(&mut self) {
--        if self.thread_id.is_some()
--            || self.config.explicit_permission_profile_mode
--            || self.permission_profiles_menu_opened
--            || self
--                .config
--                .permissions
--                .active_permission_profile()
--                .is_some_and(|profile| !profile.id.starts_with(':'))
--        {
--            self.request_permission_profiles();
--            return;
--        }
--
--        self.open_legacy_permissions_popup();
-+        self.add_info_message(
-+            "Permissions are fixed to full access without approval prompts.".to_string(),
-+            /*hint*/ None,
-+        );
-     }
- 
-     pub(super) fn open_legacy_permissions_popup(&mut self) {
 diff --git a/codex-rs/tui/src/chatwidget/protocol.rs b/codex-rs/tui/src/chatwidget/protocol.rs
 index 7a08496..d1d16e4 100644
 --- a/codex-rs/tui/src/chatwidget/protocol.rs
@@ -7933,6 +7696,39 @@ index 47c6985..c367976 100644
                  } else if scenario == "model_change" {
                      chat.handle_paste("new draft".into());
                      let mut models = chat.model_catalog.try_list_models().unwrap();
+diff --git a/codex-rs/tui/src/chatwidget/tests/permission_shortcuts_tests.rs b/codex-rs/tui/src/chatwidget/tests/permission_shortcuts_tests.rs
+index 452370e..21f8d41 100644
+--- a/codex-rs/tui/src/chatwidget/tests/permission_shortcuts_tests.rs
++++ b/codex-rs/tui/src/chatwidget/tests/permission_shortcuts_tests.rs
+@@ -9,7 +9,6 @@ async fn permission_shortcuts_cycle_builtin_modes() {
+     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+     let thread_id = ThreadId::new();
+     chat.thread_id = Some(thread_id);
+-    chat.set_feature_enabled(Feature::GuardianApproval, /*enabled*/ true);
+     chat.chat_keymap.next_permission_mode = vec![crate::key_hint::plain(KeyCode::F(8))];
+     chat.chat_keymap.previous_permission_mode = vec![crate::key_hint::plain(KeyCode::F(7))];
+     #[cfg(target_os = "windows")]
+@@ -21,17 +20,16 @@ async fn permission_shortcuts_cycle_builtin_modes() {
+     ));
+     chat.config.config_layer_stack = requirements_stack(
+         serde_json::from_value(serde_json::json!({
+-            "allowed_approvals_reviewers": ["auto_review"],
+             "allowed_permission_profiles": {":workspace": false, ":read-only": false}
+         }))
+         .unwrap(),
+     );
+     chat.turn_lifecycle.agent_turn_running = true;
+     for (current, reviewer, key, expected, next_reviewer) in [
+-        (":workspace", User, KeyCode::F(8), ":workspace", AutoReview),
+-        (":workspace", AutoReview, KeyCode::F(8), ":read-only", User),
++        (":workspace", User, KeyCode::F(8), ":read-only", User),
+         (":read-only", User, KeyCode::F(8), ":workspace", User),
+-        (":read-only", User, KeyCode::F(7), ":workspace", AutoReview),
++        (":workspace", User, KeyCode::F(7), ":read-only", User),
++        (":read-only", User, KeyCode::F(7), ":workspace", User),
+     ] {
+         let profile = if current == ":read-only" {
+             PermissionProfile::read_only()
 diff --git a/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs b/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs
 index 9074c5e..00ef7e3 100644
 --- a/codex-rs/tui/src/chatwidget/tests/status_and_layout.rs

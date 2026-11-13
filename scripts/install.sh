@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo="0xAxii/insane-codex"
-version="${INSANE_CODEX_VERSION:-0.167.0}"
+version="${INSANE_CODEX_VERSION:-0.168.0}"
 bin_dir="${INSANE_CODEX_INSTALL_DIR:-${HOME}/.local/bin}"
 libexec_root="${INSANE_CODEX_LIBEXEC_DIR:-${HOME}/.local/libexec}"
 version_dir="${libexec_root}/insane-codex-v${version}"

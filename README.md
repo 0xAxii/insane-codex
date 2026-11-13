@@ -1,74 +1,62 @@
 # insane-codex
 
-Codex CLI의 자동 승인 검토, Daybreak, 안전 차단 후속 처리와 관리형 네트워크
-검토 경로를 제거하는 패치입니다.
+OpenAI Codex CLI에서 Guardian과 Daybreak의 클라이언트 측 경로만 비활성화하는 패치입니다.
 
-Codex CLI는 터미널에서 AI에게 코드 작성이나 명령 실행을 맡기는 도구입니다.
-이 저장소에는 원본 코드의 변경 사항을 담은 패치와 빌드 스크립트가 있습니다.
-직접 빌드하지 않아도 사용할 수 있도록 GitHub Releases에서 실행 파일도 제공합니다.
+이 저장소에는 공식 Codex CLI 소스에 적용하는 패치와 빌드·설치 스크립트가 있습니다.
+플랫폼별 실행 파일은 GitHub Releases에서 제공합니다.
 
 ## 무엇이 달라지나요?
 
-### Guardian: 실행 승인 요청을 자동으로 검토하는 기능
+### Guardian
 
-Codex가 명령을 실행할 때 추가 승인을 요청하는 경우가 있습니다.
-Guardian은 이런 요청을 자동으로 검토해 승인 여부를 판단합니다.
+Guardian은 명령 실행이나 도구 호출에 필요한 승인을 자동으로 검토할 수 있습니다.
+패치 적용본에서는 Guardian 판단이 결과를 내리지 않으며, 승인이 필요하면 원본 Codex의
+사용자 승인 절차가 처리합니다.
 
-패치를 적용하면 Guardian은 판단을 내리지 않고, 기존 사용자 승인 절차에 처리를 맡깁니다.
-특정 모델에서 자동 검토를 요구하던 조건과 Guardian v2 등록도 제거합니다.
-Guardian v3, 검토 기록 전달, 응답 스트림의 Guardian 평가 처리도 포함하지 않습니다.
-v0.166.0에서 추가된 네이티브 도구와 멀티 에이전트 호출의 사전 검토 경로,
-v0.167.0에서 추가된 `thread/guardianReview` 직접 검토 경로도 제거합니다.
+0.168.0에 있는 다음 경로도 비활성화합니다.
 
-### Daybreak: 보안 관련 접근 프로그램 선택
+- Guardian 기능 플래그와 모델별 자동 검토 요구
+- Guardian v2 확장 기능 등록
+- 네이티브 도구 호출의 Guardian 사전 검토
+- 서버가 전달한 Guardian 평가의 도구 실행 연결
+- 거절 재검토와 응답 재샘플링
+- app-server의 `thread/guardianReview` 직접 검토
 
-Daybreak는 서버의 보안 관련 접근 프로그램(access program) 이름입니다.
-원본 Codex는 사용할 접근 프로그램을 선택하고, 그 식별 정보를 서버 요청에 포함할 수 있습니다.
+호환성에 필요한 타입과 모듈은 가능한 한 남겨 둡니다.
 
-패치를 적용하면 접근 프로그램을 선택하고 그 식별 정보를 요청에 포함하던 처리가 제거됩니다.
+### Daybreak
 
-### 안전 차단 후속 처리
+Daybreak는 사이버 보안 관련 접근 프로그램입니다. 패치 적용본은 인증 방식이나 모델
+카탈로그와 관계없이 Daybreak 접근 프로그램을 선택하거나 API 요청에 전달하지 않습니다.
+안전 차단 화면에 표시되던 “Enable Daybreak” 선택지도 제거합니다.
 
-v0.167.0의 원본 TUI는 서버가 생물·사이버 정책으로 요청을 차단하면 설명과 안전한
-재작성 문구를 표시할 수 있습니다. 재작성 문구를 고르면 차단된 턴 이전에서 새 대화를
-만들어 다시 제출하며, 사이버 차단에서는 Daybreak 활성화도 제안합니다.
+## 그대로 유지하는 기능
 
-패치는 이 메타데이터 처리, 재작성 선택 화면, 자동 대화 분기와 Daybreak 제안 경로를
-제거합니다. 서버와 모델이 내리는 차단 결정 자체는 클라이언트 패치로 바뀌지 않습니다.
+Guardian과 Daybreak 이외의 동작은 공식 0.168.0 구현을 유지합니다.
 
-### 관리형 네트워크 검토
+- 승인 정책, 권한 프로필, 샌드박스와 `/permissions`
+- 실행 중 권한·샌드박스·승인 검토자 갱신
+- `workspace-write`의 네트워크 설정과 관리형 `review_domains`
+- 안전 차단 설명, 안전한 재작성, 대화 분기와 재제출
+- 캐시, MCP, 스킬, 플러그인과 다른 명령
+- 사용자가 지정한 명령행 옵션과 설정
 
-v0.165.0은 관리 설정의 `review_domains`에 지정된 주소를 일반 허용 규칙보다 먼저
-승인 절차로 보내는 기능을 추가했습니다. 패치는 이 설정과 전달·적용 경로를 제거합니다.
-기존 네트워크 샌드박스와 사용자가 직접 승인하는 기능은 그대로 유지합니다.
+`codex`와 `insane` 실행 경로는 `--yolo`를 자동으로 추가하지 않습니다. 서버나
+모델의 정책은 이 클라이언트 패치의 수정 대상이 아닙니다.
 
-### 재시도할 때의 승인 처리
-
-명령이 샌드박스 제한에 막혀 더 넓은 권한으로 재시도할 때의 승인 처리도 바뀝니다.
-앞서 승인한 주체를 구분하던 처리를 되돌려, 조건에 따라 최초 승인을 재사용합니다.
-
-## 변경 범위
-
-캐시, 외부 도구 연결(MCP), 스킬, 플러그인 등은 기준 버전의 구현을 유지합니다.
-다른 명령과 일반 기능, 권한 프로필, 샌드박스와 사용자 승인 기능도 원본 구현을 유지합니다.
-서버와 모델 자체의 정책은 이 패치의 수정 대상에 포함되지 않습니다.
-
-관련 타입과 저장 필드 등 일부 코드는 남아 있습니다. 파일별 변경 내용과
-남아 있는 코드는 [상세 문서](docs/patch-details.md)에 정리했습니다.
+파일별 변경 내용과 검증 결과는 [상세 문서](docs/patch-details.md)에 정리했습니다.
 
 ## 설치하기
 
 ### macOS와 Linux
 
-macOS와 Linux에서는 설치 스크립트가 운영체제와 CPU를 확인하고 알맞은 실행 파일을
-`~/.local/libexec/insane-codex-v0.167.0/insane-codex`에 설치합니다. 검증이 끝난 뒤
-`~/.local/bin/insane-codex` 심볼릭 링크만 새 버전으로 바꿉니다.
+설치 스크립트는 운영체제와 CPU에 맞는 릴리스 파일을 내려받아
+`~/.local/libexec/insane-codex-v0.168.0/insane-codex`에 설치합니다. 새 바이너리의
+버전을 확인한 뒤 `~/.local/bin/insane-codex` 심볼릭 링크를 교체합니다.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0xAxii/insane-codex/main/scripts/install.sh | bash
 ```
-
-설치가 끝나면 실행합니다.
 
 ```bash
 insane-codex --version
@@ -83,87 +71,60 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ### Windows
 
-PowerShell에서 다음 명령을 실행합니다. CPU에 맞는 실행 파일을 내려받고 사용자
-`PATH`에 설치 경로를 추가합니다.
+PowerShell에서 다음 명령을 실행합니다.
 
 ```powershell
 irm https://raw.githubusercontent.com/0xAxii/insane-codex/main/scripts/install.ps1 | iex
 ```
 
-설치가 끝나면 새 PowerShell이나 터미널을 열고 실행합니다.
+새 PowerShell이나 터미널을 연 뒤 실행합니다.
 
 ```powershell
 insane-codex --version
 insane-codex
 ```
 
-현재 제공하는 실행 파일은 다음과 같습니다.
+제공 대상은 다음 여섯 플랫폼입니다.
 
-| 운영체제 | CPU                     |
-| -------- | ----------------------- |
-| macOS    | Apple Silicon (`arm64`) |
-| macOS    | Intel (`x86_64`)        |
-| Linux    | `x86_64`                |
-| Linux    | `arm64`                 |
-| Windows  | `x86_64`                |
-| Windows  | `arm64`                 |
+| 운영체제 | CPU |
+| --- | --- |
+| macOS | Apple Silicon (`arm64`) |
+| macOS | Intel (`x86_64`) |
+| Linux | `x86_64` |
+| Linux | `arm64` |
+| Windows | `x86_64` |
+| Windows | `arm64` |
 
-각 실행 파일은 [Releases](https://github.com/0xAxii/insane-codex/releases)에서도
-직접 받을 수 있습니다. Release에는 플랫폼별 실행 파일 패키지만 올립니다.
+릴리스 파일은 [Releases](https://github.com/0xAxii/insane-codex/releases)에서도
+직접 받을 수 있습니다. 실행 바이너리는 Git 저장소에 커밋하지 않습니다.
 
 ## 소스에서 빌드하기
 
-Git과 Rust 빌드 도구가 설치되어 있어야 합니다. 저장소를 받은 뒤 기준 버전으로
-빌드합니다.
+Git과 Rust 빌드 도구가 필요합니다.
 
 ```bash
 git clone https://github.com/0xAxii/insane-codex.git
 cd insane-codex
-./scripts/build.sh rust-v0.167.0
+./scripts/build.sh rust-v0.168.0
 ```
 
-빌드한 실행 파일을 `insane-codex` 명령으로 등록합니다.
+로컬에 버전별로 설치하려면 다음과 같이 실행합니다.
 
 ```bash
-mkdir -p "$HOME/.local/libexec/insane-codex-v0.167.0" "$HOME/.local/bin"
-install -m 755 "$(pwd)/dist/codex-rust-v0.167.0-$(uname -m)" \
-  "$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex"
-"$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex" --version
-ln -sfn "$HOME/.local/libexec/insane-codex-v0.167.0/insane-codex" \
+mkdir -p "$HOME/.local/libexec/insane-codex-v0.168.0" "$HOME/.local/bin"
+install -m 755 "$(pwd)/dist/codex-rust-v0.168.0-$(uname -m)" \
+  "$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex"
+"$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex" --version
+ln -sfn "$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex" \
   "$HOME/.local/bin/insane-codex"
 ```
 
-`insane-codex` 명령을 찾지 못하면 `PATH`에 디렉터리를 추가합니다.
-zsh와 bash에서는 다음 명령을 실행합니다.
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-fish에서는 다음 명령을 실행합니다. 이 설정은 새 터미널에서도 유지됩니다.
-
-```fish
-fish_add_path "$HOME/.local/bin"
-```
-
-zsh나 bash에서도 설정을 계속 유지하려면 위의 `export` 명령을 사용하는 셸의
-설정 파일에 추가합니다.
-
-설정을 마치면 어느 디렉터리에서나 실행할 수 있습니다.
-
-```bash
-insane-codex --version
-insane-codex
-```
-
-직접 빌드하는 경우에도 버전마다 한 번만 빌드하면 됩니다. 평소에는
-`insane-codex` 명령만 실행하면 됩니다.
-
 ## 버전과 배포 방식
 
-| 항목          | 내용                                                                                       |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| 기준 원본     | OpenAI Codex CLI **0.167.0** (`rust-v0.167.0`)                                             |
-| 저장소에 포함 | 패치, 빌드·설치 스크립트, 문서                                                             |
-| 실행 파일     | GitHub Releases에서 macOS·Linux·Windows용 파일을 제공합니다.                               |
-| 업데이트      | 자동으로 업데이트되지 않습니다. 새 버전은 패치 적용 여부를 확인한 뒤 다시 빌드해야 합니다. |
+| 항목 | 내용 |
+| --- | --- |
+| 기준 원본 | OpenAI Codex CLI **0.168.0** (`rust-v0.168.0`) |
+| 원본 커밋 | `9480ec100c3edee9fc69172e8e80a4730444094d` |
+| 저장소에 포함 | 패치, 빌드·설치 스크립트, CI 설정과 문서 |
+| 실행 파일 | GitHub Releases의 macOS·Linux·Windows용 패키지 |
+| 업데이트 | 새 공식 태그마다 패치 적용과 테스트를 다시 확인 |

@@ -35,7 +35,7 @@ jobs:
           - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
     env:
-      UPSTREAM_TAG: rust-v0.167.0
+      UPSTREAM_TAG: rust-v0.168.0
       CARGO_NET_GIT_FETCH_WITH_CLI: "true"
       CARGO_PROFILE_RELEASE_LTO: "false"
       CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
@@ -62,7 +62,7 @@ jobs:
             build-essential pkg-config libcap-dev libasound2-dev
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@d124f86f28ff42855784ff3319f48ac182c248f8 # 1.99.1
+        uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
         with:
           targets: ${{ matrix.target }}
 
@@ -146,15 +146,15 @@ jobs:
         run: |
           set -euo pipefail
           cat > release-notes.md <<'EOF'
-          Patched OpenAI Codex CLI 0.167.0 binaries.
+          Patched OpenAI Codex CLI 0.168.0 binaries.
 
-          The binaries are built from `rust-v0.167.0` after applying
+          The binaries are built from `rust-v0.168.0` after applying
           `patches/no-client-guardrails.patch`. See the repository README and
           patch details before installing.
 
-          This revision removes the forced YOLO behavior. Approval policies,
-          permission profiles, and sandbox selection retain the upstream Codex
-          behavior while the client-side guardrail paths remain removed.
+          Guardian and Daybreak client paths are disabled. Approval policies,
+          permission profiles, sandbox selection, managed network review, and
+          safety recourse otherwise retain the upstream Codex behavior.
           EOF
           gh release create "$GITHUB_REF_NAME" \
             release/*.tar.gz \

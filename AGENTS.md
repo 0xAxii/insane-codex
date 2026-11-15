@@ -30,6 +30,7 @@
   ~/.local/libexec/insane-codex-v0.166.0/insane-codex
   ~/.local/libexec/insane-codex-v0.167.0/insane-codex
   ~/.local/libexec/insane-codex-v0.168.0/insane-codex
+  ~/.local/libexec/insane-codex-v0.169.0/insane-codex
   ```
 
 - 새 버전은 다음 순서로 설치합니다.

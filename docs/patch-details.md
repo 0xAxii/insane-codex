@@ -1,19 +1,19 @@
 # 패치 상세 문서
 
-`insane-codex` 0.168.0 패치의 범위와 검증 내용을 정리합니다.
+`insane-codex` 0.169.0 패치의 범위와 검증 내용을 정리합니다.
 
 ## 1. 기준 소스
 
 | 항목 | 값 |
 | --- | --- |
 | 원본 저장소 | `openai/codex` |
-| 태그 | `rust-v0.168.0` |
-| 커밋 | `9480ec100c3edee9fc69172e8e80a4730444094d` |
+| 태그 | `rust-v0.169.0` |
+| 커밋 | `d32063f96c2dff1dc96af839b3952abb6acfeda4` |
 | 패치 파일 | `patches/no-client-guardrails.patch` |
 
 패치는 깨끗한 공식 태그에 적용하도록 작성했습니다. Guardian·Daybreak 이외의 소스는
 수정하지 않습니다. 공식 태그의 `Cargo.toml` 버전과 맞지 않는 `Cargo.lock`의 로컬
-워크스페이스 패키지 버전만 `0.168.0`으로 정규화해 `--locked` 빌드가 가능하게 합니다.
+워크스페이스 패키지 버전만 `0.169.0`으로 정규화해 `--locked` 빌드가 가능하게 합니다.
 
 ## 2. 동작 변화
 
@@ -48,8 +48,9 @@ Guardian 자동 판단 없음
 ### Daybreak
 
 `CyberAccessProgram::for_provider`와 `for_auth`는 접근 프로그램을 만들지 않습니다.
-따라서 ChatGPT 로그인과 API 키 인증 모두 API 요청에 Daybreak 프로그램을 전달하지
-않습니다.
+따라서 ChatGPT 로그인, API 키와 0.169.0의 헤더 인증 모두 API 요청에 Daybreak
+프로그램을 전달하지 않습니다. 호스트가 스레드에 필수 프로그램을 첨부하는 경로와
+부모 선택을 네이티브 헬퍼에 전달하는 경로도 결과를 만들지 않습니다.
 
 TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제거합니다. 차단 이유,
 안전한 재작성 후보, 대화 분기와 재제출 기능은 원본대로 유지합니다.
@@ -67,7 +68,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `GuardianNodeReplTranscriptImages`, `GuardianTrustOrchestratorConnectors`
 - `GuardianConversationHistoryTools`, `GuardianDenialReconsideration`
 - `GuardianV2`, `GuardianV2DecisionsComparison`, `GuardianV3`, `GuardianExt`
-- `CliDaybreak`, `ApiKeyCyberAccessPrograms`
+- `CliDaybreak`, `ApiKeyCyberAccessPrograms`, `DaybreakProgramPropagation`
 
 설정 파일이나 기능 오버라이드에서 위 기능을 켜도 활성화되지 않는 테스트를 추가했습니다.
 
@@ -85,7 +86,12 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 
 ### Daybreak 실행 경로
 
-- `codex-rs/core/src/cyber_access_program.rs`: 접근 프로그램을 선택하거나 전달하지 않습니다.
+- `codex-rs/core/src/cyber_access_program.rs`: 일반·헤더 인증과 호스트 필수 경로에서
+  접근 프로그램을 선택하거나 전달하지 않습니다.
+- `codex-rs/core/src/session/session.rs`: 호스트가 스레드에 첨부한 필수 접근 프로그램을
+  모델 클라이언트의 검증 상태로 전달하지 않습니다.
+- 네이티브 헬퍼의 Daybreak 선택 전파는 `DaybreakProgramPropagation` 기능을 항상
+  비활성화해 시작되지 않도록 합니다.
 - `codex-rs/tui/src/chatwidget/safety_recourse.rs`: Daybreak 활성화 제안만 제거합니다.
 
 ## 4. 수정하지 않는 영역
@@ -98,7 +104,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `sandbox_workspace_write.network_access`
 - 관리형 네트워크의 `review_domains`
 - 안전 차단 설명, 재작성, 대화 분기와 재제출
-- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.168.0 기능
+- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.169.0 기능
 
 이 패치는 클라이언트 소스만 수정합니다. 서버나 모델의 정책을 변경한다고 표현하지 않습니다.
 
@@ -117,16 +123,14 @@ cargo test --locked -p codex-app-server -p codex-tui --no-run
 
 - Guardian과 Daybreak 기능을 설정으로 켜도 비활성 상태인지 확인
 - Daybreak 프로그램이 인증 방식과 관계없이 전달되지 않는지 확인
-- 세션 메타데이터 갱신이 기존 권한 설정을 보존하는지 확인
-- 권한 프로필의 읽기 거부 항목이 보존되는지 확인
-- MCP 바인딩이 현재 승인 정책, 권한 프로필과 검토자를 반영하는지 확인
+- 실행 중 설정 새로고침이 원본의 갱신 가능 필드와 고정 필드를 보존하는지 확인
 - 권한 프로필 갱신이 다음 턴 환경에 적용되는지 확인
-- 권한 갱신 시 네트워크 프록시 설정이 다시 구성되는지 확인
+- 샌드박스 변경 시 관리형 네트워크 프록시 설정이 다시 구성되는지 확인
 
 ## 6. 빌드와 설치
 
 ```bash
-./scripts/build.sh rust-v0.168.0
+./scripts/build.sh rust-v0.169.0
 ```
 
 빌드 스크립트는 임시 디렉터리에 공식 태그를 복제하고 패치 적용을 확인한 뒤

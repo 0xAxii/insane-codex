@@ -13,7 +13,7 @@ Guardian은 명령 실행이나 도구 호출에 필요한 승인을 자동으�
 패치 적용본에서는 Guardian 판단이 결과를 내리지 않으며, 승인이 필요하면 원본 Codex의
 사용자 승인 절차가 처리합니다.
 
-0.168.0에 있는 다음 경로도 비활성화합니다.
+0.169.0에 있는 다음 경로도 비활성화합니다.
 
 - Guardian 기능 플래그와 모델별 자동 검토 요구
 - Guardian v2 확장 기능 등록
@@ -28,11 +28,13 @@ Guardian은 명령 실행이나 도구 호출에 필요한 승인을 자동으�
 
 Daybreak는 사이버 보안 관련 접근 프로그램입니다. 패치 적용본은 인증 방식이나 모델
 카탈로그와 관계없이 Daybreak 접근 프로그램을 선택하거나 API 요청에 전달하지 않습니다.
+0.169.0에서 추가된 헤더 인증 전달, 호스트 필수 프로그램과 네이티브 헬퍼 전파 경로도
+비활성화합니다.
 안전 차단 화면에 표시되던 “Enable Daybreak” 선택지도 제거합니다.
 
 ## 그대로 유지하는 기능
 
-Guardian과 Daybreak 이외의 동작은 공식 0.168.0 구현을 유지합니다.
+Guardian과 Daybreak 이외의 동작은 공식 0.169.0 구현을 유지합니다.
 
 - 승인 정책, 권한 프로필, 샌드박스와 `/permissions`
 - 실행 중 권한·샌드박스·승인 검토자 갱신
@@ -51,7 +53,7 @@ Guardian과 Daybreak 이외의 동작은 공식 0.168.0 구현을 유지합니�
 ### macOS와 Linux
 
 설치 스크립트는 운영체제와 CPU에 맞는 릴리스 파일을 내려받아
-`~/.local/libexec/insane-codex-v0.168.0/insane-codex`에 설치합니다. 새 바이너리의
+`~/.local/libexec/insane-codex-v0.169.0/insane-codex`에 설치합니다. 새 바이너리의
 버전을 확인한 뒤 `~/.local/bin/insane-codex` 심볼릭 링크를 교체합니다.
 
 ```bash
@@ -105,17 +107,17 @@ Git과 Rust 빌드 도구가 필요합니다.
 ```bash
 git clone https://github.com/0xAxii/insane-codex.git
 cd insane-codex
-./scripts/build.sh rust-v0.168.0
+./scripts/build.sh rust-v0.169.0
 ```
 
 로컬에 버전별로 설치하려면 다음과 같이 실행합니다.
 
 ```bash
-mkdir -p "$HOME/.local/libexec/insane-codex-v0.168.0" "$HOME/.local/bin"
-install -m 755 "$(pwd)/dist/codex-rust-v0.168.0-$(uname -m)" \
-  "$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex"
-"$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex" --version
-ln -sfn "$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex" \
+mkdir -p "$HOME/.local/libexec/insane-codex-v0.169.0" "$HOME/.local/bin"
+install -m 755 "$(pwd)/dist/codex-rust-v0.169.0-$(uname -m)" \
+  "$HOME/.local/libexec/insane-codex-v0.169.0/insane-codex"
+"$HOME/.local/libexec/insane-codex-v0.169.0/insane-codex" --version
+ln -sfn "$HOME/.local/libexec/insane-codex-v0.169.0/insane-codex" \
   "$HOME/.local/bin/insane-codex"
 ```
 
@@ -123,8 +125,8 @@ ln -sfn "$HOME/.local/libexec/insane-codex-v0.168.0/insane-codex" \
 
 | 항목 | 내용 |
 | --- | --- |
-| 기준 원본 | OpenAI Codex CLI **0.168.0** (`rust-v0.168.0`) |
-| 원본 커밋 | `9480ec100c3edee9fc69172e8e80a4730444094d` |
+| 기준 원본 | OpenAI Codex CLI **0.169.0** (`rust-v0.169.0`) |
+| 원본 커밋 | `d32063f96c2dff1dc96af839b3952abb6acfeda4` |
 | 저장소에 포함 | 패치, 빌드·설치 스크립트, CI 설정과 문서 |
 | 실행 파일 | GitHub Releases의 macOS·Linux·Windows용 패키지 |
 | 업데이트 | 새 공식 태그마다 패치 적용과 테스트를 다시 확인 |

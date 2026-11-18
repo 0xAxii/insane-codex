@@ -63,13 +63,19 @@ Guardian과 Daybreak 이외의 동작은 공식 0.170.0 구현을 유지합니�
 
 ### npm
 
-Node.js 18 이상에서는 npm 패키지가 현재 운영체제와 CPU에 맞는 릴리스 바이너리를
-설치하고 SHA-256 해시와 버전을 확인합니다.
+[npm의 `insane-codex` 패키지](https://www.npmjs.com/package/insane-codex)를 전역으로
+설치하면 `insane-codex` 명령을 사용할 수 있습니다. Node.js 18 이상이 필요합니다.
 
 ```bash
 npm install -g insane-codex
 insane-codex --version
+insane-codex
 ```
+
+패키지의 postinstall 스크립트는 현재 운영체제와 CPU에 맞는 바이너리를 GitHub
+Releases에서 내려받습니다. 다운로드한 파일의 SHA-256 해시와 `codex-cli 0.170.0`
+버전을 모두 확인한 뒤 설치합니다. npm에서 설치 스크립트를 비활성화한 환경에서는
+postinstall 실행을 허용해야 합니다.
 
 ### macOS와 Linux
 

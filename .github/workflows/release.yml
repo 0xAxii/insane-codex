@@ -35,7 +35,7 @@ jobs:
           - runner: windows-11-arm
             target: aarch64-pc-windows-msvc
     env:
-      UPSTREAM_TAG: rust-v0.169.0
+      UPSTREAM_TAG: rust-v0.170.0
       CARGO_NET_GIT_FETCH_WITH_CLI: "true"
       CARGO_PROFILE_RELEASE_LTO: "false"
       CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
@@ -146,14 +146,15 @@ jobs:
         run: |
           set -euo pipefail
           cat > release-notes.md <<'EOF'
-          Patched OpenAI Codex CLI 0.169.0 binaries.
+          Patched OpenAI Codex CLI 0.170.0 binaries.
 
-          The binaries are built from `rust-v0.169.0` after applying
+          The binaries are built from `rust-v0.170.0` after applying
           `patches/no-client-guardrails.patch`. See the repository README and
           patch details before installing.
 
-          Guardian and Daybreak client paths are disabled. Approval policies,
-          permission profiles, sandbox selection, managed network review, and
+          Guardian and Daybreak client paths are disabled. The binary defaults
+          to YOLO-equivalent permissions unless an explicit permission mode is
+          selected. Runtime permission updates, managed network review, and
           safety recourse otherwise retain the upstream Codex behavior.
           EOF
           gh release create "$GITHUB_REF_NAME" \

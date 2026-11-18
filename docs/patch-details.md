@@ -1,19 +1,19 @@
 # 패치 상세 문서
 
-`insane-codex` 0.169.0 패치의 범위와 검증 내용을 정리합니다.
+`insane-codex` 0.170.0 패치의 범위와 검증 내용을 정리합니다.
 
 ## 1. 기준 소스
 
 | 항목 | 값 |
 | --- | --- |
 | 원본 저장소 | `openai/codex` |
-| 태그 | `rust-v0.169.0` |
-| 커밋 | `d32063f96c2dff1dc96af839b3952abb6acfeda4` |
+| 태그 | `rust-v0.170.0` |
+| 커밋 | `29eb79e9866b3262a777fdf8195c1b9e63684c91` |
 | 패치 파일 | `patches/no-client-guardrails.patch` |
 
-패치는 깨끗한 공식 태그에 적용하도록 작성했습니다. Guardian·Daybreak 이외의 소스는
-수정하지 않습니다. 공식 태그의 `Cargo.toml` 버전과 맞지 않는 `Cargo.lock`의 로컬
-워크스페이스 패키지 버전만 `0.169.0`으로 정규화해 `--locked` 빌드가 가능하게 합니다.
+패치는 깨끗한 공식 태그에 적용하도록 작성했습니다. Guardian·Daybreak 실행 경로,
+사이버 모델의 권한 강제 변경, 콘텐츠 필터 후속 지침과 배포본의 기본 권한
+모드만 수정합니다. 서버나 모델 자체의 정책을 변경하지는 않습니다.
 
 ## 2. 동작 변화
 
@@ -41,6 +41,9 @@ Guardian 자동 판단 없음
 - 서버 Guardian 평가를 도구 실행 컨텍스트에 연결하는 처리
 - Guardian 거절 재검토와 응답 재샘플링
 - `thread/guardianReview` 직접 검토 요청
+- 자동 검토와 `node_repl` 강제 검토 메타데이터 전송
+- Guardian v3 기능과 증거 보드 정리 경로
+- Guardian이 하위 에이전트에 재시도 금지 지침을 남기는 경로
 
 `thread/guardianReview` 프로토콜 타입은 호환성을 위해 유지하지만, 요청하면 이
 빌드에서는 사용할 수 없다는 오류를 반환합니다.
@@ -48,12 +51,38 @@ Guardian 자동 판단 없음
 ### Daybreak
 
 `CyberAccessProgram::for_provider`와 `for_auth`는 접근 프로그램을 만들지 않습니다.
-따라서 ChatGPT 로그인, API 키와 0.169.0의 헤더 인증 모두 API 요청에 Daybreak
+따라서 ChatGPT 로그인, API 키와 0.170.0의 헤더 인증 모두 API 요청에 Daybreak
 프로그램을 전달하지 않습니다. 호스트가 스레드에 필수 프로그램을 첨부하는 경로와
 부모 선택을 네이티브 헬퍼에 전달하는 경로도 결과를 만들지 않습니다.
 
 TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제거합니다. 차단 이유,
 안전한 재작성 후보, 대화 분기와 재제출 기능은 원본대로 유지합니다.
+
+### 기본 YOLO와 권한 보존
+
+대화형 TUI와 `codex exec` 모두 권한 모드를 명시하지 않으면 `--yolo`와 같은
+구성을 적용합니다. 다음 명시적 선택이 있으면 기본 YOLO를 적용하지 않습니다.
+
+- `--sandbox`
+- `--approve-for-me`
+- `--ask-for-approval`
+- `--yolo`
+
+사이버 모델을 선택할 때 클라이언트가 기존 세션의 권한 프로필, 승인 정책과
+검토자를 `workspace-write + on-request + auto_review`로 강제 변경하던 코드는 제거합니다.
+실행 중 `/permissions`로 변경하는 원본 경로는 그대로 남습니다.
+
+### 프롬프트 경로
+
+0.170.0의 번들 모델 기본 지침, 현재 로컬 모델 캐시의 Astra·Sol 지침,
+`codex-rs/prompts`와 런타임 컨텍스트 조각을 전체 내용 기준으로 확인했습니다.
+모델 기본 지침에서 사이버보안 작업 자체를 금지하는 별도 문구는 확인되지
+않았습니다. 위험 평가와 거절 문구는 Guardian 검토 프롬프트에 집중돼 있으며,
+이 패치에서는 그 실행 경로를 비활성화합니다.
+
+서버가 콘텐츠 필터 오류를 반환한 뒤 클라이언트가 세션에 추가하던
+`content_filter_guidance`는 더 이상 기록하지 않습니다. 서버의 필터 자체나 응답은
+수정하지 않습니다.
 
 ## 3. 파일별 변경 사항
 
@@ -75,7 +104,11 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 ### Guardian 실행 경로
 
 - `codex-rs/config/src/config_requirements.rs`: 모델별 자동 검토 요구를 끕니다.
+- `codex-rs/app-server/Cargo.toml`: Guardian v2를 제품 빌드 의존성에서 제거하고,
+  Guardian v3는 테스트 전용 의존성으로만 남깁니다.
 - `codex-rs/app-server/src/extensions.rs`: Guardian v2 확장 기능을 등록하지 않습니다.
+- `codex-rs/app-server/src/message_processor.rs`: Guardian v3 증거 보드 정리 코드를
+  제품 런타임에 연결하지 않습니다.
 - `codex-rs/app-server/src/request_processors/turn_processor.rs`:
   `thread/guardianReview` 실행을 거부합니다.
 - `codex-rs/core/src/guardian/decision.rs`: Guardian 판단 결과를 만들지 않습니다.
@@ -83,6 +116,11 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `codex-rs/core/src/session/turn.rs`: 스트림의 Guardian 평가를 도구 실행에 연결하지 않습니다.
 - `codex-rs/core/src/tools/registry.rs`: 네이티브 도구 실행 전 Guardian 검토를 호출하지 않습니다.
 - `codex-rs/core/src/tools/mod.rs`: 기존 검토 모듈은 테스트 호환성을 위해 테스트 빌드에만 노출합니다.
+- `codex-rs/core/src/turn_metadata.rs`: 자동 검토 요구 메타데이터를 전송하지 않습니다.
+- `codex-rs/codex-mcp/src/elicitation.rs`: Guardian 판단이 없으면 강제 거절하지 않고
+  원본 MCP 권한 및 사용자 승인 경로를 따릅니다.
+- `codex-rs/core/src/session_prefix.rs`: Guardian의 재시도 금지 후속 지침을 일반
+  하위 에이전트 오류 지침으로 바꿉니다.
 
 ### Daybreak 실행 경로
 
@@ -94,6 +132,14 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
   비활성화해 시작되지 않도록 합니다.
 - `codex-rs/tui/src/chatwidget/safety_recourse.rs`: Daybreak 활성화 제안만 제거합니다.
 
+### 기본 권한과 프롬프트 후속 처리
+
+- `codex-rs/utils/cli/src/shared_options.rs`: 권한 모드가 명시되지 않으면 YOLO를 기본으로 선택합니다.
+- `codex-rs/tui/src/startup_orchestration.rs`, `codex-rs/exec/src/lib.rs`: TUI와 exec 시작 경로에
+  같은 기본값을 적용합니다.
+- `codex-rs/tui/src/app/thread_settings.rs`: 모델 선택은 권한·승인 설정을 덮어쓰지 않습니다.
+- `codex-rs/core/src/responses_retry.rs`: 콘텐츠 필터 오류 후속 지침을 대화에 추가하지 않습니다.
+
 ## 4. 수정하지 않는 영역
 
 0.167 패치에서 발생했던 권한 갱신 회귀를 피하기 위해 다음 코드는 건드리지 않습니다.
@@ -104,7 +150,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `sandbox_workspace_write.network_access`
 - 관리형 네트워크의 `review_domains`
 - 안전 차단 설명, 재작성, 대화 분기와 재제출
-- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.169.0 기능
+- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.170.0 기능
 
 이 패치는 클라이언트 소스만 수정합니다. 서버나 모델의 정책을 변경한다고 표현하지 않습니다.
 
@@ -116,6 +162,8 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 git apply --check patches/no-client-guardrails.patch
 cargo fmt --check
 cargo check --locked --bin codex
+cargo test --locked -p codex-utils-cli
+cargo test --locked -p codex-mcp --no-run
 cargo test --locked -p codex-app-server -p codex-tui --no-run
 ```
 
@@ -126,11 +174,14 @@ cargo test --locked -p codex-app-server -p codex-tui --no-run
 - 실행 중 설정 새로고침이 원본의 갱신 가능 필드와 고정 필드를 보존하는지 확인
 - 권한 프로필 갱신이 다음 턴 환경에 적용되는지 확인
 - 샌드박스 변경 시 관리형 네트워크 프록시 설정이 다시 구성되는지 확인
+- 사이버 모델 선택이 기존 권한·승인 설정을 덮어쓰지 않는지 확인
+- 자동 검토 메타데이터와 콘텐츠 필터 후속 지침이 제외되는지 확인
+- 명시적 권한 모드가 없을 때만 YOLO 기본값이 적용되는지 확인
 
 ## 6. 빌드와 설치
 
 ```bash
-./scripts/build.sh rust-v0.169.0
+./scripts/build.sh rust-v0.170.0
 ```
 
 빌드 스크립트는 임시 디렉터리에 공식 태그를 복제하고 패치 적용을 확인한 뒤

@@ -18,7 +18,7 @@ const architecture = architectures[process.arch];
 const system = systems[process.platform];
 
 if (!architecture || !system) {
-  console.error(`insane: unsupported platform: ${process.platform} ${process.arch}`);
+  console.error(`insane-codex: unsupported platform: ${process.platform} ${process.arch}`);
   process.exit(1);
 }
 
@@ -32,7 +32,7 @@ const child = spawn(binary, process.argv.slice(2), { stdio: "inherit" });
 process.on("SIGINT", () => {});
 
 child.on("error", (error) => {
-  console.error(`insane: failed to start ${binary}: ${error.message}`);
+  console.error(`insane-codex: failed to start ${binary}: ${error.message}`);
   process.exit(1);
 });
 

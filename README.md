@@ -68,7 +68,7 @@ Node.js 18 이상에서는 npm 패키지가 현재 운영체제와 CPU에 맞는
 
 ```bash
 npm install -g insane-codex
-insane --version
+insane-codex --version
 ```
 
 ### macOS와 Linux

@@ -14,7 +14,7 @@
   },
   "type": "commonjs",
   "bin": {
-    "insane": "npm/bin/insane.js"
+    "insane-codex": "npm/bin/insane-codex.js"
   },
   "files": [
     "npm/",

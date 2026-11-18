@@ -28,7 +28,7 @@ for (const target of expectedTargets) {
   }
 }
 
-for (const relative of ["postinstall.js", "bin/insane.js", "manifest.json"]) {
+for (const relative of ["postinstall.js", "bin/insane-codex.js", "manifest.json"]) {
   if (!fs.existsSync(path.join(__dirname, relative))) {
     throw new Error(`missing npm package file: npm/${relative}`);
   }

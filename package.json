@@ -1,0 +1,37 @@
+{
+  "name": "insane-codex",
+  "version": "0.170.0-insane.1",
+  "description": "Patched Codex CLI with client-side Guardian and Daybreak paths disabled",
+  "license": "UNLICENSED",
+  "author": "0xAxii",
+  "homepage": "https://github.com/0xAxii/insane-codex#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xAxii/insane-codex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0xAxii/insane-codex/issues"
+  },
+  "type": "commonjs",
+  "bin": {
+    "insane": "npm/bin/insane.js"
+  },
+  "files": [
+    "npm/",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node npm/postinstall.js",
+    "prepack": "node npm/validate-package.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "codex",
+    "cli",
+    "openai",
+    "guardian",
+    "daybreak"
+  ]
+}

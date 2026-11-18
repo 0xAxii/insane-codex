@@ -61,6 +61,16 @@ Guardian과 Daybreak 이외의 동작은 공식 0.170.0 구현을 유지합니�
 
 ## 설치하기
 
+### npm
+
+Node.js 18 이상에서는 npm 패키지가 현재 운영체제와 CPU에 맞는 릴리스 바이너리를
+설치하고 SHA-256 해시와 버전을 확인합니다.
+
+```bash
+npm install -g insane-codex
+insane --version
+```
+
 ### macOS와 Linux
 
 설치 스크립트는 운영체제와 CPU에 맞는 릴리스 파일을 내려받아

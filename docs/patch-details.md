@@ -1,14 +1,14 @@
 # 패치 상세 문서
 
-`insane-codex` 0.170.0 패치의 범위와 검증 내용을 정리합니다.
+`insane-codex` 0.172.0 패치의 범위와 검증 내용을 정리합니다.
 
 ## 1. 기준 소스
 
 | 항목 | 값 |
 | --- | --- |
 | 원본 저장소 | `openai/codex` |
-| 태그 | `rust-v0.170.0` |
-| 커밋 | `29eb79e9866b3262a777fdf8195c1b9e63684c91` |
+| 태그 | `rust-v0.172.0` |
+| 커밋 | `3d86e43b075adeba2193ec5c22ac92f55afd82e6` |
 | 패치 파일 | `patches/no-client-guardrails.patch` |
 
 패치는 깨끗한 공식 태그에 적용하도록 작성했습니다. Guardian·Daybreak 실행 경로,
@@ -36,13 +36,13 @@ Guardian 자동 판단 없음
 다음 Guardian 연결도 비활성화합니다.
 
 - 모델별 자동 검토 요구
-- Guardian v2 app-server 확장 기능
+- Guardian v2·v3 app-server 확장 기능
 - 네이티브 도구의 실행 전 검토
 - 서버 Guardian 평가를 도구 실행 컨텍스트에 연결하는 처리
 - Guardian 거절 재검토와 응답 재샘플링
 - `thread/guardianReview` 직접 검토 요청
 - 자동 검토와 `node_repl` 강제 검토 메타데이터 전송
-- Guardian v3 기능과 증거 보드 정리 경로
+- Guardian v3 기능, 중첩 승인 컨텍스트와 증거 보드 정리 경로
 - Guardian이 하위 에이전트에 재시도 금지 지침을 남기는 경로
 
 `thread/guardianReview` 프로토콜 타입은 호환성을 위해 유지하지만, 요청하면 이
@@ -51,7 +51,7 @@ Guardian 자동 판단 없음
 ### Daybreak
 
 `CyberAccessProgram::for_provider`와 `for_auth`는 접근 프로그램을 만들지 않습니다.
-따라서 ChatGPT 로그인, API 키와 0.170.0의 헤더 인증 모두 API 요청에 Daybreak
+따라서 ChatGPT 로그인, API 키와 0.172.0의 헤더 인증 모두 API 요청에 Daybreak
 프로그램을 전달하지 않습니다. 호스트가 스레드에 필수 프로그램을 첨부하는 경로와
 부모 선택을 네이티브 헬퍼에 전달하는 경로도 결과를 만들지 않습니다.
 
@@ -74,7 +74,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 
 ### 프롬프트 경로
 
-0.170.0의 번들 모델 기본 지침, 현재 로컬 모델 캐시의 Astra·Sol 지침,
+0.172.0의 번들 모델 기본 지침, 현재 로컬 모델 캐시의 Astra·Sol 지침,
 `codex-rs/prompts`와 런타임 컨텍스트 조각을 전체 내용 기준으로 확인했습니다.
 모델 기본 지침에서 사이버보안 작업 자체를 금지하는 별도 문구는 확인되지
 않았습니다. 위험 평가와 거절 문구는 Guardian 검토 프롬프트에 집중돼 있으며,
@@ -93,7 +93,8 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 
 - `GuardianApproval`, `GuardianIncludeAdditionalContext`, `GuardianRecordedItems`
 - `GuardianThreadContext`, `GuardianReuseParentCompaction`, `GuardianRootHandoffContext`
-- `GuardianNativeMultiAgentHistory`, `GuardianEnhancedNodeReplTranscripts`
+- `GuardianNativeMultiAgentHistory`, `GuardianNestedApprovalContext`
+- `GuardianEnhancedNodeReplTranscripts`
 - `GuardianNodeReplTranscriptImages`, `GuardianTrustOrchestratorConnectors`
 - `GuardianConversationHistoryTools`, `GuardianDenialReconsideration`
 - `GuardianV2`, `GuardianV2DecisionsComparison`, `GuardianV3`, `GuardianExt`
@@ -106,7 +107,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `codex-rs/config/src/config_requirements.rs`: 모델별 자동 검토 요구를 끕니다.
 - `codex-rs/app-server/Cargo.toml`: Guardian v2를 제품 빌드 의존성에서 제거하고,
   Guardian v3는 테스트 전용 의존성으로만 남깁니다.
-- `codex-rs/app-server/src/extensions.rs`: Guardian v2 확장 기능을 등록하지 않습니다.
+- `codex-rs/app-server/src/extensions.rs`: Guardian v2·v3 확장 기능을 등록하지 않습니다.
 - `codex-rs/app-server/src/message_processor.rs`: Guardian v3 증거 보드 정리 코드를
   제품 런타임에 연결하지 않습니다.
 - `codex-rs/app-server/src/request_processors/turn_processor.rs`:
@@ -150,7 +151,7 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `sandbox_workspace_write.network_access`
 - 관리형 네트워크의 `review_domains`
 - 안전 차단 설명, 재작성, 대화 분기와 재제출
-- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.170.0 기능
+- 캐시, MCP, 스킬, 플러그인과 그 밖의 0.172.0 기능
 
 이 패치는 클라이언트 소스만 수정합니다. 서버나 모델의 정책을 변경한다고 표현하지 않습니다.
 
@@ -160,11 +161,15 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 
 ```bash
 git apply --check patches/no-client-guardrails.patch
-cargo fmt --check
+cargo fmt --all --check
 cargo check --locked --bin codex
-cargo test --locked -p codex-utils-cli
-cargo test --locked -p codex-mcp --no-run
-cargo test --locked -p codex-app-server -p codex-tui --no-run
+cargo test --locked -p codex-features guardian_and_daybreak_features_cannot_be_enabled
+cargo test --locked -p codex-utils-cli yolo
+cargo test --locked -p codex-core cyber_access_program --lib
+cargo test --locked -p codex-mcp strict_auto_review --lib
+cargo test --locked -p codex-app-server --no-run
+RUST_MIN_STACK=67108864 cargo test --locked -p codex-tui \
+  daybreak_refusal_does_not_offer_enable_for_the_next_turn --lib
 ```
 
 추가로 다음 동작을 테스트했습니다.
@@ -181,7 +186,7 @@ cargo test --locked -p codex-app-server -p codex-tui --no-run
 ## 6. 빌드와 설치
 
 ```bash
-./scripts/build.sh rust-v0.170.0
+./scripts/build.sh rust-v0.172.0
 ```
 
 빌드 스크립트는 임시 디렉터리에 공식 태그를 복제하고 패치 적용을 확인한 뒤

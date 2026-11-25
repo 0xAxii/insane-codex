@@ -5,27 +5,27 @@
   "assets": {
     "aarch64-apple-darwin": {
       "file": "insane-codex-aarch64-apple-darwin.tar.gz",
-      "sha256": "e82ab704d449cf0c4d3c99dfd80bd6d3e089fa78b5ba6380cb7c61bc846487eb"
+      "sha256": "758681cbf548852819d4111a0b0a92ffa87f35deca2e7ac09eb30aea6ddc3e8c"
     },
     "aarch64-pc-windows-msvc": {
       "file": "insane-codex-aarch64-pc-windows-msvc.zip",
-      "sha256": "544031a26c8f32175f1f2da2515760822eee9560382a3218fb851b71235135b5"
+      "sha256": "8b4f4a0ba8995d54dc24f4bf8cea72dde06f6ac04522d3b6daaea329b92cd7f3"
     },
     "aarch64-unknown-linux-gnu": {
       "file": "insane-codex-aarch64-unknown-linux-gnu.tar.gz",
-      "sha256": "626249f21a1050b2cc1f2f0b10edc2fd6f7155f3a6aa6d532f132cde19b30456"
+      "sha256": "fbe7bbed0cce106bf9e256a7a574ef33b7ab3615730f4362286750c2aa3a59be"
     },
     "x86_64-apple-darwin": {
       "file": "insane-codex-x86_64-apple-darwin.tar.gz",
-      "sha256": "0977459efbbb3d5ab698bff83f8ae67430417636fea7607880bf403143b4d26a"
+      "sha256": "5957296f3b0e353ed5fcc8cb15f5f2eed255a856e058c90a7a1b13abfedf8ecd"
     },
     "x86_64-pc-windows-msvc": {
       "file": "insane-codex-x86_64-pc-windows-msvc.zip",
-      "sha256": "1203ea00a8a268d902cfd543f87960a05a2939525688a69e44b4baba3a3fa453"
+      "sha256": "5a6f82fd504b747e84c51ad2f0b1e8f56afe85203734d0f85a625ca10a0daf5a"
     },
     "x86_64-unknown-linux-gnu": {
       "file": "insane-codex-x86_64-unknown-linux-gnu.tar.gz",
-      "sha256": "7612d1ac55bc99f397724fa86b03f5e2abc75778f627a94861d42d2b7435c843"
+      "sha256": "15c78db57677740bbf647ec0fe0af7f658c23a12701b26910a3553543b68f60b"
     }
   }
 }

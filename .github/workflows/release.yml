@@ -26,9 +26,9 @@ jobs:
             target: aarch64-apple-darwin
           - runner: macos-15-intel
             target: x86_64-apple-darwin
-          - runner: ubuntu-24.04
+          - runner: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
           - runner: windows-2025
             target: x86_64-pc-windows-msvc
@@ -104,6 +104,22 @@ jobs:
           package/insane-codex --version
           tar -C package -czf "release/${asset}" insane-codex
 
+      - name: Verify glibc 2.35 compatibility
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          max_glibc="$(
+            readelf --version-info package/insane-codex \
+              | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)*' \
+              | sed 's/^GLIBC_//' \
+              | sort -Vu \
+              | tail -n 1
+          )"
+          test -n "$max_glibc"
+          dpkg --compare-versions "$max_glibc" le "2.35"
+          echo "maximum required glibc version: $max_glibc"
+
       - name: Package Windows binary
         if: runner.os == 'Windows'
         shell: pwsh
@@ -154,8 +170,10 @@ jobs:
 
           Guardian and Daybreak client paths are disabled. The binary defaults
           to YOLO-equivalent permissions unless an explicit permission mode is
-          selected. Runtime permission updates, managed network review, and
-          safety recourse otherwise retain the upstream Codex behavior.
+          selected, and interactive sessions use the patched embedded app
+          server unless an explicit remote endpoint is selected. Linux binaries
+          support glibc 2.35. Runtime permission updates, managed network review,
+          and safety recourse otherwise retain the upstream Codex behavior.
           EOF
           gh release create "$GITHUB_REF_NAME" \
             release/*.tar.gz \

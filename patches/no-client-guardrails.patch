@@ -3472,18 +3472,44 @@ index c27757ec2f651b2226e0a56fe4031e84c991b5f5..20584033cc4bcf23380d1173dd4718b5
  
          // After an error ends the turn, try sending the next queued input.
 diff --git a/codex-rs/tui/src/startup_orchestration.rs b/codex-rs/tui/src/startup_orchestration.rs
-index ce51253098c39d204f83a769f718c1c2c43e2d1b..b64760328a1eb8584e627aa6988fc78bbcf3e12e 100644
+index ce51253098c39d204f83a769f718c1c2c43e2d1b..627281e9a612417fce25b41800a06fab86803b98 100644
 --- a/codex-rs/tui/src/startup_orchestration.rs
 +++ b/codex-rs/tui/src/startup_orchestration.rs
-@@ -13,6 +13,8 @@ pub(super) async fn run_main_inner(
+@@ -13,6 +13,12 @@ pub(super) async fn run_main_inner(
      loader_overrides: LoaderOverrides,
      mut explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
  ) -> std::io::Result<AppExitInfo> {
 +    cli.shared
 +        .enable_yolo_by_default(cli.approval_policy.is_some());
++    // insane-codex runs its patched embedded app server by default so the CLI
++    // cannot silently attach to an older or unpatched managed daemon. An
++    // explicit remote endpoint remains authoritative.
++    cli.no_daemon |= explicit_remote_endpoint.is_none();
      if cli.no_daemon && explicit_remote_endpoint.is_some() {
          return Err(std::io::Error::other(
              "--no-daemon cannot be used with --remote.",
+diff --git a/codex-rs/tui/tests/suite/focus_palette.rs b/codex-rs/tui/tests/suite/focus_palette.rs
+index 3d3bd15fe5f3737de4cbd5f040c44bfe8b76e378..22a80c6b8320f6a5bd110bf00e32e842cedd7c0a 100644
+--- a/codex-rs/tui/tests/suite/focus_palette.rs
++++ b/codex-rs/tui/tests/suite/focus_palette.rs
+@@ -605,7 +605,7 @@ pub(super) fn write_test_config(codex_home: &Path, repo_root: &Path) -> Result<(
+ }
+ 
+ #[test]
+-fn no_daemon_skips_startup_and_discovery() -> Result<()> {
++fn embedded_server_is_the_default_and_skips_daemon_discovery() -> Result<()> {
+     for running in [false, true] {
+         let workspace = tempfile::tempdir()?;
+         let home = tempfile::tempdir()?;
+@@ -625,7 +625,7 @@ fn no_daemon_skips_startup_and_discovery() -> Result<()> {
+         } else {
+             None
+         };
+-        let mut terminal = PtyCodex::start(workspace.path(), home, &["--no-daemon"])?;
++        let mut terminal = PtyCodex::start(workspace.path(), home, &[])?;
+         terminal.wait_for_startup()?;
+         terminal.write_input(b"/status")?;
+         terminal.wait_for_screen("show current session configuration")?;
 diff --git a/codex-rs/utils/cli/src/shared_options.rs b/codex-rs/utils/cli/src/shared_options.rs
 index 5e525662d49ce0697ff6965473be178378443776..b668e8550a5914add4c440920a87b8712c564e57 100644
 --- a/codex-rs/utils/cli/src/shared_options.rs

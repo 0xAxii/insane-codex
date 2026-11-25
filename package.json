@@ -1,6 +1,6 @@
 {
   "name": "insane-codex",
-  "version": "0.172.0-insane.1",
+  "version": "0.172.0-insane.2",
   "description": "Patched Codex CLI with client-side Guardian and Daybreak paths disabled",
   "license": "UNLICENSED",
   "author": "0xAxii",

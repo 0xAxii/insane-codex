@@ -13,7 +13,8 @@
 
 패치는 깨끗한 공식 태그에 적용하도록 작성했습니다. Guardian·Daybreak 실행 경로,
 사이버 모델의 권한 강제 변경, 콘텐츠 필터 후속 지침과 배포본의 기본 권한
-모드만 수정합니다. 서버나 모델 자체의 정책을 변경하지는 않습니다.
+모드, 대화형 세션의 기본 app-server 선택만 수정합니다. 서버나 모델 자체의 정책을
+변경하지는 않습니다.
 
 ## 2. 동작 변화
 
@@ -71,6 +72,13 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 사이버 모델을 선택할 때 클라이언트가 기존 세션의 권한 프로필, 승인 정책과
 검토자를 `workspace-write + on-request + auto_review`로 강제 변경하던 코드는 제거합니다.
 실행 중 `/permissions`로 변경하는 원본 경로는 그대로 남습니다.
+
+### 기본 내장 app-server
+
+대화형 TUI, `resume`, `fork`와 `agents`는 명시적인 원격 서버가 없으면 공유 데몬을
+검색하지 않고 패치 바이너리 내부의 app-server를 사용합니다. CLI만 갱신되고 실행 중인
+관리형 데몬은 구버전으로 남는 경우에도 세션 처리 버전과 패치 범위를 일치시킵니다.
+`--remote`를 명시한 실행과 app-server 데몬 관리 명령은 원본 동작을 유지합니다.
 
 ### 프롬프트 경로
 
@@ -138,6 +146,8 @@ TUI의 안전 차단 후속 처리에서는 “Enable Daybreak” 항목만 제�
 - `codex-rs/utils/cli/src/shared_options.rs`: 권한 모드가 명시되지 않으면 YOLO를 기본으로 선택합니다.
 - `codex-rs/tui/src/startup_orchestration.rs`, `codex-rs/exec/src/lib.rs`: TUI와 exec 시작 경로에
   같은 기본값을 적용합니다.
+- `codex-rs/tui/src/startup_orchestration.rs`: 명시적인 원격 서버가 없는 대화형 세션은
+  패치 바이너리의 내장 app-server를 기본으로 사용합니다.
 - `codex-rs/tui/src/app/thread_settings.rs`: 모델 선택은 권한·승인 설정을 덮어쓰지 않습니다.
 - `codex-rs/core/src/responses_retry.rs`: 콘텐츠 필터 오류 후속 지침을 대화에 추가하지 않습니다.
 
@@ -170,6 +180,8 @@ cargo test --locked -p codex-mcp strict_auto_review --lib
 cargo test --locked -p codex-app-server --no-run
 RUST_MIN_STACK=67108864 cargo test --locked -p codex-tui \
   daybreak_refusal_does_not_offer_enable_for_the_next_turn --lib
+RUST_MIN_STACK=67108864 cargo test --locked -p codex-tui \
+  embedded_server_is_the_default_and_skips_daemon_discovery --test all
 ```
 
 추가로 다음 동작을 테스트했습니다.
@@ -182,6 +194,7 @@ RUST_MIN_STACK=67108864 cargo test --locked -p codex-tui \
 - 사이버 모델 선택이 기존 권한·승인 설정을 덮어쓰지 않는지 확인
 - 자동 검토 메타데이터와 콘텐츠 필터 후속 지침이 제외되는지 확인
 - 명시적 권한 모드가 없을 때만 YOLO 기본값이 적용되는지 확인
+- 실행 중인 공유 데몬이 있어도 대화형 세션이 내장 app-server를 사용하는지 확인
 
 ## 6. 빌드와 설치
 
@@ -196,3 +209,5 @@ RUST_MIN_STACK=67108864 cargo test --locked -p codex-tui \
 공개 배포는 macOS, Linux와 Windows의 x86_64·ARM64 여섯 빌드가 모두 성공한 뒤에만
 완료로 간주합니다. 실행 바이너리는 Git 저장소가 아니라 GitHub Releases 자산으로만
 배포합니다.
+Linux x86_64·ARM64는 Ubuntu 22.04에서 빌드하고 ELF 버전 정보를 검사하여 요구하는
+glibc 버전이 2.35를 넘지 않는지 확인합니다.

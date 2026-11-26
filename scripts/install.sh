@@ -49,7 +49,10 @@ for required in codex-package.json bin/insane-codex bin/codex-code-mode-host bin
   test -f "${temp_dir}/${required}" || { echo "missing package file: ${required}" >&2; exit 1; }
 done
 mkdir -p "${version_dir}" "${bin_dir}"
-cp -R "${temp_dir}/bin" "${temp_dir}/codex-path" "${temp_dir}/codex-resources" "${version_dir}/"
+for directory in bin codex-path codex-resources; do
+  mkdir -p "${version_dir}/${directory}"
+  cp -R "${temp_dir}/${directory}/." "${version_dir}/${directory}/"
+done
 cp "${temp_dir}/codex-package.json" "${version_dir}/codex-package.json"
 "${binary}" --version
 ln -sfn "${binary}" "${bin_dir}/insane-codex"

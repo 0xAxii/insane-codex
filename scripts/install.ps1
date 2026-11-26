@@ -45,9 +45,11 @@ try {
         }
     }
     New-Item -ItemType Directory -Force $installDir | Out-Null
-    Copy-Item (Join-Path $tempDir "bin") (Join-Path $installDir "bin") -Recurse -Force
-    Copy-Item (Join-Path $tempDir "codex-path") (Join-Path $installDir "codex-path") -Recurse -Force
-    Copy-Item (Join-Path $tempDir "codex-resources") (Join-Path $installDir "codex-resources") -Recurse -Force
+    foreach ($directory in @("bin", "codex-path", "codex-resources")) {
+        $destination = Join-Path $installDir $directory
+        New-Item -ItemType Directory -Force $destination | Out-Null
+        Copy-Item (Join-Path (Join-Path $tempDir $directory) "*") $destination -Recurse -Force
+    }
     Copy-Item (Join-Path $tempDir "codex-package.json") (Join-Path $installDir "codex-package.json") -Force
     $binDir = Join-Path $installDir "bin"
 

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 repo="0xAxii/insane-codex"
-version="${INSANE_CODEX_VERSION:-0.172.0-insane.5}"
+version="${INSANE_CODEX_VERSION:-0.172.0-insane.4}"
 bin_dir="${INSANE_CODEX_INSTALL_DIR:-${HOME}/.local/bin}"
 libexec_root="${INSANE_CODEX_LIBEXEC_DIR:-${HOME}/.local/libexec}"
 version_dir="${libexec_root}/insane-codex-v${version}"
 binary="${version_dir}/bin/insane-codex"
-release_base="${INSANE_CODEX_RELEASE_BASE:-https://github.com/${repo}/releases/latest/download}"
+release_base="${INSANE_CODEX_RELEASE_BASE:-https://github.com/${repo}/releases/download/v${version}}"
 
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64)

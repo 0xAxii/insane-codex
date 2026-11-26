@@ -72,8 +72,8 @@ function sha256(file) {
   return hash.digest("hex");
 }
 
-function run(command, args) {
-  const result = spawnSync(command, args, { encoding: "utf8", stdio: "pipe" });
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, { encoding: "utf8", stdio: "pipe", ...options });
   if (result.error) {
     throw result.error;
   }
@@ -92,10 +92,14 @@ function extract(archive, destination) {
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      "Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force",
-      archive,
-      destination,
-    ]);
+      "Expand-Archive -LiteralPath $env:INSANE_CODEX_ARCHIVE -DestinationPath $env:INSANE_CODEX_DESTINATION -Force",
+    ], {
+      env: {
+        ...process.env,
+        INSANE_CODEX_ARCHIVE: archive,
+        INSANE_CODEX_DESTINATION: destination,
+      },
+    });
     return;
   }
   run("tar", ["-xzf", archive, "-C", destination]);

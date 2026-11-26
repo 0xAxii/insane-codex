@@ -7,7 +7,7 @@ const path = require("node:path");
 const packageJson = require("../package.json");
 const manifest = require("./manifest.json");
 
-const expectedPackageVersion = `${manifest.codexVersion}-insane.3`;
+const expectedPackageVersion = `${manifest.codexVersion}-insane.4`;
 if (packageJson.version !== expectedPackageVersion) {
   throw new Error(`package version ${packageJson.version} does not match ${expectedPackageVersion}`);
 }

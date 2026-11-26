@@ -31,7 +31,7 @@ app-server를 사용합니다. 따라서 CLI를 갱신한 뒤 구버전 데몬�
 ### macOS와 Linux
 
 설치 스크립트는 운영체제와 CPU에 맞는 릴리스 파일을 내려받아
-`~/.local/libexec/insane-codex-v0.172.0-insane.3/`에 전체 패키지를 설치합니다. 새 바이너리의
+`~/.local/libexec/insane-codex-v0.172.0-insane.4/`에 전체 패키지를 설치합니다. 새 바이너리의
 버전을 확인한 뒤 `~/.local/bin/insane-codex` 심볼릭 링크를 교체합니다.
 
 ```bash

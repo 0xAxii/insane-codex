@@ -26,14 +26,23 @@ git -C "${source_dir}" apply --check "${patch_file}"
 git -C "${source_dir}" apply "${patch_file}"
 
 mkdir -p "${target_dir}" "${dist_dir}"
-CARGO_TARGET_DIR="${target_dir}" \
-  cargo build --manifest-path "${source_dir}/codex-rs/Cargo.toml" --locked --release \
-    --bin codex --bin codex-code-mode-host --bin codex-exec-server
+case "$(uname -s)-$(uname -m)" in
+  Darwin-arm64) target="aarch64-apple-darwin" ;;
+  Darwin-x86_64) target="x86_64-apple-darwin" ;;
+  Linux-aarch64) target="aarch64-unknown-linux-gnu" ;;
+  Linux-x86_64) target="x86_64-unknown-linux-gnu" ;;
+  *) echo "unsupported build platform" >&2; exit 1 ;;
+esac
 
-artifact="${dist_dir}/codex-${upstream_tag}-$(uname -m)"
-install -m 755 "${target_dir}/release/codex" "${artifact}"
-install -m 755 "${target_dir}/release/codex-code-mode-host" "${dist_dir}/codex-code-mode-host-${upstream_tag}-$(uname -m)"
-install -m 755 "${target_dir}/release/codex-exec-server" "${dist_dir}/codex-exec-server-${upstream_tag}-$(uname -m)"
+package_dir="${dist_dir}/insane-codex-${upstream_tag}-${target}"
+CODEX_REPO_ROOT="${source_dir}" CARGO_TARGET_DIR="${target_dir}" \
+  python3 "${source_dir}/scripts/build_codex_package.py" \
+    --target "${target}" --cargo-profile release --strip none \
+    --package-dir "${package_dir}"
+mv "${package_dir}/bin/codex" "${package_dir}/bin/insane-codex"
+python3 -c 'import json, pathlib, sys; p = pathlib.Path(sys.argv[1]); data = json.loads(p.read_text()); data["entrypoint"] = "bin/insane-codex"; p.write_text(json.dumps(data, indent=2) + "\n")' "${package_dir}/codex-package.json"
+
+artifact="${package_dir}/bin/insane-codex"
 
 "${artifact}" --version
 if command -v shasum >/dev/null 2>&1; then

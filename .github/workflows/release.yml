@@ -66,6 +66,11 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Install Python for Codex package builder
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+
       - name: Fetch and patch Codex
         shell: bash
         run: |
@@ -81,20 +86,6 @@ jobs:
           workspaces: upstream/codex-rs -> target
           key: ${{ matrix.target }}
 
-      - name: Build Codex
-        working-directory: upstream/codex-rs
-        shell: bash
-        run: |
-          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-msvc" ]]; then
-            export LIBSQLITE3_FLAGS=SQLITE_DISABLE_INTRINSIC
-          fi
-          cargo build --locked --release --bin codex --bin codex-code-mode-host --bin codex-exec-server
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            cargo build --locked --release --bin bwrap
-          elif [[ "${{ runner.os }}" == "Windows" ]]; then
-            cargo build --locked --release --bin codex-command-runner --bin codex-windows-sandbox-setup
-          fi
-
       - name: Assemble complete Codex package
         shell: bash
         env:
@@ -102,24 +93,18 @@ jobs:
         run: |
           set -euo pipefail
           export CODEX_REPO_ROOT="$GITHUB_WORKSPACE/upstream"
+          if [[ "$TARGET" == "x86_64-pc-windows-msvc" ]]; then
+            export LIBSQLITE3_FLAGS=SQLITE_DISABLE_INTRINSIC
+          fi
           suffix=""
-          extra=()
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             suffix=".exe"
-            extra+=(--codex-command-runner-bin "upstream/codex-rs/target/release/codex-command-runner.exe")
-            extra+=(--codex-windows-sandbox-setup-bin "upstream/codex-rs/target/release/codex-windows-sandbox-setup.exe")
-          elif [[ "${{ runner.os }}" == "Linux" ]]; then
-            extra+=(--bwrap-bin "upstream/codex-rs/target/release/bwrap")
           fi
-          python3 upstream/scripts/build_codex_package.py \
+          python upstream/scripts/build_codex_package.py \
             --target "$TARGET" --cargo-profile release --strip none \
-            --package-dir "$GITHUB_WORKSPACE/package" \
-            --entrypoint-bin "upstream/codex-rs/target/release/codex${suffix}" \
-            --code-mode-host-bin "upstream/codex-rs/target/release/codex-code-mode-host${suffix}" \
-            --exec-server-bin "upstream/codex-rs/target/release/codex-exec-server${suffix}" \
-            "${extra[@]}"
+            --package-dir "$GITHUB_WORKSPACE/package"
           mv "package/bin/codex${suffix}" "package/bin/insane-codex${suffix}"
-          python3 -c 'import json, pathlib, sys; p = pathlib.Path("package/codex-package.json"); data = json.loads(p.read_text()); data["entrypoint"] = "bin/insane-codex" + sys.argv[1]; p.write_text(json.dumps(data, indent=2) + "\n")' "$suffix"
+          python -c 'import json, pathlib, sys; p = pathlib.Path("package/codex-package.json"); data = json.loads(p.read_text()); data["entrypoint"] = "bin/insane-codex" + sys.argv[1]; p.write_text(json.dumps(data, indent=2) + "\n")' "$suffix"
           test -x "package/bin/insane-codex${suffix}"
           test -x "package/bin/codex-code-mode-host${suffix}"
           test -x "package/bin/codex-exec-server${suffix}"

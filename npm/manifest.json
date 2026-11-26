@@ -1,31 +1,31 @@
 {
   "codexVersion": "0.172.0",
-  "releaseTag": "v0.172.0-insane.5",
+  "releaseTag": "v0.172.0-insane.4",
   "repository": "0xAxii/insane-codex",
   "assets": {
     "aarch64-apple-darwin": {
       "file": "insane-codex-aarch64-apple-darwin.tar.gz",
-      "sha256": "758681cbf548852819d4111a0b0a92ffa87f35deca2e7ac09eb30aea6ddc3e8c"
+      "sha256": "e7f81dc1958513e82eb50204f5e68226afd2d06137e96124a6019827a6886727"
     },
     "aarch64-pc-windows-msvc": {
       "file": "insane-codex-aarch64-pc-windows-msvc.zip",
-      "sha256": "8b4f4a0ba8995d54dc24f4bf8cea72dde06f6ac04522d3b6daaea329b92cd7f3"
+      "sha256": "3970ed3e1524d12d7e625df0ffa47b324beb0a2c4a5b7b7f6de5290b76621ca6"
     },
     "aarch64-unknown-linux-gnu": {
       "file": "insane-codex-aarch64-unknown-linux-gnu.tar.gz",
-      "sha256": "fbe7bbed0cce106bf9e256a7a574ef33b7ab3615730f4362286750c2aa3a59be"
+      "sha256": "d24acc24e5f21a3f8c5970d96d1507aee7e2febc5365edef04c1d05389718034"
     },
     "x86_64-apple-darwin": {
       "file": "insane-codex-x86_64-apple-darwin.tar.gz",
-      "sha256": "5957296f3b0e353ed5fcc8cb15f5f2eed255a856e058c90a7a1b13abfedf8ecd"
+      "sha256": "8787a02ab1eef00b6f58260511d65753b61034a269898c3462eb545efc748f60"
     },
     "x86_64-pc-windows-msvc": {
       "file": "insane-codex-x86_64-pc-windows-msvc.zip",
-      "sha256": "5a6f82fd504b747e84c51ad2f0b1e8f56afe85203734d0f85a625ca10a0daf5a"
+      "sha256": "a854f99d733cecb8b6e74944e8fbe1d279817bde3da6a3123aced6a2411685cb"
     },
     "x86_64-unknown-linux-gnu": {
       "file": "insane-codex-x86_64-unknown-linux-gnu.tar.gz",
-      "sha256": "15c78db57677740bbf647ec0fe0af7f658c23a12701b26910a3553543b68f60b"
+      "sha256": "327bc9828ee7b808eed322540578b9577f7a13ff022cc6a8e1fea4ec7d45f1d4"
     }
   }
 }

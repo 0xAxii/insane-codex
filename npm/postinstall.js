@@ -116,7 +116,8 @@ async function main() {
   const packageRoot = path.resolve(__dirname, "..");
   const vendorDir = path.join(packageRoot, "npm", "vendor", target);
   const binaryName = process.platform === "win32" ? "insane-codex.exe" : "insane-codex";
-  const binary = path.join(vendorDir, binaryName);
+  const binary = path.join(vendorDir, "bin", binaryName);
+  const suffix = process.platform === "win32" ? ".exe" : "";
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "insane-codex-npm-"));
   const archive = path.join(temporary, asset.file);
   const url = `https://github.com/${manifest.repository}/releases/download/${manifest.releaseTag}/${asset.file}`;
@@ -133,6 +134,21 @@ async function main() {
     extract(archive, vendorDir);
     if (!fs.existsSync(binary)) {
       throw new Error(`archive did not contain ${binaryName}`);
+    }
+    for (const relative of [
+      "codex-package.json",
+      path.join("bin", `codex-code-mode-host${suffix}`),
+      path.join("bin", `codex-exec-server${suffix}`),
+      path.join("codex-path", `rg${suffix}`),
+      ...(process.platform === "linux" ? [path.join("codex-resources", "bwrap")] : []),
+      ...(process.platform === "win32" ? [
+        path.join("codex-resources", "codex-command-runner.exe"),
+        path.join("codex-resources", "codex-windows-sandbox-setup.exe"),
+      ] : []),
+    ]) {
+      if (!fs.existsSync(path.join(vendorDir, relative))) {
+        throw new Error(`archive did not contain ${relative}`);
+      }
     }
     if (process.platform !== "win32") {
       fs.chmodSync(binary, 0o755);

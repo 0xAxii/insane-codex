@@ -39,21 +39,30 @@ try {
     Invoke-WebRequest "$releaseBase/$asset" -OutFile (Join-Path $tempDir $asset)
 
     Expand-Archive (Join-Path $tempDir $asset) -DestinationPath $tempDir -Force
+    foreach ($required in @("codex-package.json", "bin/insane-codex.exe", "bin/codex-code-mode-host.exe", "bin/codex-exec-server.exe", "codex-path/rg.exe", "codex-resources/codex-command-runner.exe", "codex-resources/codex-windows-sandbox-setup.exe")) {
+        if (-not (Test-Path (Join-Path $tempDir $required))) {
+            throw "Missing package file: $required"
+        }
+    }
     New-Item -ItemType Directory -Force $installDir | Out-Null
-    Copy-Item (Join-Path $tempDir "insane-codex.exe") (Join-Path $installDir "insane-codex.exe") -Force
+    Copy-Item (Join-Path $tempDir "bin") (Join-Path $installDir "bin") -Recurse -Force
+    Copy-Item (Join-Path $tempDir "codex-path") (Join-Path $installDir "codex-path") -Recurse -Force
+    Copy-Item (Join-Path $tempDir "codex-resources") (Join-Path $installDir "codex-resources") -Recurse -Force
+    Copy-Item (Join-Path $tempDir "codex-package.json") (Join-Path $installDir "codex-package.json") -Force
+    $binDir = Join-Path $installDir "bin"
 
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     $pathEntries = if ($userPath) { $userPath -split ";" } else { @() }
-    if ($pathEntries -notcontains $installDir) {
-        $newUserPath = if ($userPath) { "$installDir;$userPath" } else { $installDir }
+    if ($pathEntries -notcontains $binDir) {
+        $newUserPath = if ($userPath) { "$binDir;$userPath" } else { $binDir }
         [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
     }
-    if (($env:Path -split ";") -notcontains $installDir) {
-        $env:Path = "$installDir;$env:Path"
+    if (($env:Path -split ";") -notcontains $binDir) {
+        $env:Path = "$binDir;$env:Path"
     }
 
-    Write-Host "Installed: $(Join-Path $installDir 'insane-codex.exe')"
-    & (Join-Path $installDir "insane-codex.exe") --version
+    Write-Host "Installed: $(Join-Path $binDir 'insane-codex.exe')"
+    & (Join-Path $binDir "insane-codex.exe") --version
     Write-Host "Open a new terminal, then run: insane-codex"
 } finally {
     if (Test-Path $tempDir) {

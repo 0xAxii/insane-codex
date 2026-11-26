@@ -19,8 +19,8 @@ insane-codex
 ```
 
 패키지의 postinstall 스크립트는 현재 운영체제와 CPU에 맞는 바이너리를 GitHub
-Releases에서 내려받습니다. 다운로드한 파일의 SHA-256 해시와 `codex-cli 0.172.0`
-버전을 모두 확인한 뒤 설치합니다. npm에서 설치 스크립트를 비활성화한 환경에서는
+Releases에서 내려받습니다. 다운로드한 파일의 SHA-256 해시, 보조 실행 파일과
+`codex-cli 0.172.0` 버전을 확인한 뒤 설치합니다. npm에서 설치 스크립트를 비활성화한 환경에서는
 postinstall 실행을 허용해야 합니다.
 
 일반 대화형 실행은 공유 백그라운드 데몬 대신 같은 0.172.0 패치 바이너리에 포함된
@@ -31,7 +31,7 @@ app-server를 사용합니다. 따라서 CLI를 갱신한 뒤 구버전 데몬�
 ### macOS와 Linux
 
 설치 스크립트는 운영체제와 CPU에 맞는 릴리스 파일을 내려받아
-`~/.local/libexec/insane-codex-v0.172.0/insane-codex`에 설치합니다. 새 바이너리의
+`~/.local/libexec/insane-codex-v0.172.0-insane.3/`에 전체 패키지를 설치합니다. 새 바이너리의
 버전을 확인한 뒤 `~/.local/bin/insane-codex` 심볼릭 링크를 교체합니다.
 
 ```bash
@@ -152,16 +152,7 @@ cd insane-codex
 ./scripts/build.sh rust-v0.172.0
 ```
 
-로컬에 버전별로 설치하려면 다음과 같이 실행합니다.
-
-```bash
-mkdir -p "$HOME/.local/libexec/insane-codex-v0.172.0" "$HOME/.local/bin"
-install -m 755 "$(pwd)/dist/codex-rust-v0.172.0-$(uname -m)" \
-  "$HOME/.local/libexec/insane-codex-v0.172.0/insane-codex"
-"$HOME/.local/libexec/insane-codex-v0.172.0/insane-codex" --version
-ln -sfn "$HOME/.local/libexec/insane-codex-v0.172.0/insane-codex" \
-  "$HOME/.local/bin/insane-codex"
-```
+릴리스 설치 스크립트는 Code Mode 호스트와 실행 서버 등 보조 파일도 함께 설치합니다.
 
 ## 버전과 배포 방식
 

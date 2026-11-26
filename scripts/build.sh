@@ -27,10 +27,13 @@ git -C "${source_dir}" apply "${patch_file}"
 
 mkdir -p "${target_dir}" "${dist_dir}"
 CARGO_TARGET_DIR="${target_dir}" \
-  cargo build --manifest-path "${source_dir}/codex-rs/Cargo.toml" --locked --release --bin codex
+  cargo build --manifest-path "${source_dir}/codex-rs/Cargo.toml" --locked --release \
+    --bin codex --bin codex-code-mode-host --bin codex-exec-server
 
 artifact="${dist_dir}/codex-${upstream_tag}-$(uname -m)"
 install -m 755 "${target_dir}/release/codex" "${artifact}"
+install -m 755 "${target_dir}/release/codex-code-mode-host" "${dist_dir}/codex-code-mode-host-${upstream_tag}-$(uname -m)"
+install -m 755 "${target_dir}/release/codex-exec-server" "${dist_dir}/codex-exec-server-${upstream_tag}-$(uname -m)"
 
 "${artifact}" --version
 if command -v shasum >/dev/null 2>&1; then

@@ -2,11 +2,11 @@
 set -euo pipefail
 
 repo="0xAxii/insane-codex"
-version="${INSANE_CODEX_VERSION:-0.172.0}"
+version="${INSANE_CODEX_VERSION:-0.172.0-insane.3}"
 bin_dir="${INSANE_CODEX_INSTALL_DIR:-${HOME}/.local/bin}"
 libexec_root="${INSANE_CODEX_LIBEXEC_DIR:-${HOME}/.local/libexec}"
 version_dir="${libexec_root}/insane-codex-v${version}"
-binary="${version_dir}/insane-codex"
+binary="${version_dir}/bin/insane-codex"
 release_base="${INSANE_CODEX_RELEASE_BASE:-https://github.com/${repo}/releases/latest/download}"
 
 case "$(uname -s)-$(uname -m)" in
@@ -45,8 +45,12 @@ curl --fail --location --retry 3 --silent --show-error \
   "${release_base}/${asset}" -o "${temp_dir}/${asset}"
 
 tar -C "${temp_dir}" -xzf "${temp_dir}/${asset}"
+for required in codex-package.json bin/insane-codex bin/codex-code-mode-host bin/codex-exec-server codex-path/rg; do
+  test -f "${temp_dir}/${required}" || { echo "missing package file: ${required}" >&2; exit 1; }
+done
 mkdir -p "${version_dir}" "${bin_dir}"
-install -m 755 "${temp_dir}/insane-codex" "${binary}"
+cp -R "${temp_dir}/bin" "${temp_dir}/codex-path" "${temp_dir}/codex-resources" "${version_dir}/"
+cp "${temp_dir}/codex-package.json" "${version_dir}/codex-package.json"
 "${binary}" --version
 ln -sfn "${binary}" "${bin_dir}/insane-codex"
 

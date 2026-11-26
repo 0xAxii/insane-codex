@@ -88,7 +88,43 @@ jobs:
           if [[ "${{ matrix.target }}" == "x86_64-pc-windows-msvc" ]]; then
             export LIBSQLITE3_FLAGS=SQLITE_DISABLE_INTRINSIC
           fi
-          cargo build --locked --release -p codex-cli --bin codex
+          cargo build --locked --release --bin codex --bin codex-code-mode-host --bin codex-exec-server
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            cargo build --locked --release --bin bwrap
+          elif [[ "${{ runner.os }}" == "Windows" ]]; then
+            cargo build --locked --release --bin codex-command-runner --bin codex-windows-sandbox-setup
+          fi
+
+      - name: Assemble complete Codex package
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          export CODEX_REPO_ROOT="$GITHUB_WORKSPACE/upstream"
+          suffix=""
+          extra=()
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            suffix=".exe"
+            extra+=(--codex-command-runner-bin "upstream/codex-rs/target/release/codex-command-runner.exe")
+            extra+=(--codex-windows-sandbox-setup-bin "upstream/codex-rs/target/release/codex-windows-sandbox-setup.exe")
+          elif [[ "${{ runner.os }}" == "Linux" ]]; then
+            extra+=(--bwrap-bin "upstream/codex-rs/target/release/bwrap")
+          fi
+          python3 upstream/scripts/build_codex_package.py \
+            --target "$TARGET" --cargo-profile release --strip none \
+            --package-dir "$GITHUB_WORKSPACE/package" \
+            --entrypoint-bin "upstream/codex-rs/target/release/codex${suffix}" \
+            --code-mode-host-bin "upstream/codex-rs/target/release/codex-code-mode-host${suffix}" \
+            --exec-server-bin "upstream/codex-rs/target/release/codex-exec-server${suffix}" \
+            "${extra[@]}"
+          mv "package/bin/codex${suffix}" "package/bin/insane-codex${suffix}"
+          python3 -c 'import json, pathlib, sys; p = pathlib.Path("package/codex-package.json"); data = json.loads(p.read_text()); data["entrypoint"] = "bin/insane-codex" + sys.argv[1]; p.write_text(json.dumps(data, indent=2) + "\n")' "$suffix"
+          test -x "package/bin/insane-codex${suffix}"
+          test -x "package/bin/codex-code-mode-host${suffix}"
+          test -x "package/bin/codex-exec-server${suffix}"
+          "package/bin/insane-codex${suffix}" --version
+          "package/bin/codex-code-mode-host${suffix}" --help
 
       - name: Package Unix binary
         if: runner.os != 'Windows'
@@ -97,28 +133,28 @@ jobs:
           TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
-          binary="upstream/codex-rs/target/release/codex"
           asset="insane-codex-${TARGET}.tar.gz"
-          mkdir -p package release
-          install -m 755 "$binary" package/insane-codex
-          package/insane-codex --version
-          tar -C package -czf "release/${asset}" insane-codex
+          mkdir -p release
+          tar -C package -czf "release/${asset}" .
 
       - name: Verify glibc 2.35 compatibility
         if: runner.os == 'Linux'
         shell: bash
         run: |
           set -euo pipefail
-          max_glibc="$(
-            readelf --version-info package/insane-codex \
+          for binary in package/bin/* package/codex-resources/bwrap; do
+            max_glibc="$(
+              readelf --version-info "$binary" \
               | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)*' \
               | sed 's/^GLIBC_//' \
               | sort -Vu \
-              | tail -n 1
-          )"
-          test -n "$max_glibc"
-          dpkg --compare-versions "$max_glibc" le "2.35"
-          echo "maximum required glibc version: $max_glibc"
+              | tail -n 1 || true
+            )"
+            if [[ -n "$max_glibc" ]]; then
+              dpkg --compare-versions "$max_glibc" le "2.35"
+              echo "$binary maximum required glibc version: $max_glibc"
+            fi
+          done
 
       - name: Package Windows binary
         if: runner.os == 'Windows'
@@ -128,10 +164,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $asset = "insane-codex-$env:TARGET.zip"
-          New-Item -ItemType Directory -Force package, release | Out-Null
-          Copy-Item "upstream/codex-rs/target/release/codex.exe" "package/insane-codex.exe"
-          & "package/insane-codex.exe" --version
-          Compress-Archive -Path "package/insane-codex.exe" -DestinationPath "release/$asset"
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path "package/*" -DestinationPath "release/$asset"
 
       - name: Upload package
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -174,6 +208,8 @@ jobs:
           server unless an explicit remote endpoint is selected. Linux binaries
           support glibc 2.35. Runtime permission updates, managed network review,
           and safety recourse otherwise retain the upstream Codex behavior.
+          Each archive includes the Code Mode host, execution server, search
+          binary, package metadata, and platform-specific runtime helpers.
           EOF
           gh release create "$GITHUB_REF_NAME" \
             release/*.tar.gz \

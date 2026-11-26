@@ -24,7 +24,7 @@ if (!architecture || !system) {
 
 const target = `${architecture}-${system}`;
 const executable = process.platform === "win32" ? "insane-codex.exe" : "insane-codex";
-const binary = path.resolve(__dirname, "..", "vendor", target, executable);
+const binary = path.resolve(__dirname, "..", "vendor", target, "bin", executable);
 const child = spawn(binary, process.argv.slice(2), { stdio: "inherit" });
 
 // Keep the launcher alive while the TUI handles Ctrl-C itself. Both processes

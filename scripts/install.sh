@@ -35,9 +35,13 @@ fi
 
 asset="insane-codex-${target}.tar.gz"
 temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/insane-codex-install.XXXXXX")"
+staging_dir=""
 
 cleanup() {
   rm -rf "${temp_dir}"
+  if [[ -n "${staging_dir}" ]]; then
+    rm -rf "${staging_dir}"
+  fi
 }
 trap cleanup EXIT
 
@@ -48,13 +52,29 @@ tar -C "${temp_dir}" -xzf "${temp_dir}/${asset}"
 for required in codex-package.json bin/insane-codex bin/codex-code-mode-host bin/codex-exec-server codex-path/rg; do
   test -f "${temp_dir}/${required}" || { echo "missing package file: ${required}" >&2; exit 1; }
 done
-mkdir -p "${version_dir}" "${bin_dir}"
+mkdir -p "${libexec_root}" "${bin_dir}"
+staging_dir="$(mktemp -d "${libexec_root}/.insane-codex-stage.XXXXXX")"
 for directory in bin codex-path codex-resources; do
-  mkdir -p "${version_dir}/${directory}"
-  cp -R "${temp_dir}/${directory}/." "${version_dir}/${directory}/"
+  cp -R "${temp_dir}/${directory}" "${staging_dir}/${directory}"
 done
-cp "${temp_dir}/codex-package.json" "${version_dir}/codex-package.json"
-"${binary}" --version
+cp "${temp_dir}/codex-package.json" "${staging_dir}/codex-package.json"
+"${staging_dir}/bin/insane-codex" --version
+"${staging_dir}/bin/codex-code-mode-host" --help >/dev/null
+
+backup_dir="${version_dir}.backup.$$"
+if [[ -e "${version_dir}" ]]; then
+  mv "${version_dir}" "${backup_dir}"
+fi
+if ! mv "${staging_dir}" "${version_dir}"; then
+  if [[ -e "${backup_dir}" ]]; then
+    mv "${backup_dir}" "${version_dir}"
+  fi
+  exit 1
+fi
+staging_dir=""
+if [[ -e "${backup_dir}" ]]; then
+  rm -rf "${backup_dir}"
+fi
 ln -sfn "${binary}" "${bin_dir}/insane-codex"
 
 echo "installed: ${binary}"
